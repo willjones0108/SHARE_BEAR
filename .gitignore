@@ -1,0 +1,92 @@
+# .NET build folders
+bin/
+obj/
+out/
+[Bb]uild/
+[Ll]og/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code files
+.vscode/
+
+# Rider files
+.idea/
+
+# NuGet
+*.nupkg
+*.snupkg
+# The packages folder can be ignored if using PackageReference
+**/packages/*
+!**/packages/build/
+!**/packages/repositories.config
+
+# ASP.NET & Razor artifacts
+wwwroot/lib/
+node_modules/
+dist/
+bower_components/
+
+# Runtime files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# User-specific files
+*.userprefs
+*.psess
+*.vsp
+*.vspx
+*.vspscc
+*.vssscc
+*.cache
+*.ide
+*.scc
+*.pdb
+
+# File indexing/cache
+*.vsidx
+
+# Publish artifacts
+publish/
+*.Publish.xml
+
+# Configuration files
+appsettings*.json
+!appsettings.json
+!appsettings.Development.json
+
+# JetBrains Rider specific
+.idea/
+*.sln.iml
+
+# Other IDEs/editors
+*.swp
+*.bak
+*.tmp
+*.orig
+
+# Local secrets (if any)
+secrets.json
+.env
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
