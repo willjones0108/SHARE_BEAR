@@ -1,0 +1,14 @@
+USE AUTH;
+GO
+
+CREATE PROCEDURE sp_Lab3Login
+    @Username NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT Password 
+    FROM HashedCredentials 
+    WHERE Username = @Username;
+END;
+GO

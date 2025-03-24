@@ -1,0 +1,23 @@
+﻿@page
+@model JMUcare.Pages.HashedLogin.HashedLoginModel
+@{
+}
+<form asp-page="HashedLogin">
+    <input asp-for="Username" class="form-control" placeholder="Enter Username" />
+    <br />
+    <label>Enter Password:</label>
+    <input asp-for="Password" class="form-control" type="password" />
+    <br />
+    <input type="submit" class="btn btn-primary" />
+</form>
+<br />
+@{
+    if (HttpContext.Session.GetString("username") != null)
+    {
+                <p class="text-success">@ViewData["LoginMessage"]</p>
+    }
+    else
+    {
+                <p class="text-danger">@ViewData["LoginMessage"]</p>
+    }
+}

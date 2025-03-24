@@ -1,0 +1,55 @@
+﻿@page
+@model JMUcare.Pages.Dataclasses.HashedLogin.CreateHashedLoginModel
+@{
+	ViewData["Title"] = "Create Hashed Login";
+}
+<h2>Create New User</h2>
+
+<form method="post">
+    <label>Select User Role:</label>
+    <select asp-for="UserRoleID" class="form-control">
+        <option value="">-- Select Role --</option>
+        <option value="1">Admin</option>
+        <option value="2">Contributor</option>
+        <option value="3">Viewer</option>
+    </select>
+    <br />
+
+    <label>First Name:</label>
+    <input asp-for="FirstName" class="form-control" placeholder="Enter First Name" />
+    <br />
+
+    <label>Last Name:</label>
+    <input asp-for="LastName" class="form-control" placeholder="Enter Last Name" />
+    <br />
+
+    <label>Email:</label>
+    <input asp-for="Email" class="form-control" type="email" placeholder="Enter Email" />
+    <br />
+
+    <label>Enter Username:</label>
+    <input asp-for="Username" class="form-control" placeholder="Enter Username" />
+    <br />
+
+    <label>Enter Password:</label>
+    <input asp-for="Password" class="form-control" type="password" placeholder="Enter Password" />
+    <br />
+
+    <label>Updated At:</label>
+    <input asp-for="UpdatedAt" class="form-control" type="datetime-local" />
+    <br />
+
+    <label>Is Archived:</label>
+    <select asp-for="IsArchived" class="form-control">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+    </select>
+    <br />
+
+    <input type="submit" class="btn btn-primary" value="Create User" />
+</form>
+
+@if (ViewData["UserCreate"] != null)
+{
+    <p class="text-success">@ViewData["UserCreate"]</p>
+}

@@ -20,7 +20,7 @@ CREATE TABLE Grants (
 
 -- User Tables
 CREATE TABLE DBUser (
-    UserID INT PRIMARY KEY,
+    UserID INT IDENTITY(1,1) PRIMARY KEY,
     FirstName VARCHAR(100),
     LastName VARCHAR(100),
     Email VARCHAR(150),
@@ -310,3 +310,10 @@ CREATE TABLE Nested_Project (
     FOREIGN KEY (ParentProjectID) REFERENCES Project(ProjectID),
     FOREIGN KEY (NestedProjectID) REFERENCES Project(ProjectID)
 );
+
+INSERT INTO UserRole (UserRoleID, RoleName, Description) VALUES
+(1, 'Admin', 'Full access to manage users, settings, and data'),
+(2, 'Contributor', 'Can add and edit content but has limited administrative privileges'),
+(3, 'Viewer', 'Can view content but cannot modify anything'),
+(4, 'Business Partner', 'External user with limited access to business-related data'),
+(5, 'Employee', 'Internal user with role-based access to projects and data');
