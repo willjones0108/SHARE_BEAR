@@ -24,6 +24,7 @@ CREATE TABLE DBUser (
     FirstName VARCHAR(100),
     LastName VARCHAR(100),
     Email VARCHAR(150),
+    Username VARCHAR(150),
     UserRoleID INT,
     UpdatedAt DATETIME,
     IsArchived BIT,
