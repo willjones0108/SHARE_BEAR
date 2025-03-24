@@ -1,0 +1,279 @@
+-- Procedures
+CREATE PROCEDURE CheckGrantViewAccess
+    @UserID INT,
+    @GrantID INT,
+    @HasAccess BIT OUTPUT
+AS
+BEGIN
+    SET @HasAccess = 0; -- Initialize to false
+
+    -- Check if the user has View access to the specific Grant
+    SELECT TOP 1 @HasAccess = 
+        CASE 
+            WHEN gp.AccessLevel = 'View' OR gp.AccessLevel = 'FullControl' THEN 1
+            ELSE 0
+        END
+    FROM Grant_Permission gp
+    WHERE gp.GrantID = @GrantID AND gp.UserID = @UserID;
+
+    -- If not found, check if the user has role-based access (Admin has View)
+    IF @HasAccess = 0
+    BEGIN
+        SELECT @HasAccess = 
+            CASE 
+                WHEN ur.RoleName = 'Admin' THEN 1
+                ELSE 0
+            END
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID;
+    END
+END;
+
+CREATE PROCEDURE CheckGrantEditAccess
+    @UserID INT,
+    @GrantID INT,
+    @HasAccess BIT OUTPUT
+AS
+BEGIN
+    SET @HasAccess = 0; -- Initialize to false
+
+    -- Check if the user has Edit access to the specific Grant
+    SELECT TOP 1 @HasAccess = 
+        CASE 
+            WHEN gp.AccessLevel = 'Edit' OR gp.AccessLevel = 'FullControl' THEN 1
+            ELSE 0
+        END
+    FROM Grant_Permission gp
+    WHERE gp.GrantID = @GrantID AND gp.UserID = @UserID;
+
+    -- If not found, check if the user has role-based access (Admin has Edit)
+    IF @HasAccess = 0
+    BEGIN
+        SELECT @HasAccess = 
+            CASE 
+                WHEN ur.RoleName = 'Admin' THEN 1
+                ELSE 0
+            END
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID;
+    END
+END;
+
+CREATE PROCEDURE CheckGrantFullControlAccess
+    @UserID INT,
+    @GrantID INT,
+    @HasAccess BIT OUTPUT
+AS
+BEGIN
+    SET @HasAccess = 0; -- Initialize to false
+
+    -- Check if the user has FullControl access to the specific Grant
+    SELECT TOP 1 @HasAccess = 
+        CASE 
+            WHEN gp.AccessLevel = 'FullControl' THEN 1
+            ELSE 0
+        END
+    FROM Grant_Permission gp
+    WHERE gp.GrantID = @GrantID AND gp.UserID = @UserID;
+
+    -- If not found, check if the user has role-based access (Admin has FullControl)
+    IF @HasAccess = 0
+    BEGIN
+        SELECT @HasAccess = 
+            CASE 
+                WHEN ur.RoleName = 'Admin' THEN 1
+                ELSE 0
+            END
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID;
+    END
+END;
+
+CREATE PROCEDURE CheckProjectViewAccess
+    @UserID INT,
+    @ProjectID INT,
+    @HasAccess BIT OUTPUT
+AS
+BEGIN
+    SET @HasAccess = 0; -- Initialize to false
+
+    -- Check if the user has View access to the specific Project
+    SELECT TOP 1 @HasAccess = 
+        CASE 
+            WHEN pp.AccessLevel = 'View' OR pp.AccessLevel = 'FullControl' THEN 1
+            ELSE 0
+        END
+    FROM Project_Permission pp
+    WHERE pp.ProjectID = @ProjectID AND pp.UserID = @UserID;
+
+    -- If not found, check if the user has role-based access (Admin has View)
+    IF @HasAccess = 0
+    BEGIN
+        SELECT @HasAccess = 
+            CASE 
+                WHEN ur.RoleName = 'Admin' THEN 1
+                ELSE 0
+            END
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID;
+    END
+END;
+
+CREATE PROCEDURE CheckProjectEditAccess
+    @UserID INT,
+    @ProjectID INT,
+    @HasAccess BIT OUTPUT
+AS
+BEGIN
+    SET @HasAccess = 0; -- Initialize to false
+
+    -- Check if the user has Edit access to the specific Project
+    SELECT TOP 1 @HasAccess = 
+        CASE 
+            WHEN pp.AccessLevel = 'Edit' OR pp.AccessLevel = 'FullControl' THEN 1
+            ELSE 0
+        END
+    FROM Project_Permission pp
+    WHERE pp.ProjectID = @ProjectID AND pp.UserID = @UserID;
+
+    -- If not found, check if the user has role-based access (Admin has Edit)
+    IF @HasAccess = 0
+    BEGIN
+        SELECT @HasAccess = 
+            CASE 
+                WHEN ur.RoleName = 'Admin' THEN 1
+                ELSE 0
+            END
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID;
+    END
+END;
+
+CREATE PROCEDURE CheckProjectFullControlAccess
+    @UserID INT,
+    @ProjectID INT,
+    @HasAccess BIT OUTPUT
+AS
+BEGIN
+    SET @HasAccess = 0; -- Initialize to false
+
+    -- Check if the user has FullControl access to the specific Project
+    SELECT TOP 1 @HasAccess = 
+        CASE 
+            WHEN pp.AccessLevel = 'FullControl' THEN 1
+            ELSE 0
+        END
+    FROM Project_Permission pp
+    WHERE pp.ProjectID = @ProjectID AND pp.UserID = @UserID;
+
+    -- If not found, check if the user has role-based access (Admin has FullControl)
+    IF @HasAccess = 0
+    BEGIN
+        SELECT @HasAccess = 
+            CASE 
+                WHEN ur.RoleName = 'Admin' THEN 1
+                ELSE 0
+            END
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID;
+    END
+END;
+
+CREATE PROCEDURE CheckEventViewAccess
+    @UserID INT,
+    @EventID INT,
+    @HasAccess BIT OUTPUT
+AS
+BEGIN
+    SET @HasAccess = 0; -- Initialize to false
+
+    -- Check if the user has View access to the specific Event
+    SELECT TOP 1 @HasAccess = 
+        CASE 
+            WHEN ep.AccessLevel = 'View' OR ep.AccessLevel = 'FullControl' THEN 1
+            ELSE 0
+        END
+    FROM Event_Permission ep
+    WHERE ep.EventID = @EventID AND ep.UserID = @UserID;
+
+    -- If not found, check if the user has role-based access (Admin has View)
+    IF @HasAccess = 0
+    BEGIN
+        SELECT @HasAccess = 
+            CASE 
+                WHEN ur.RoleName = 'Admin' THEN 1
+                ELSE 0
+            END
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID;
+    END
+END;
+
+CREATE PROCEDURE CheckEventEditAccess
+    @UserID INT,
+    @EventID INT,
+    @HasAccess BIT OUTPUT
+AS
+BEGIN
+    SET @HasAccess = 0; -- Initialize to false
+
+    -- Check if the user has Edit access to the specific Event
+    SELECT TOP 1 @HasAccess = 
+        CASE 
+            WHEN ep.AccessLevel = 'Edit' OR ep.AccessLevel = 'FullControl' THEN 1
+            ELSE 0
+        END
+    FROM Event_Permission ep
+    WHERE ep.EventID = @EventID AND ep.UserID = @UserID;
+
+    -- If not found, check if the user has role-based access (Admin has Edit)
+    IF @HasAccess = 0
+    BEGIN
+        SELECT @HasAccess = 
+            CASE 
+                WHEN ur.RoleName = 'Admin' THEN 1
+                ELSE 0
+            END
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID;
+    END
+END;
+
+CREATE PROCEDURE CheckEventFullControlAccess
+    @UserID INT,
+    @EventID INT,
+    @HasAccess BIT OUTPUT
+AS
+BEGIN
+    SET @HasAccess = 0; -- Initialize to false
+
+    -- Check if the user has FullControl access to the specific Event
+    SELECT TOP 1 @HasAccess = 
+        CASE 
+            WHEN ep.AccessLevel = 'FullControl' THEN 1
+            ELSE 0
+        END
+    FROM Event_Permission ep
+    WHERE ep.EventID = @EventID AND ep.UserID = @UserID;
+
+    -- If not found, check if the user has role-based access (Admin has FullControl)
+    IF @HasAccess = 0
+    BEGIN
+        SELECT @HasAccess = 
+            CASE 
+                WHEN ur.RoleName = 'Admin' THEN 1
+                ELSE 0
+            END
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID;
+    END
+END;

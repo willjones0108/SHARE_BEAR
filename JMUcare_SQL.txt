@@ -1,0 +1,311 @@
+-- Base Tables
+CREATE TABLE UserRole (
+    UserRoleID INT PRIMARY KEY,
+    RoleName VARCHAR(100),         -- Admin, Contributor, Viewer, etc.
+    Description TEXT
+);
+
+CREATE TABLE Grants (
+    GrantID INT PRIMARY KEY,
+    GrantTitle VARCHAR(255),
+    Category VARCHAR(100),
+    FundingSource VARCHAR(255),
+    Amount DECIMAL(12,2),
+    Status VARCHAR(50),
+    CreatedBy INT,
+    GrantLeadID INT,
+    TrackingStatus NVARCHAR(MAX),
+    IsArchived BIT
+);
+
+-- User Tables
+CREATE TABLE DBUser (
+    UserID INT PRIMARY KEY,
+    FirstName VARCHAR(100),
+    LastName VARCHAR(100),
+    Email VARCHAR(150),
+    UserRoleID INT,
+    UpdatedAt DATETIME,
+    IsArchived BIT,
+    FOREIGN KEY (UserRoleID) REFERENCES UserRole(UserRoleID)
+);
+
+CREATE TABLE Business_Partner (
+    Business_Partner_ID INT PRIMARY KEY,
+    Business_Name VARCHAR(150),
+    BusinessType VARCHAR(100),
+    OrgType VARCHAR(100),
+    ContactInfo TEXT,
+    Status_Flag VARCHAR(50),
+    IsArchived BIT,
+    AdminUserID INT, -- NEW
+    FOREIGN KEY (AdminUserID) REFERENCES DBUser(UserID) -- NEW
+);
+
+CREATE TABLE Business_Partner_User (
+    PartnerUserID INT PRIMARY KEY IDENTITY(1,1),
+    Business_Partner_ID INT,
+    UserID INT,
+    FOREIGN KEY (Business_Partner_ID) REFERENCES Business_Partner(Business_Partner_ID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+
+
+
+-- Add foreign keys to Grants now that DBUser exists
+ALTER TABLE Grants
+ADD CONSTRAINT FK_Grants_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID);
+
+ALTER TABLE Grants
+ADD CONSTRAINT FK_Grants_GrantLeadID FOREIGN KEY (GrantLeadID) REFERENCES DBUser(UserID);
+
+
+
+CREATE TABLE User_Credential (
+    UserCredentialID INT PRIMARY KEY,
+    UserID INT UNIQUE,
+    HashedPassword VARCHAR(255),
+    UpdatedAt DATETIME,
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+-- Project and Related Tables
+CREATE TABLE Project (
+    ProjectID INT PRIMARY KEY,
+    GrantID INT,
+    Title VARCHAR(255),
+    CreatedBy INT,
+    TrackingStatus NVARCHAR(MAX),
+    IsArchived BIT,
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID) -- Added foreign key
+);
+
+CREATE TABLE Project_Task (
+    TaskID INT PRIMARY KEY,
+    ProjectID INT,
+    TaskContent TEXT,
+    DueDate DATE,
+    Status VARCHAR(50),
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
+);
+
+-- Reminder Table (needed before Calendar_Event)
+CREATE TABLE Reminder (
+    ReminderID INT PRIMARY KEY,
+    UserID INT,
+    DueDate DATETIME,
+    Acknowledged BIT,
+    Status VARCHAR(50),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Calendar_Event (
+    EventID INT PRIMARY KEY,
+    EventType VARCHAR(100),
+    StartDateTime DATETIME,
+    EndDateTime DATETIME,
+    UserID INT,
+    GrantID INT,
+    ProjectID INT,
+    TaskID INT,
+    ReminderID INT,
+    History TEXT,
+    Status VARCHAR(50),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID), -- Added foreign key
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
+    FOREIGN KEY (TaskID) REFERENCES Project_Task(TaskID), -- Added foreign key
+    FOREIGN KEY (ReminderID) REFERENCES Reminder(ReminderID) -- Added foreign key
+);
+
+-- Permission Tables
+CREATE TABLE User_Permissions (
+    PermissionID INT PRIMARY KEY,
+    UserID INT,
+    Permissions NVARCHAR(MAX),  -- Stores grant/project/task IDs and feature flags
+    AccessLevel VARCHAR(100),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Event_Permission (
+    EventID INT,
+    UserID INT,
+    AccessLevel VARCHAR(50),
+    PRIMARY KEY (EventID, UserID),
+    FOREIGN KEY (EventID) REFERENCES Calendar_Event(EventID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Grant_Permission (
+    GrantID INT,
+    UserID INT,
+    AccessLevel VARCHAR(50),       -- View, Edit, FullControl, etc.
+    PRIMARY KEY (GrantID, UserID),
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Project_Permission (
+    ProjectID INT,
+    UserID INT,
+    AccessLevel VARCHAR(50),
+    PRIMARY KEY (ProjectID, UserID),
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+-- Other Tables
+CREATE TABLE Onboarding_Status (
+    OnboardingID INT PRIMARY KEY,
+    UserID INT,
+    Stage VARCHAR(100),
+    AssignedStaffID INT,
+    StartDate DATE,
+    EndDate DATE,
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID),
+    FOREIGN KEY (AssignedStaffID) REFERENCES DBUser(UserID) -- Added foreign key
+);
+
+CREATE TABLE System_Notification (
+    NotificationID INT PRIMARY KEY,
+    UserID INT,
+    Timestamp DATETIME,
+    Status VARCHAR(50),  -- e.g., 'Unread', 'Read'
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Partner_Interaction (
+    InteractionID INT PRIMARY KEY,
+    PartnerID INT,
+    UserID INT,
+    InteractionType VARCHAR(100),
+    DateLogged DATE,
+    FOREIGN KEY (PartnerID) REFERENCES Business_Partner(Business_Partner_ID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Admin_Interaction (
+    AdminInteractionID INT PRIMARY KEY,
+    MeetingPurpose TEXT,
+    DateHeld DATE,
+    PartnerID INT,
+    UserID INT,
+    FOREIGN KEY (PartnerID) REFERENCES Business_Partner(Business_Partner_ID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Calendar_Invite (
+    InviteID INT PRIMARY KEY,
+    EventID INT,
+    UserID INT,
+    Status VARCHAR(50),  -- e.g., Pending, Accepted, Declined
+    FOREIGN KEY (EventID) REFERENCES Calendar_Event(EventID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Grant_Message (
+    GrantMessageID INT PRIMARY KEY,
+    GrantID INT,
+    SenderID INT,
+    MessageText TEXT,
+    SentDateTime DATETIME,
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (SenderID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Grant_File (
+    GrantFileID INT PRIMARY KEY,
+    GrantID INT,
+    FilePath VARCHAR(255),
+    UploadedBy INT,
+    UploadedDateTime DATETIME,
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (UploadedBy) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Grant_Tracking (
+    TrackingID INT PRIMARY KEY,
+    GrantID INT,
+    StageName VARCHAR(100),
+    Notes TEXT,
+    CompletionDate DATE,
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID)
+);
+
+CREATE TABLE Grant_User (
+    GrantUserID INT PRIMARY KEY,
+    GrantID INT,
+    UserID INT,
+    Role VARCHAR(100),
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Grant_Note (
+    NoteID INT PRIMARY KEY,
+    GrantID INT,
+    Text_Content TEXT,
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID)
+);
+
+CREATE TABLE Grant_Project (
+    GrantProjectID INT PRIMARY KEY,
+    GrantID INT,
+    ProjectID INT,
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
+);
+
+CREATE TABLE Project_User (
+    ProjectUserID INT PRIMARY KEY,
+    ProjectID INT,
+    UserID INT,
+    Role VARCHAR(100),
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Project_Task_User (
+    ProjectTaskUserID INT PRIMARY KEY,
+    TaskID INT,
+    UserID INT,
+    FOREIGN KEY (TaskID) REFERENCES Project_Task(TaskID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Project_Note (
+    NoteID INT PRIMARY KEY,
+    ProjectID INT,
+    Text_Content TEXT,
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
+);
+
+CREATE TABLE Project_Message (
+    ProjectMessageID INT PRIMARY KEY,
+    ProjectID INT,
+    SenderID INT,
+    MessageText TEXT,
+    SentDateTime DATETIME,
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
+    FOREIGN KEY (SenderID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Project_File (
+    FileID INT PRIMARY KEY,
+    ProjectID INT,
+    FilePath VARCHAR(255),
+    UploadedBy INT,
+    UploadedDateTime DATETIME,
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
+    FOREIGN KEY (UploadedBy) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Nested_Project (
+    ParentProjectID INT,
+    NestedProjectID INT,
+    PRIMARY KEY (ParentProjectID, NestedProjectID),
+    FOREIGN KEY (ParentProjectID) REFERENCES Project(ProjectID),
+    FOREIGN KEY (NestedProjectID) REFERENCES Project(ProjectID)
+);
