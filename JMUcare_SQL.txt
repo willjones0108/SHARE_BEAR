@@ -6,7 +6,7 @@ CREATE TABLE UserRole (
 );
 
 CREATE TABLE Grants (
-    GrantID INT PRIMARY KEY,
+    GrantID INT IDENTITY(1,1) PRIMARY KEY,
     GrantTitle VARCHAR(255),
     Category VARCHAR(100),
     FundingSource VARCHAR(255),
@@ -14,6 +14,7 @@ CREATE TABLE Grants (
     Status VARCHAR(50),
     CreatedBy INT,
     GrantLeadID INT,
+    Description TEXT,
     TrackingStatus NVARCHAR(MAX),
     IsArchived BIT
 );
@@ -61,26 +62,35 @@ ADD CONSTRAINT FK_Grants_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES DBUser(Use
 ALTER TABLE Grants
 ADD CONSTRAINT FK_Grants_GrantLeadID FOREIGN KEY (GrantLeadID) REFERENCES DBUser(UserID);
 
-
-
-CREATE TABLE User_Credential (
-    UserCredentialID INT PRIMARY KEY,
-    UserID INT UNIQUE,
-    HashedPassword VARCHAR(255),
-    UpdatedAt DATETIME,
-    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+CREATE TABLE Master_Project (
+    MasterProjectID INT PRIMARY KEY,
+    Title VARCHAR(255),
+    Description TEXT,
+    Status VARCHAR(50),
+    CreatedBy INT,
+    ProjectLeadID INT,
+    IsArchived BIT,
+    Master_Project_Description TEXT,
+    FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID),
+    FOREIGN KEY (ProjectLeadID) REFERENCES DBUser(UserID)
 );
+
+
 
 -- Project and Related Tables
 CREATE TABLE Project (
     ProjectID INT PRIMARY KEY,
-    GrantID INT,
     Title VARCHAR(255),
     CreatedBy INT,
+    GrantID INT NULL,
+    MasterProjectID INT NULL,
+    ProjectType VARCHAR(50), -- 'Grant', 'Master', 'Both', 'Standalone'
     TrackingStatus NVARCHAR(MAX),
     IsArchived BIT,
+    Project_Description TEXT,
+    FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID),
     FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
-    FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID) -- Added foreign key
+    FOREIGN KEY (MasterProjectID) REFERENCES Master_Project(MasterProjectID)
 );
 
 CREATE TABLE Project_Task (
@@ -91,6 +101,16 @@ CREATE TABLE Project_Task (
     Status VARCHAR(50),
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
 );
+
+CREATE TABLE Project_Task_User (
+    ProjectTaskUserID INT PRIMARY KEY IDENTITY(1,1),
+    TaskID INT,
+    UserID INT,
+    Role VARCHAR(100), -- Optional: 'Assignee', 'Reviewer', etc.
+    FOREIGN KEY (TaskID) REFERENCES Project_Task(TaskID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
 
 -- Reminder Table (needed before Calendar_Event)
 CREATE TABLE Reminder (
@@ -239,7 +259,7 @@ CREATE TABLE Grant_User (
     GrantUserID INT PRIMARY KEY,
     GrantID INT,
     UserID INT,
-    Role VARCHAR(100),
+    AccessLevel VARCHAR(50), -- 'Read', 'Edit', 'FullControl'
     FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
     FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
 );
@@ -259,22 +279,17 @@ CREATE TABLE Grant_Project (
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
 );
 
+
+
 CREATE TABLE Project_User (
     ProjectUserID INT PRIMARY KEY,
     ProjectID INT,
     UserID INT,
-    Role VARCHAR(100),
+    AccessLevel VARCHAR(50), -- 'Read', 'Edit', 'FullControl'
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
     FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
 );
 
-CREATE TABLE Project_Task_User (
-    ProjectTaskUserID INT PRIMARY KEY,
-    TaskID INT,
-    UserID INT,
-    FOREIGN KEY (TaskID) REFERENCES Project_Task(TaskID),
-    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
-);
 
 CREATE TABLE Project_Note (
     NoteID INT PRIMARY KEY,
@@ -290,6 +305,16 @@ CREATE TABLE Project_Message (
     MessageText TEXT,
     SentDateTime DATETIME,
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
+    FOREIGN KEY (SenderID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Master_Project_Message (
+    MasterProjectMessageID INT PRIMARY KEY,
+    MasterProjectID INT,
+    SenderID INT,
+    MessageText TEXT,
+    SentDateTime DATETIME,
+    FOREIGN KEY (MasterProjectID) REFERENCES Master_Project(MasterProjectID),
     FOREIGN KEY (SenderID) REFERENCES DBUser(UserID)
 );
 
@@ -310,6 +335,18 @@ CREATE TABLE Nested_Project (
     FOREIGN KEY (ParentProjectID) REFERENCES Project(ProjectID),
     FOREIGN KEY (NestedProjectID) REFERENCES Project(ProjectID)
 );
+
+
+CREATE TABLE Master_Project_Permission (
+    MasterProjectID INT,
+    UserID INT,
+    AccessLevel VARCHAR(50), -- 'Read', 'Edit', etc.
+    PRIMARY KEY (MasterProjectID, UserID),
+    FOREIGN KEY (MasterProjectID) REFERENCES Master_Project(MasterProjectID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+
 
 INSERT INTO UserRole (UserRoleID, RoleName, Description) VALUES
 (1, 'Admin', 'Full access to manage users, settings, and data'),

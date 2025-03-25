@@ -136,6 +136,164 @@ namespace JMUcare.Pages.DBclass
             }
             CreateHashedUser(dbUser.Username, dbUser.Password);
         }
+
+
+        public static List<DbUserModel> GetUsers()
+        {
+            var users = new List<DbUserModel>();
+
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            const string sqlQuery = @"
+        SELECT UserID, FirstName, LastName 
+        FROM DBUser 
+        WHERE IsArchived = 0";
+
+            using var cmd = new SqlCommand(sqlQuery, connection);
+            connection.Open();
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                users.Add(new DbUserModel
+                {
+                    UserID = reader.GetInt32(0),
+                    FirstName = reader.GetString(1),
+                    LastName = reader.GetString(2)
+                    // Optionally add: FullName = reader.GetString(1) + " " + reader.GetString(2)
+                });
+            }
+
+            return users;
+        }
+
+
+        public static int InsertGrant(GrantModel grant)
+        {
+            int newGrantId;
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            INSERT INTO Grants (
+                GrantTitle,
+                Category,
+                FundingSource,
+                Amount,
+                Status,
+                CreatedBy,
+                GrantLeadID,
+                Description,
+                TrackingStatus,
+                IsArchived
+            )
+            OUTPUT INSERTED.GrantID
+            VALUES (
+                @GrantTitle,
+                @Category,
+                @FundingSource,
+                @Amount,
+                @Status,
+                @CreatedBy,
+                @GrantLeadID,
+                @Description,
+                @TrackingStatus,
+                @IsArchived
+            )";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@GrantTitle", grant.GrantTitle);
+                    cmd.Parameters.AddWithValue("@Category", grant.Category);
+                    cmd.Parameters.AddWithValue("@FundingSource", grant.FundingSource);
+                    cmd.Parameters.AddWithValue("@Amount", grant.Amount);
+                    cmd.Parameters.AddWithValue("@Status", grant.Status);
+                    cmd.Parameters.AddWithValue("@CreatedBy", grant.CreatedBy);
+                    cmd.Parameters.AddWithValue("@GrantLeadID", grant.GrantLeadID);
+                    cmd.Parameters.AddWithValue("@Description", grant.Description ?? "");
+                    cmd.Parameters.AddWithValue("@TrackingStatus", grant.TrackingStatus ?? "");
+                    cmd.Parameters.AddWithValue("@IsArchived", grant.IsArchived);
+
+                    connection.Open();
+                    newGrantId = (int)cmd.ExecuteScalar();
+                }
+            }
+
+            return newGrantId;
+        }
+
+        public static void InsertGrantPermission(int grantId, int userId, string accessLevel)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            INSERT INTO Grant_Permission (GrantID, UserID, AccessLevel)
+            VALUES (@GrantID, @UserID, @AccessLevel)";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@GrantID", grantId);
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    cmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
+
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+
+        public static List<GrantModel> GetGrantsForUser(int userId)
+        {
+            var grants = new List<GrantModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        SELECT DISTINCT g.*
+        FROM Grants g
+        LEFT JOIN Grant_Permission gp ON g.GrantID = gp.GrantID
+        LEFT JOIN DBUser u ON u.UserID = @UserID
+        LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE 
+            gp.UserID = @UserID AND gp.AccessLevel IN ('Read', 'Edit')
+            OR ur.RoleName = 'Admin'";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            grants.Add(new GrantModel
+                            {
+                                GrantID = reader.GetInt32(reader.GetOrdinal("GrantID")),
+                                GrantTitle = reader.GetString(reader.GetOrdinal("GrantTitle")),
+                                Category = reader.GetString(reader.GetOrdinal("Category")),
+                                FundingSource = reader.GetString(reader.GetOrdinal("FundingSource")),
+                                Amount = reader.GetDecimal(reader.GetOrdinal("Amount")),
+                                Status = reader.GetString(reader.GetOrdinal("Status")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                GrantLeadID = reader.GetInt32(reader.GetOrdinal("GrantLeadID")),
+                                Description = reader.GetString(reader.GetOrdinal("Description")),
+                                TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return grants ?? new List<GrantModel>();
+        }
+
+
+
+
+
+
     }
 }
 

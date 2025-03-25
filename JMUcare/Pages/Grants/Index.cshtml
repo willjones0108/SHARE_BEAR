@@ -1,0 +1,27 @@
+﻿@page
+@model JMUcare.Pages.Grants.IndexModel
+
+@{
+    ViewData["Title"] = "Your Grants";
+}
+
+<h2 class="mb-4">Your Grants</h2>
+
+@if (!Model.Grants.Any())
+{
+    <p>You don’t have access to any grants.</p>
+}
+else
+{
+    <div class="list-group">
+        @foreach (var grant in Model.Grants)
+        {
+            <a class="list-group-item list-group-item-action"
+               asp-page="/Grants/Details"
+               asp-route-id="@grant.GrantID">
+                <strong>@grant.GrantTitle</strong><br />
+                <small>@grant.Category — $@grant.Amount.ToString("N0")</small>
+            </a>
+        }
+    </div>
+}

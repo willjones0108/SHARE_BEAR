@@ -1,0 +1,70 @@
+@page
+@model JMUcare.Pages.Grants.CreateGrantModel
+
+@{
+    ViewData["Title"] = "Create Grant";
+}
+
+<h2 class="mb-4">Create Grant</h2>
+
+<form method="post" class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Grant.GrantTitle" class="form-label">Grant Title</label>
+        <input asp-for="Grant.GrantTitle" class="form-control" />
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Grant.Category" class="form-label">Category</label>
+        <input asp-for="Grant.Category" class="form-control" />
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Grant.FundingSource" class="form-label">Funding Source</label>
+        <input asp-for="Grant.FundingSource" class="form-control" />
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Grant.Amount" class="form-label">Amount</label>
+        <input asp-for="Grant.Amount" type="number" class="form-control" />
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Grant.Status" class="form-label">Status</label>
+        <input asp-for="Grant.Status" class="form-control" />
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Grant.Description" class="form-label">Description</label>
+        <textarea asp-for="Grant.Description" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Grant.TrackingStatus" class="form-label">Tracking Status</label>
+        <input asp-for="Grant.TrackingStatus" class="form-control" />
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Grant.CreatedBy" class="form-label">Created By</label>
+        <select asp-for="Grant.CreatedBy" class="form-select" asp-items="@(new SelectList(Model.Users, "UserID", "FirstName"))">
+            <option value="">-- Select User --</option>
+        </select>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Grant.GrantLeadID" class="form-label">Grant Lead</label>
+        <select asp-for="Grant.GrantLeadID" class="form-select" asp-items="@(new SelectList(Model.Users, "UserID", "FirstName"))">
+            <option value="">-- Select User --</option>
+        </select>
+    </div>
+
+    <div class="col-md-6 d-flex align-items-center">
+        <div class="form-check mt-4">
+            <input asp-for="Grant.IsArchived" class="form-check-input" type="checkbox" />
+            <label asp-for="Grant.IsArchived" class="form-check-label">Archived?</label>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Create Grant</button>
+    </div>
+</form>

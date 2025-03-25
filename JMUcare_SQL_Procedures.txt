@@ -1,279 +1,226 @@
--- Procedures
-CREATE PROCEDURE CheckGrantViewAccess
+CREATE PROCEDURE CheckGrantAccess
     @UserID INT,
     @GrantID INT,
-    @HasAccess BIT OUTPUT
+    @RequiredAccessLevel VARCHAR(50)  -- 'Edit' or 'View'
 AS
 BEGIN
-    SET @HasAccess = 0; -- Initialize to false
+    SET NOCOUNT ON;
 
-    -- Check if the user has View access to the specific Grant
-    SELECT TOP 1 @HasAccess = 
-        CASE 
-            WHEN gp.AccessLevel = 'View' OR gp.AccessLevel = 'FullControl' THEN 1
-            ELSE 0
-        END
-    FROM Grant_Permission gp
-    WHERE gp.GrantID = @GrantID AND gp.UserID = @UserID;
+    DECLARE @UserAccess VARCHAR(50);
 
-    -- If not found, check if the user has role-based access (Admin has View)
-    IF @HasAccess = 0
-    BEGIN
-        SELECT @HasAccess = 
-            CASE 
-                WHEN ur.RoleName = 'Admin' THEN 1
-                ELSE 0
-            END
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID;
-    END
+    SELECT TOP 1 @UserAccess = AccessLevel
+    FROM Grant_Permission
+    WHERE GrantID = @GrantID AND UserID = @UserID;
+
+    IF @UserAccess = 'FullControl' OR @UserAccess = @RequiredAccessLevel
+        SELECT 1 AS HasAccess;
+    ELSE IF @UserAccess = 'Edit' AND @RequiredAccessLevel = 'View'
+        SELECT 1 AS HasAccess;
+    ELSE
+        SELECT 0 AS HasAccess;
 END;
 
-CREATE PROCEDURE CheckGrantEditAccess
-    @UserID INT,
-    @GrantID INT,
-    @HasAccess BIT OUTPUT
-AS
-BEGIN
-    SET @HasAccess = 0; -- Initialize to false
 
-    -- Check if the user has Edit access to the specific Grant
-    SELECT TOP 1 @HasAccess = 
-        CASE 
-            WHEN gp.AccessLevel = 'Edit' OR gp.AccessLevel = 'FullControl' THEN 1
-            ELSE 0
-        END
-    FROM Grant_Permission gp
-    WHERE gp.GrantID = @GrantID AND gp.UserID = @UserID;
 
-    -- If not found, check if the user has role-based access (Admin has Edit)
-    IF @HasAccess = 0
-    BEGIN
-        SELECT @HasAccess = 
-            CASE 
-                WHEN ur.RoleName = 'Admin' THEN 1
-                ELSE 0
-            END
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID;
-    END
-END;
-
-CREATE PROCEDURE CheckGrantFullControlAccess
-    @UserID INT,
-    @GrantID INT,
-    @HasAccess BIT OUTPUT
-AS
-BEGIN
-    SET @HasAccess = 0; -- Initialize to false
-
-    -- Check if the user has FullControl access to the specific Grant
-    SELECT TOP 1 @HasAccess = 
-        CASE 
-            WHEN gp.AccessLevel = 'FullControl' THEN 1
-            ELSE 0
-        END
-    FROM Grant_Permission gp
-    WHERE gp.GrantID = @GrantID AND gp.UserID = @UserID;
-
-    -- If not found, check if the user has role-based access (Admin has FullControl)
-    IF @HasAccess = 0
-    BEGIN
-        SELECT @HasAccess = 
-            CASE 
-                WHEN ur.RoleName = 'Admin' THEN 1
-                ELSE 0
-            END
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID;
-    END
-END;
-
-CREATE PROCEDURE CheckProjectViewAccess
+CREATE PROCEDURE CheckProjectAccess
     @UserID INT,
     @ProjectID INT,
-    @HasAccess BIT OUTPUT
+    @RequiredAccessLevel VARCHAR(50)  -- 'Edit' or 'View'
 AS
 BEGIN
-    SET @HasAccess = 0; -- Initialize to false
+    SET NOCOUNT ON;
 
-    -- Check if the user has View access to the specific Project
-    SELECT TOP 1 @HasAccess = 
-        CASE 
-            WHEN pp.AccessLevel = 'View' OR pp.AccessLevel = 'FullControl' THEN 1
-            ELSE 0
-        END
-    FROM Project_Permission pp
-    WHERE pp.ProjectID = @ProjectID AND pp.UserID = @UserID;
+    DECLARE @DirectAccess VARCHAR(50);
+    DECLARE @GrantID INT;
+    DECLARE @MasterProjectID INT;
+    DECLARE @InheritedGrantAccess VARCHAR(50);
+    DECLARE @InheritedMasterAccess VARCHAR(50);
 
-    -- If not found, check if the user has role-based access (Admin has View)
-    IF @HasAccess = 0
-    BEGIN
-        SELECT @HasAccess = 
-            CASE 
-                WHEN ur.RoleName = 'Admin' THEN 1
-                ELSE 0
-            END
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID;
-    END
+    -- Get direct project access
+    SELECT TOP 1 @DirectAccess = AccessLevel
+    FROM Project_Permission
+    WHERE ProjectID = @ProjectID AND UserID = @UserID;
+
+    -- Get Grant and MasterProject linked to the project
+    SELECT GrantID, MasterProjectID INTO #tmpLinks
+    FROM Project
+    WHERE ProjectID = @ProjectID;
+
+    SET @GrantID = (SELECT GrantID FROM #tmpLinks);
+    SET @MasterProjectID = (SELECT MasterProjectID FROM #tmpLinks);
+
+    -- Inherited access from Grant
+    SELECT TOP 1 @InheritedGrantAccess = AccessLevel
+    FROM Grant_Permission
+    WHERE GrantID = @GrantID AND UserID = @UserID;
+
+    -- Inherited access from Master Project
+    SELECT TOP 1 @InheritedMasterAccess = AccessLevel
+    FROM Master_Project_Permission
+    WHERE MasterProjectID = @MasterProjectID AND UserID = @UserID;
+
+    DROP TABLE #tmpLinks;
+
+    -- Determine access
+    IF @DirectAccess IN ('FullControl', @RequiredAccessLevel)
+        SELECT 1 AS HasAccess;
+    ELSE IF @DirectAccess = 'Edit' AND @RequiredAccessLevel = 'View'
+        SELECT 1 AS HasAccess;
+    ELSE IF @InheritedGrantAccess = 'FullControl' OR @InheritedGrantAccess = @RequiredAccessLevel
+        SELECT 1 AS HasAccess;
+    ELSE IF @InheritedGrantAccess = 'Edit' AND @RequiredAccessLevel = 'View'
+        SELECT 1 AS HasAccess;
+    ELSE IF @InheritedMasterAccess = 'FullControl' OR @InheritedMasterAccess = @RequiredAccessLevel
+        SELECT 1 AS HasAccess;
+    ELSE IF @InheritedMasterAccess = 'Edit' AND @RequiredAccessLevel = 'View'
+        SELECT 1 AS HasAccess;
+    ELSE
+        SELECT 0 AS HasAccess;
 END;
 
-CREATE PROCEDURE CheckProjectEditAccess
+
+
+CREATE PROCEDURE CheckMasterProjectAccess
     @UserID INT,
-    @ProjectID INT,
-    @HasAccess BIT OUTPUT
+    @MasterProjectID INT,
+    @RequiredAccessLevel VARCHAR(50)  -- 'Edit' or 'View'
 AS
 BEGIN
-    SET @HasAccess = 0; -- Initialize to false
+    SET NOCOUNT ON;
 
-    -- Check if the user has Edit access to the specific Project
-    SELECT TOP 1 @HasAccess = 
-        CASE 
-            WHEN pp.AccessLevel = 'Edit' OR pp.AccessLevel = 'FullControl' THEN 1
-            ELSE 0
-        END
-    FROM Project_Permission pp
-    WHERE pp.ProjectID = @ProjectID AND pp.UserID = @UserID;
+    DECLARE @UserAccess VARCHAR(50);
 
-    -- If not found, check if the user has role-based access (Admin has Edit)
-    IF @HasAccess = 0
-    BEGIN
-        SELECT @HasAccess = 
-            CASE 
-                WHEN ur.RoleName = 'Admin' THEN 1
-                ELSE 0
-            END
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID;
-    END
+    SELECT TOP 1 @UserAccess = AccessLevel
+    FROM Master_Project_Permission
+    WHERE MasterProjectID = @MasterProjectID AND UserID = @UserID;
+
+    IF @UserAccess = 'FullControl' OR @UserAccess = @RequiredAccessLevel
+        SELECT 1 AS HasAccess;
+    ELSE IF @UserAccess = 'Edit' AND @RequiredAccessLevel = 'View'
+        SELECT 1 AS HasAccess;
+    ELSE
+        SELECT 0 AS HasAccess;
 END;
 
-CREATE PROCEDURE CheckProjectFullControlAccess
-    @UserID INT,
-    @ProjectID INT,
-    @HasAccess BIT OUTPUT
+
+
+
+CREATE PROCEDURE DeleteProjectAndDependencies
+    @ProjectID INT
 AS
 BEGIN
-    SET @HasAccess = 0; -- Initialize to false
+    SET NOCOUNT ON;
 
-    -- Check if the user has FullControl access to the specific Project
-    SELECT TOP 1 @HasAccess = 
-        CASE 
-            WHEN pp.AccessLevel = 'FullControl' THEN 1
-            ELSE 0
-        END
-    FROM Project_Permission pp
-    WHERE pp.ProjectID = @ProjectID AND pp.UserID = @UserID;
+    -- Delete nested project relationships
+    DELETE FROM Nested_Project WHERE ParentProjectID = @ProjectID OR NestedProjectID = @ProjectID;
 
-    -- If not found, check if the user has role-based access (Admin has FullControl)
-    IF @HasAccess = 0
-    BEGIN
-        SELECT @HasAccess = 
-            CASE 
-                WHEN ur.RoleName = 'Admin' THEN 1
-                ELSE 0
-            END
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID;
-    END
+    -- Delete project task assignments
+    DELETE PTU
+    FROM Project_Task_User PTU
+    JOIN Project_Task PT ON PTU.TaskID = PT.TaskID
+    WHERE PT.ProjectID = @ProjectID;
+
+    -- Delete tasks
+    DELETE FROM Project_Task WHERE ProjectID = @ProjectID;
+
+    -- Delete related project records
+    DELETE FROM Project_File WHERE ProjectID = @ProjectID;
+    DELETE FROM Project_Message WHERE ProjectID = @ProjectID;
+    DELETE FROM Project_Note WHERE ProjectID = @ProjectID;
+    DELETE FROM Project_User WHERE ProjectID = @ProjectID;
+    DELETE FROM Project_Permission WHERE ProjectID = @ProjectID;
+    DELETE FROM Project_Permission WHERE ProjectID = @ProjectID;
+
+    -- Delete calendar events tied to this project
+    DELETE FROM Calendar_Event WHERE ProjectID = @ProjectID;
+
+    -- Delete project record
+    DELETE FROM Project WHERE ProjectID = @ProjectID;
 END;
 
-CREATE PROCEDURE CheckEventViewAccess
-    @UserID INT,
-    @EventID INT,
-    @HasAccess BIT OUTPUT
+
+CREATE PROCEDURE DeleteMasterProjectAndDependencies
+    @MasterProjectID INT
 AS
 BEGIN
-    SET @HasAccess = 0; -- Initialize to false
+    SET NOCOUNT ON;
 
-    -- Check if the user has View access to the specific Event
-    SELECT TOP 1 @HasAccess = 
-        CASE 
-            WHEN ep.AccessLevel = 'View' OR ep.AccessLevel = 'FullControl' THEN 1
-            ELSE 0
-        END
-    FROM Event_Permission ep
-    WHERE ep.EventID = @EventID AND ep.UserID = @UserID;
+    DECLARE @ProjectID INT;
 
-    -- If not found, check if the user has role-based access (Admin has View)
-    IF @HasAccess = 0
+    -- Loop through all projects under this master project
+    DECLARE ProjectCursor CURSOR FOR
+        SELECT ProjectID FROM Project WHERE MasterProjectID = @MasterProjectID;
+
+    OPEN ProjectCursor;
+    FETCH NEXT FROM ProjectCursor INTO @ProjectID;
+
+    WHILE @@FETCH_STATUS = 0
     BEGIN
-        SELECT @HasAccess = 
-            CASE 
-                WHEN ur.RoleName = 'Admin' THEN 1
-                ELSE 0
-            END
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID;
+        EXEC DeleteProjectAndDependencies @ProjectID;
+        FETCH NEXT FROM ProjectCursor INTO @ProjectID;
     END
+
+    CLOSE ProjectCursor;
+    DEALLOCATE ProjectCursor;
+
+    -- Delete master-level records
+    DELETE FROM Master_Project_Permission WHERE MasterProjectID = @MasterProjectID;
+    DELETE FROM Master_Project_Message WHERE MasterProjectID = @MasterProjectID;
+
+    -- Delete the master project
+    DELETE FROM Master_Project WHERE MasterProjectID = @MasterProjectID;
 END;
 
-CREATE PROCEDURE CheckEventEditAccess
-    @UserID INT,
-    @EventID INT,
-    @HasAccess BIT OUTPUT
+
+
+CREATE PROCEDURE DeleteGrantAndDependencies
+    @GrantID INT
 AS
 BEGIN
-    SET @HasAccess = 0; -- Initialize to false
+    SET NOCOUNT ON;
 
-    -- Check if the user has Edit access to the specific Event
-    SELECT TOP 1 @HasAccess = 
-        CASE 
-            WHEN ep.AccessLevel = 'Edit' OR ep.AccessLevel = 'FullControl' THEN 1
-            ELSE 0
-        END
-    FROM Event_Permission ep
-    WHERE ep.EventID = @EventID AND ep.UserID = @UserID;
+    -- Delete Project-Task-User assignments under projects in the grant
+    DELETE PTU
+    FROM Project_Task_User PTU
+    JOIN Project_Task PT ON PTU.TaskID = PT.TaskID
+    JOIN Project P ON PT.ProjectID = P.ProjectID
+    WHERE P.GrantID = @GrantID;
 
-    -- If not found, check if the user has role-based access (Admin has Edit)
-    IF @HasAccess = 0
-    BEGIN
-        SELECT @HasAccess = 
-            CASE 
-                WHEN ur.RoleName = 'Admin' THEN 1
-                ELSE 0
-            END
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID;
-    END
+    -- Delete tasks under projects in the grant
+    DELETE PT
+    FROM Project_Task PT
+    JOIN Project P ON PT.ProjectID = P.ProjectID
+    WHERE P.GrantID = @GrantID;
+
+    -- Delete project files, messages, notes, permissions
+    DELETE FROM Project_File WHERE ProjectID IN (SELECT ProjectID FROM Project WHERE GrantID = @GrantID);
+    DELETE FROM Project_Message WHERE ProjectID IN (SELECT ProjectID FROM Project WHERE GrantID = @GrantID);
+    DELETE FROM Project_Note WHERE ProjectID IN (SELECT ProjectID FROM Project WHERE GrantID = @GrantID);
+    DELETE FROM Project_User WHERE ProjectID IN (SELECT ProjectID FROM Project WHERE GrantID = @GrantID);
+    DELETE FROM Project_Permission WHERE ProjectID IN (SELECT ProjectID FROM Project WHERE GrantID = @GrantID);
+
+    -- Delete nested projects under this grant
+    DELETE NP
+    FROM Nested_Project NP
+    JOIN Project P ON NP.ParentProjectID = P.ProjectID
+    WHERE P.GrantID = @GrantID OR NP.NestedProjectID IN (SELECT ProjectID FROM Project WHERE GrantID = @GrantID);
+
+    -- Delete projects tied to this grant
+    DELETE FROM Project WHERE GrantID = @GrantID;
+
+    -- Delete grant-level objects
+    DELETE FROM Grant_File WHERE GrantID = @GrantID;
+    DELETE FROM Grant_Message WHERE GrantID = @GrantID;
+    DELETE FROM Grant_Note WHERE GrantID = @GrantID;
+    DELETE FROM Grant_Tracking WHERE GrantID = @GrantID;
+    DELETE FROM Grant_User WHERE GrantID = @GrantID;
+    DELETE FROM Grant_Permission WHERE GrantID = @GrantID;
+    DELETE FROM Grant_Project WHERE GrantID = @GrantID;
+
+    -- Delete related calendar events
+    DELETE FROM Calendar_Event WHERE GrantID = @GrantID;
+    
+    -- Delete the grant itself
+    DELETE FROM Grants WHERE GrantID = @GrantID;
 END;
 
-CREATE PROCEDURE CheckEventFullControlAccess
-    @UserID INT,
-    @EventID INT,
-    @HasAccess BIT OUTPUT
-AS
-BEGIN
-    SET @HasAccess = 0; -- Initialize to false
-
-    -- Check if the user has FullControl access to the specific Event
-    SELECT TOP 1 @HasAccess = 
-        CASE 
-            WHEN ep.AccessLevel = 'FullControl' THEN 1
-            ELSE 0
-        END
-    FROM Event_Permission ep
-    WHERE ep.EventID = @EventID AND ep.UserID = @UserID;
-
-    -- If not found, check if the user has role-based access (Admin has FullControl)
-    IF @HasAccess = 0
-    BEGIN
-        SELECT @HasAccess = 
-            CASE 
-                WHEN ur.RoleName = 'Admin' THEN 1
-                ELSE 0
-            END
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID;
-    END
-END;
