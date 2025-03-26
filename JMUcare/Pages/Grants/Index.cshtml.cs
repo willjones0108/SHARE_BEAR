@@ -44,5 +44,19 @@ namespace JMUcare.Pages.Grants
                 _logger.LogInformation("Grants retrieved: {GrantsCount}", Grants.Count);
             }
         }
+
+        public string GetGrantPageForUser(int grantId)
+        {
+            string accessLevel = DBClass.GetUserAccessLevelForGrant(CurrentUserID, grantId);
+
+            if (accessLevel == "Edit")
+            {
+                return "/Grants/Edit";
+            }
+            else
+            {
+                return "/Grants/View";
+            }
+        }
     }
 }

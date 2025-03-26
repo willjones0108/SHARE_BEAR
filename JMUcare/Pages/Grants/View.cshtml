@@ -1,0 +1,38 @@
+﻿@page "{id:int}"
+@model JMUcare.Pages.Grants.ViewModel
+@{
+    ViewData["Title"] = "View Grant";
+}
+
+<h2>View Grant: @Model.Grant.GrantTitle</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">@Model.Grant.GrantTitle</h5>
+                <div class="mb-3">
+                    <strong>Category:</strong> @Model.Grant.Category
+                </div>
+                <div class="mb-3">
+                    <strong>Funding Source:</strong> @Model.Grant.FundingSource
+                </div>
+                <div class="mb-3">
+                    <strong>Amount:</strong> $@Model.Grant.Amount.ToString("N0")
+                </div>
+                <div class="mb-3">
+                    <strong>Status:</strong> @Model.Grant.Status
+                </div>
+                <div class="mb-3">
+                    <strong>Description:</strong>
+                    <p>@Model.Grant.Description</p>
+                </div>
+                <div class="mb-3">
+                    <strong>Tracking Status:</strong> @Model.Grant.TrackingStatus
+                </div>
+
+                <a asp-page="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+</div>

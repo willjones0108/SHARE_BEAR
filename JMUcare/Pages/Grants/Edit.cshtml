@@ -1,0 +1,83 @@
+﻿@page "{id:int}"
+@model JMUcare.Pages.Grants.EditModel
+@{
+    ViewData["Title"] = "Edit Grant";
+}
+
+<h2>Edit Grant</h2>
+
+<form method="post">
+    <input type="hidden" asp-for="Grant.GrantID" />
+    <input type="hidden" asp-for="Grant.CreatedBy" />
+    <input type="hidden" asp-for="Grant.IsArchived" />
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Grant.GrantTitle" class="form-label">Title</label>
+                        <input asp-for="Grant.GrantTitle" class="form-control" />
+                        <span asp-validation-for="Grant.GrantTitle" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Grant.Category" class="form-label">Category</label>
+                        <input asp-for="Grant.Category" class="form-control" />
+                        <span asp-validation-for="Grant.Category" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Grant.FundingSource" class="form-label">Funding Source</label>
+                        <input asp-for="Grant.FundingSource" class="form-control" />
+                        <span asp-validation-for="Grant.FundingSource" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Grant.Amount" class="form-label">Amount</label>
+                        <input asp-for="Grant.Amount" class="form-control" />
+                        <span asp-validation-for="Grant.Amount" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Grant.Status" class="form-label">Status</label>
+                        <select asp-for="Grant.Status" class="form-select">
+                            <option value="Draft">Draft</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Grant.GrantLeadID" class="form-label">Grant Lead</label>
+                        <select asp-for="Grant.GrantLeadID" class="form-select"
+                                asp-items="@(new SelectList(Model.Users, "UserID", "FirstName"))">
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Grant.Description" class="form-label">Description</label>
+                        <textarea asp-for="Grant.Description" class="form-control" rows="5"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Grant.TrackingStatus" class="form-label">Tracking Status</label>
+                        <input asp-for="Grant.TrackingStatus" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

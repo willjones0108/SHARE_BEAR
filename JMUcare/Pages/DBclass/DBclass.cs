@@ -299,6 +299,125 @@ namespace JMUcare.Pages.DBclass
         }
 
 
+        public static string GetUserAccessLevelForGrant(int userId, int grantId)
+        {
+            string accessLevel = "None";
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                // First check if user is an admin
+                string adminQuery = @"
+            SELECT ur.RoleName 
+            FROM DBUser u
+            JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+            WHERE u.UserID = @UserID AND ur.RoleName = 'Admin'";
+
+                using (SqlCommand adminCmd = new SqlCommand(adminQuery, connection))
+                {
+                    adminCmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+                    var adminResult = adminCmd.ExecuteScalar();
+
+                    if (adminResult != null)
+                    {
+                        return "Edit"; // Admins get edit access to all grants
+                    }
+
+                    // Check specific grant permission
+                    string permQuery = @"
+                SELECT AccessLevel 
+                FROM Grant_Permission 
+                WHERE GrantID = @GrantID AND UserID = @UserID";
+
+                    using (SqlCommand permCmd = new SqlCommand(permQuery, connection))
+                    {
+                        permCmd.Parameters.AddWithValue("@GrantID", grantId);
+                        permCmd.Parameters.AddWithValue("@UserID", userId);
+
+                        var result = permCmd.ExecuteScalar();
+                        if (result != null)
+                        {
+                            accessLevel = result.ToString();
+                        }
+                    }
+                }
+            }
+
+            return accessLevel;
+        }
+
+        public static GrantModel GetGrantById(int grantId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            SELECT * FROM Grants
+            WHERE GrantID = @GrantID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@GrantID", grantId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return new GrantModel
+                            {
+                                GrantID = reader.GetInt32(reader.GetOrdinal("GrantID")),
+                                GrantTitle = reader.GetString(reader.GetOrdinal("GrantTitle")),
+                                Category = reader.GetString(reader.GetOrdinal("Category")),
+                                FundingSource = reader.GetString(reader.GetOrdinal("FundingSource")),
+                                Amount = reader.GetDecimal(reader.GetOrdinal("Amount")),
+                                Status = reader.GetString(reader.GetOrdinal("Status")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                GrantLeadID = reader.GetInt32(reader.GetOrdinal("GrantLeadID")),
+                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
+                                TrackingStatus = reader.IsDBNull(reader.GetOrdinal("TrackingStatus")) ? "" : reader.GetString(reader.GetOrdinal("TrackingStatus")),
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        public static void UpdateGrant(GrantModel grant)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            UPDATE Grants SET
+                GrantTitle = @GrantTitle,
+                Category = @Category,
+                FundingSource = @FundingSource,
+                Amount = @Amount,
+                Status = @Status,
+                GrantLeadID = @GrantLeadID,
+                Description = @Description,
+                TrackingStatus = @TrackingStatus
+            WHERE GrantID = @GrantID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@GrantID", grant.GrantID);
+                    cmd.Parameters.AddWithValue("@GrantTitle", grant.GrantTitle);
+                    cmd.Parameters.AddWithValue("@Category", grant.Category);
+                    cmd.Parameters.AddWithValue("@FundingSource", grant.FundingSource);
+                    cmd.Parameters.AddWithValue("@Amount", grant.Amount);
+                    cmd.Parameters.AddWithValue("@Status", grant.Status);
+                    cmd.Parameters.AddWithValue("@GrantLeadID", grant.GrantLeadID);
+                    cmd.Parameters.AddWithValue("@Description", grant.Description ?? "");
+                    cmd.Parameters.AddWithValue("@TrackingStatus", grant.TrackingStatus ?? "");
+
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
 
 
     }
