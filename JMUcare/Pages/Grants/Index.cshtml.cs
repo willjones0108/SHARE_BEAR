@@ -58,5 +58,10 @@ namespace JMUcare.Pages.Grants
                 return "/Grants/View";
             }
         }
+
+        public bool IsUserAdmin()
+        {
+            return DBClass.IsUserAdmin(CurrentUserID);
+        }
     }
 }

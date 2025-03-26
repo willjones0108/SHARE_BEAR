@@ -35,8 +35,8 @@ namespace JMUcare.Pages.Grants
             // Get users for the dropdown
             Users = DBClass.GetUsers();
 
-            // Get the grant details
-            Grant = GetGrantById(Id);
+            // Get the grant details using DBClass method to properly populate fields
+            Grant = DBClass.GetGrantById(Id);
 
             if (Grant == null)
             {
@@ -70,33 +70,43 @@ namespace JMUcare.Pages.Grants
                 return RedirectToPage("/AccessDenied");
             }
 
+            // Get the original grant to check for grant lead changes
+            var originalGrant = DBClass.GetGrantById(Id);
+
+            // Check if grant lead has changed
+            if (originalGrant.GrantLeadID != Grant.GrantLeadID)
+            {
+                // If the grant lead has changed, update permissions accordingly
+
+                // 1. Check if the old lead had explicit permission (they might have been an admin)
+                string oldLeadAccess = DBClass.GetUserAccessLevelForGrant(originalGrant.GrantLeadID, Id);
+
+                // 2. Remove old grant lead's permission if they had explicit permission
+                // This is done by setting a new permission with "None" access which will
+                // effectively remove their access (unless they are an admin)
+                if (oldLeadAccess != "None" && !DBClass.IsUserAdmin(originalGrant.GrantLeadID))
+                {
+                    // Use UpdateGrantPermission to effectively remove access
+                    DBClass.UpdateGrantPermission(Id, originalGrant.GrantLeadID, "None");
+                }
+
+                // 3. Check if the new lead is an admin
+                bool isNewLeadAdmin = DBClass.IsUserAdmin(Grant.GrantLeadID);
+
+                // 4. Only add permission for the new lead if they're not an admin
+                // Admins already have access to all grants, so no need to add explicit permission
+                if (!isNewLeadAdmin)
+                {
+                    // Add "Edit" permission for the new lead
+                    DBClass.UpdateGrantPermission(Id, Grant.GrantLeadID, "Edit");
+                }
+            }
+
             // Update grant in the database
-            // You'll need to add this method to your DBClass
-            UpdateGrant(Grant);
+            DBClass.UpdateGrant(Grant);
 
             return RedirectToPage("/Grants/Index");
         }
 
-        private GrantModel GetGrantById(int grantId)
-        {
-            // Implementation needed to fetch a specific grant by ID
-            // You'll need to add this method to your DBClass
-            // For now, placeholder implementation
-            foreach (var grant in DBClass.GetGrantsForUser(CurrentUserID))
-            {
-                if (grant.GrantID == grantId)
-                {
-                    return grant;
-                }
-            }
-
-            return null;
-        }
-
-        private void UpdateGrant(GrantModel grant)
-        {
-            // Implementation needed to update a grant in the database
-            // You'll need to add this method to your DBClass
-        }
     }
 }

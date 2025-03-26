@@ -418,6 +418,82 @@ namespace JMUcare.Pages.DBclass
             }
         }
 
+        public static bool IsUserAdmin(int userId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string adminQuery = @"
+            SELECT ur.RoleName 
+            FROM DBUser u
+            JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+            WHERE u.UserID = @UserID AND ur.RoleName = 'Admin'";
+
+                using (SqlCommand adminCmd = new SqlCommand(adminQuery, connection))
+                {
+                    adminCmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+                    var adminResult = adminCmd.ExecuteScalar();
+
+                    return adminResult != null;
+                }
+            }
+        }
+
+        public static void UpdateGrantPermission(int grantId, int userId, string accessLevel)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                // First check if a permission record already exists
+                string checkQuery = @"
+            SELECT COUNT(*) FROM Grant_Permission 
+            WHERE GrantID = @GrantID AND UserID = @UserID";
+
+                using (SqlCommand checkCmd = new SqlCommand(checkQuery, connection))
+                {
+                    checkCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    checkCmd.Parameters.AddWithValue("@UserID", userId);
+
+                    connection.Open();
+                    int existingCount = (int)checkCmd.ExecuteScalar();
+
+                    if (existingCount > 0)
+                    {
+                        // Update existing permission
+                        string updateQuery = @"
+                    UPDATE Grant_Permission 
+                    SET AccessLevel = @AccessLevel 
+                    WHERE GrantID = @GrantID AND UserID = @UserID";
+
+                        using (SqlCommand updateCmd = new SqlCommand(updateQuery, connection))
+                        {
+                            updateCmd.Parameters.AddWithValue("@GrantID", grantId);
+                            updateCmd.Parameters.AddWithValue("@UserID", userId);
+                            updateCmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
+
+                            updateCmd.ExecuteNonQuery();
+                        }
+                    }
+                    else if (accessLevel != "None") // Don't insert None permissions if there's no existing record
+                    {
+                        // Insert new permission
+                        string insertQuery = @"
+                    INSERT INTO Grant_Permission (GrantID, UserID, AccessLevel)
+                    VALUES (@GrantID, @UserID, @AccessLevel)";
+
+                        using (SqlCommand insertCmd = new SqlCommand(insertQuery, connection))
+                        {
+                            insertCmd.Parameters.AddWithValue("@GrantID", grantId);
+                            insertCmd.Parameters.AddWithValue("@UserID", userId);
+                            insertCmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
+
+                            insertCmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+            }
+        }
+
+
 
 
     }
