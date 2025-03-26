@@ -1,19 +1,17 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using JMUcare.Pages.Dataclasses;
 using JMUcare.Pages.DBclass;
-using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace JMUcare.Pages.Grants
+namespace JMUcare.Pages.Phases
 {
     public class ViewModel : PageModel
     {
         [BindProperty(SupportsGet = true)]
         public int Id { get; set; }
 
-        public GrantModel Grant { get; set; }
-        public List<PhaseModel> Phases { get; set; } // New property
+        public PhaseModel Phase { get; set; }
+        //public List<TaskModel> Tasks { get; set; } // Placeholder for tasks
 
         public int CurrentUserID
         {
@@ -30,24 +28,24 @@ namespace JMUcare.Pages.Grants
                 return RedirectToPage("/Account/Login");
             }
 
-            // Get the grant details
-            Grant = DBClass.GetGrantById(Id);
+            // Get the phase details
+            Phase = DBClass.GetPhaseById(Id);
 
-            if (Grant == null)
+            if (Phase == null)
             {
                 return NotFound();
             }
 
-            // Check if user has permission to view this grant
-            string accessLevel = DBClass.GetUserAccessLevelForGrant(CurrentUserID, Id);
+            // Check if user has permission to view this phase
+            string accessLevel = DBClass.GetUserAccessLevelForPhase(CurrentUserID, Id);
 
             if (accessLevel == "None")
             {
                 return RedirectToPage("/AccessDenied");
             }
 
-            // Get the phases associated with the grant
-            Phases = DBClass.GetPhasesByGrantId(Id);
+            //// Placeholder for getting tasks associated with the phase
+           // Tasks = new List<TaskModel>(); // Replace with actual method to get tasks
 
             return Page();
         }

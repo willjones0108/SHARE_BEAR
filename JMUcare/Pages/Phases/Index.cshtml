@@ -1,0 +1,59 @@
+﻿@page  
+@model JMUcare.Pages.Phases.IndexModel  
+@using JMUcare.Pages.DBclass  
+
+@{  
+   Layout = "_Layout";  
+   ViewData["Title"] = "Your Phases";  
+}  
+
+<div class="d-flex justify-content-between align-items-center mb-4">  
+   <h2>Your Phases</h2>  
+
+   @if (Model.IsUserAdmin())  
+   {  
+       <a asp-page="/Phases/CreatePhase" class="btn btn-primary">  
+           <i class="bi bi-plus-circle"></i> New +  
+       </a>  
+   }  
+</div>  
+
+@if (!Model.Phases.Any())  
+{  
+   <p>You don't have access to any phases.</p>  
+}  
+else  
+{  
+   <div class="list-group">  
+       @foreach (var phase in Model.Phases)  
+       {  
+           <div class="list-group-item">  
+               <div class="d-flex justify-content-between align-items-center">  
+                   <div>
+                        <strong>@phase.PhaseName</strong><br />
+                        <small>@phase.Description</small>  
+                   </div>  
+                   <div>  
+                       <a asp-page="/Phases/View"  
+                          asp-route-id="@phase.PhaseID"  
+                          class="btn btn-primary btn-sm">  
+                           <i class="bi bi-eye"></i> View  
+                       </a>  
+
+                       @{  
+                           string accessLevel = DBClass.GetUserAccessLevelForGrant(Model.CurrentUserID, phase.PhaseID);  
+                           if (accessLevel == "Edit")  
+                           {  
+                               <a asp-page="/Phases/Edit"  
+                                  asp-route-id="@phase.PhaseID"  
+                                  class="btn btn-success btn-sm ms-2">  
+                                   <i class="bi bi-pencil"></i> Edit  
+                               </a>  
+                           }  
+                       }  
+                   </div>  
+               </div>  
+           </div>  
+       }  
+   </div>  
+}

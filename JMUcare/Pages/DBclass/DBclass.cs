@@ -529,6 +529,349 @@ namespace JMUcare.Pages.DBclass
 
             return users;
         }
+        public static int InsertPhase(PhaseModel phase)
+        {
+            int newPhaseId;
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+                INSERT INTO Phase (
+                    PhaseName,
+                    Description,
+                    Status,
+                    CreatedBy,
+                    PhaseLeadID
+                )
+                OUTPUT INSERTED.PhaseID
+                VALUES (
+                    @PhaseName,
+                    @Description,
+                    @Status,
+                    @CreatedBy,
+                    @PhaseLeadID
+                )";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseName", phase.PhaseName);
+                    cmd.Parameters.AddWithValue("@Description", phase.Description ?? "");
+                    cmd.Parameters.AddWithValue("@Status", phase.Status);
+                    cmd.Parameters.AddWithValue("@CreatedBy", phase.CreatedBy);
+                    cmd.Parameters.AddWithValue("@PhaseLeadID", phase.PhaseLeadID);
+
+                    connection.Open();
+                    newPhaseId = (int)cmd.ExecuteScalar();
+                }
+            }
+
+            return newPhaseId;
+        }
+
+        public static void InsertPhasePermission(int phaseId, int userId, string accessLevel)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string checkQuery = @"
+        SELECT COUNT(*) FROM Phase_Permission 
+        WHERE PhaseID = @PhaseID AND UserID = @UserID";
+
+                using (SqlCommand checkCmd = new SqlCommand(checkQuery, connection))
+                {
+                    checkCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    checkCmd.Parameters.AddWithValue("@UserID", userId);
+
+                    connection.Open();
+                    int count = (int)checkCmd.ExecuteScalar();
+
+                    if (count == 0)
+                    {
+                        string insertQuery = @"
+                INSERT INTO Phase_Permission (PhaseID, UserID, AccessLevel)
+                VALUES (@PhaseID, @UserID, @AccessLevel)";
+
+                        using (SqlCommand insertCmd = new SqlCommand(insertQuery, connection))
+                        {
+                            insertCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                            insertCmd.Parameters.AddWithValue("@UserID", userId);
+                            insertCmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
+
+                            insertCmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+            }
+        }
+
+        public static List<PhaseModel> GetPhasesForUser(int userId)
+        {
+            var phases = new List<PhaseModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+                SELECT p.*
+                FROM Phase p
+                LEFT JOIN Phase_Permission pp ON p.PhaseID = pp.PhaseID
+                LEFT JOIN DBUser u ON u.UserID = @UserID
+                LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+                WHERE 
+                    (pp.UserID = @UserID AND pp.AccessLevel IN ('Read', 'Edit')) OR ur.RoleName = 'Admin'";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            phases.Add(new PhaseModel
+                            {
+                                PhaseID = reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                                PhaseName = reader.GetString(reader.GetOrdinal("PhaseName")), // Updated here
+                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
+                                Status = reader.GetString(reader.GetOrdinal("Status")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                PhaseLeadID = reader.GetInt32(reader.GetOrdinal("PhaseLeadID"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return phases ?? new List<PhaseModel>();
+        }
+
+        public static PhaseModel GetPhaseById(int phaseId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        SELECT * FROM Phase
+        WHERE PhaseID = @PhaseID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return new PhaseModel
+                            {
+                                PhaseID = reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                                PhaseName = reader.GetString(reader.GetOrdinal("PhaseName")),
+                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
+                                Status = reader.GetString(reader.GetOrdinal("Status")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                PhaseLeadID = reader.GetInt32(reader.GetOrdinal("PhaseLeadID"))
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        public static void UpdatePhase(PhaseModel phase)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        UPDATE Phases SET
+            PhaseName = @PhaseName,
+            Description = @Description,
+            Status = @Status,
+            PhaseLeadID = @PhaseLeadID
+        WHERE PhaseID = @PhaseID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseID", phase.PhaseID);
+                    cmd.Parameters.AddWithValue("@PhaseName", phase.PhaseName);
+                    cmd.Parameters.AddWithValue("@Description", phase.Description ?? "");
+                    cmd.Parameters.AddWithValue("@Status", phase.Status);
+                    cmd.Parameters.AddWithValue("@PhaseLeadID", phase.PhaseLeadID);
+
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public static void UpdatePhasePermission(int phaseId, int userId, string accessLevel)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        MERGE Phase_Permission AS target
+        USING (SELECT @PhaseID, @UserID, @AccessLevel) AS source (PhaseID, UserID, AccessLevel)
+        ON target.PhaseID = source.PhaseID AND target.UserID = source.UserID
+        WHEN MATCHED THEN
+            UPDATE SET AccessLevel = source.AccessLevel
+        WHEN NOT MATCHED THEN
+            INSERT (PhaseID, UserID, AccessLevel)
+            VALUES (source.PhaseID, source.UserID, source.AccessLevel);";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    cmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
+
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public static List<(DbUserModel User, string AccessLevel)> GetPhaseUserPermissions(int phaseId)
+        {
+            var users = new List<(DbUserModel User, string AccessLevel)>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        SELECT u.*, pp.AccessLevel
+        FROM DBUser u
+        JOIN Phase_Permission pp ON u.UserID = pp.UserID
+        WHERE pp.PhaseID = @PhaseID AND pp.AccessLevel != 'None'";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var user = new DbUserModel
+                            {
+                                UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                // Add other user properties as needed
+                            };
+                            string accessLevel = reader.GetString(reader.GetOrdinal("AccessLevel"));
+                            users.Add((user, accessLevel));
+                        }
+                    }
+                }
+            }
+
+            return users;
+        }
+        public static void InsertGrantPhase(int grantId, int phaseId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        INSERT INTO Grant_Phase (GrantID, PhaseID)
+        VALUES (@GrantID, @PhaseID)";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@GrantID", grantId);
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+        public static List<PhaseModel> GetPhasesByGrantId(int grantId)
+        {
+            var phases = new List<PhaseModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        SELECT p.*
+        FROM Phase p
+        JOIN Grant_Phase gp ON p.PhaseID = gp.PhaseID
+        WHERE gp.GrantID = @GrantID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@GrantID", grantId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            phases.Add(new PhaseModel
+                            {
+                                PhaseID = reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                                PhaseName = reader.GetString(reader.GetOrdinal("PhaseName")),
+                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
+                                Status = reader.GetString(reader.GetOrdinal("Status")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                PhaseLeadID = reader.GetInt32(reader.GetOrdinal("PhaseLeadID"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return phases ?? new List<PhaseModel>();
+        }
+        public static string GetUserAccessLevelForPhase(int userId, int phaseId)
+        {
+            string accessLevel = "None";
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                // First check if user is an admin
+                string adminQuery = @"
+        SELECT ur.RoleName 
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID AND ur.RoleName = 'Admin'";
+
+                using (SqlCommand adminCmd = new SqlCommand(adminQuery, connection))
+                {
+                    adminCmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+                    var adminResult = adminCmd.ExecuteScalar();
+
+                    if (adminResult != null)
+                    {
+                        return "Edit"; // Admins get edit access to all phases
+                    }
+
+                    // Check specific phase permission
+                    string permQuery = @"
+            SELECT AccessLevel 
+            FROM Phase_Permission 
+            WHERE PhaseID = @PhaseID AND UserID = @UserID";
+
+                    using (SqlCommand permCmd = new SqlCommand(permQuery, connection))
+                    {
+                        permCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                        permCmd.Parameters.AddWithValue("@UserID", userId);
+
+                        var result = permCmd.ExecuteScalar();
+                        if (result != null)
+                        {
+                            accessLevel = result.ToString();
+                        }
+                    }
+                }
+            }
+
+            return accessLevel;
+        }
+
+
+
+
+
 
 
 

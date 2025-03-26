@@ -1,0 +1,53 @@
+﻿@page
+@model JMUcare.Pages.Phases.EditModel
+@{
+	ViewData["Title"] = "Edit Phase";
+}
+<h2>Edit Phase</h2>
+
+<form method="post">
+    <input type="hidden" asp-for="Phase.PhaseID" />
+    <input type="hidden" asp-for="Phase.CreatedBy" />
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Phase.PhaseName" class="form-label">Phase Name</label>
+                        <input asp-for="Phase.PhaseName" class="form-control" />
+                        <span asp-validation-for="Phase.PhaseName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Phase.Description" class="form-label">Description</label>
+                        <textarea asp-for="Phase.Description" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="Phase.Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Phase.Status" class="form-label">Status</label>
+                        <select asp-for="Phase.Status" class="form-select" asp-items="Model.StatusOptions">
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Phase.PhaseLeadID" class="form-label">Phase Lead</label>
+                        <select asp-for="Phase.PhaseLeadID" class="form-select" asp-items="@(new SelectList(Model.Users, "UserID", "FirstName"))">
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+}

@@ -1,0 +1,38 @@
+﻿@page "{id:int}"
+@using JMUcare.Pages.DBclass
+@model JMUcare.Pages.Phases.ViewModel
+@{
+    ViewData["Title"] = "View Phase";
+}
+
+<h2>View Phase: @Model.Phase.PhaseName</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">@Model.Phase.PhaseName</h5>
+                <div class="mb-3">
+                    <strong>Description:</strong>
+                    <p>@Model.Phase.Description</p>
+                </div>
+                <div class="mb-3">
+                    <strong>Status:</strong> @Model.Phase.Status
+                </div>
+                <div class="mb-3">
+                    <strong>Phase Lead:</strong> @Model.Phase.PhaseLeadID
+                </div>
+
+                <a asp-page="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="mt-4">Associated Tasks</h3>
+
+}
+else
+{
+    <p>No tasks are associated with this phase.</p>
+}

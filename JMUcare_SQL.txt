@@ -1,3 +1,4 @@
+
 -- Base Tables
 CREATE TABLE UserRole (
     UserRoleID INT PRIMARY KEY,
@@ -52,9 +53,6 @@ CREATE TABLE Business_Partner_User (
     FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
 );
 
-
-
-
 -- Add foreign keys to Grants now that DBUser exists
 ALTER TABLE Grants
 ADD CONSTRAINT FK_Grants_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID);
@@ -75,8 +73,6 @@ CREATE TABLE Master_Project (
     FOREIGN KEY (ProjectLeadID) REFERENCES DBUser(UserID)
 );
 
-
-
 -- Project and Related Tables
 CREATE TABLE Project (
     ProjectID INT PRIMARY KEY,
@@ -90,7 +86,6 @@ CREATE TABLE Project (
     Project_Description TEXT,
     FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID),
     FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
-    FOREIGN KEY (MasterProjectID) REFERENCES Master_Project(MasterProjectID)
 );
 
 CREATE TABLE Project_Task (
@@ -110,7 +105,6 @@ CREATE TABLE Project_Task_User (
     FOREIGN KEY (TaskID) REFERENCES Project_Task(TaskID),
     FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
 );
-
 
 -- Reminder Table (needed before Calendar_Event)
 CREATE TABLE Reminder (
@@ -174,6 +168,44 @@ CREATE TABLE Project_Permission (
     AccessLevel VARCHAR(50),
     PRIMARY KEY (ProjectID, UserID),
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
+    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+);
+
+-- New Phase Tables
+CREATE TABLE Phase (
+    PhaseID INT PRIMARY KEY IDENTITY(1,1),
+    PhaseName VARCHAR(255),
+    Description TEXT,
+    Status VARCHAR(50),
+    CreatedBy INT,
+    PhaseLeadID INT,
+    IsArchived BIT,
+    FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID),
+    FOREIGN KEY (PhaseLeadID) REFERENCES DBUser(UserID)
+);
+
+CREATE TABLE Grant_Phase (
+    GrantID INT,
+    PhaseID INT,
+    PRIMARY KEY (GrantID, PhaseID),
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (PhaseID) REFERENCES Phase(PhaseID)
+);
+
+CREATE TABLE Phase_Project (
+    PhaseID INT,
+    ProjectID INT,
+    PRIMARY KEY (PhaseID, ProjectID),
+    FOREIGN KEY (PhaseID) REFERENCES Phase(PhaseID),
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
+);
+
+CREATE TABLE Phase_Permission (
+    PhaseID INT,
+    UserID INT,
+    AccessLevel VARCHAR(50),       -- View, Edit, FullControl, etc.
+    PRIMARY KEY (PhaseID, UserID),
+    FOREIGN KEY (PhaseID) REFERENCES Phase(PhaseID),
     FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
 );
 
@@ -279,8 +311,6 @@ CREATE TABLE Grant_Project (
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
 );
 
-
-
 CREATE TABLE Project_User (
     ProjectUserID INT PRIMARY KEY,
     ProjectID INT,
@@ -289,7 +319,6 @@ CREATE TABLE Project_User (
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
     FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
 );
-
 
 CREATE TABLE Project_Note (
     NoteID INT PRIMARY KEY,
@@ -336,7 +365,6 @@ CREATE TABLE Nested_Project (
     FOREIGN KEY (NestedProjectID) REFERENCES Project(ProjectID)
 );
 
-
 CREATE TABLE Master_Project_Permission (
     MasterProjectID INT,
     UserID INT,
@@ -346,11 +374,12 @@ CREATE TABLE Master_Project_Permission (
     FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
 );
 
-
-
+-- Insert initial data
 INSERT INTO UserRole (UserRoleID, RoleName, Description) VALUES
 (1, 'Admin', 'Full access to manage users, settings, and data'),
 (2, 'Contributor', 'Can add and edit content but has limited administrative privileges'),
 (3, 'Viewer', 'Can view content but cannot modify anything'),
 (4, 'Business Partner', 'External user with limited access to business-related data'),
 (5, 'Employee', 'Internal user with role-based access to projects and data');
+
+
