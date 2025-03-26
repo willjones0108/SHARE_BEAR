@@ -15,24 +15,30 @@ namespace JMUcare.Pages.HashedLogin
             {
             }
 
-            public IActionResult OnPost()
+        public IActionResult OnPost()
+        {
+            if (DBClass.HashedParameterLogin(Username, Password))
             {
-                if (DBClass.HashedParameterLogin(Username, Password))
-                {
-                    HttpContext.Session.SetString("username", Username);
-                    ViewData["LoginMessage"] = "Login Successful!";
-                    DBClass.JMUcareDBConnection.Close();
+                HttpContext.Session.SetString("username", Username);
 
-                    return RedirectToPage("/Index");
-                }
-                else
-                {
-                    ViewData["LoginMessage"] = "Username and/or Password Incorrect";
-                    DBClass.JMUcareDBConnection.Close();
-                    return Page();
-                }
+                // Also retrieve and store the user ID
+                int userId = DBClass.GetUserIdByUsername(Username);
+                HttpContext.Session.SetInt32("CurrentUserID", userId);
+
+                ViewData["LoginMessage"] = "Login Successful!";
+                DBClass.JMUcareDBConnection.Close();
+
+                return RedirectToPage("/Index");
+            }
+            else
+            {
+                ViewData["LoginMessage"] = "Username and/or Password Incorrect";
+                DBClass.JMUcareDBConnection.Close();
+                return Page();
             }
         }
+
     }
+}
 
 

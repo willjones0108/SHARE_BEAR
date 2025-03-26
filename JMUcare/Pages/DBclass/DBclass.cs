@@ -255,8 +255,7 @@ namespace JMUcare.Pages.DBclass
         LEFT JOIN DBUser u ON u.UserID = @UserID
         LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
         WHERE 
-            gp.UserID = @UserID AND gp.AccessLevel IN ('Read', 'Edit')
-            OR ur.RoleName = 'Admin'";
+            (gp.UserID = @UserID AND gp.AccessLevel IN ('Read', 'Edit')) OR ur.RoleName = 'Admin'";
 
                 using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
                 {
@@ -269,17 +268,10 @@ namespace JMUcare.Pages.DBclass
                         {
                             grants.Add(new GrantModel
                             {
+                                // Your existing property mappings
                                 GrantID = reader.GetInt32(reader.GetOrdinal("GrantID")),
                                 GrantTitle = reader.GetString(reader.GetOrdinal("GrantTitle")),
-                                Category = reader.GetString(reader.GetOrdinal("Category")),
-                                FundingSource = reader.GetString(reader.GetOrdinal("FundingSource")),
-                                Amount = reader.GetDecimal(reader.GetOrdinal("Amount")),
-                                Status = reader.GetString(reader.GetOrdinal("Status")),
-                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
-                                GrantLeadID = reader.GetInt32(reader.GetOrdinal("GrantLeadID")),
-                                Description = reader.GetString(reader.GetOrdinal("Description")),
-                                TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
-                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+                                // ... rest of your properties
                             });
                         }
                     }
@@ -290,6 +282,21 @@ namespace JMUcare.Pages.DBclass
         }
 
 
+
+        public static int GetUserIdByUsername(string username)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string query = "SELECT UserID FROM DBUser WHERE Username = @Username";
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@Username", username);
+                    connection.Open();
+                    var result = cmd.ExecuteScalar();
+                    return result != null ? Convert.ToInt32(result) : 0;
+                }
+            }
+        }
 
 
 
