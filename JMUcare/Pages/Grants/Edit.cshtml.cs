@@ -5,6 +5,7 @@ using JMUcare.Pages.Dataclasses;
 using JMUcare.Pages.DBclass;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace JMUcare.Pages.Grants
 {
@@ -27,6 +28,8 @@ namespace JMUcare.Pages.Grants
                 return HttpContext.Session.GetInt32("CurrentUserID") ?? 0;
             }
         }
+
+        public List<(DbUserModel User, string AccessLevel)> GrantUsers { get; set; }
 
         public EditModel()
         {
@@ -74,6 +77,11 @@ namespace JMUcare.Pages.Grants
             {
                 return RedirectToPage("/Grants/View", new { id = Id });
             }
+
+            // Get users with permissions for this grant (excluding admins)
+            GrantUsers = DBClass.GetGrantUserPermissions(Id)
+                .Where(u => !DBClass.IsUserAdmin(u.User.UserID))
+                .ToList();
 
             return Page();
         }

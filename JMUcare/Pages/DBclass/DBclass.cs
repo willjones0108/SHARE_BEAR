@@ -443,54 +443,64 @@ namespace JMUcare.Pages.DBclass
         {
             using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
             {
-                // First check if a permission record already exists
-                string checkQuery = @"
-            SELECT COUNT(*) FROM Grant_Permission 
-            WHERE GrantID = @GrantID AND UserID = @UserID";
+                string sqlQuery = @"
+            MERGE Grant_Permission AS target
+            USING (SELECT @GrantID, @UserID, @AccessLevel) AS source (GrantID, UserID, AccessLevel)
+            ON target.GrantID = source.GrantID AND target.UserID = source.UserID
+            WHEN MATCHED THEN
+                UPDATE SET AccessLevel = source.AccessLevel
+            WHEN NOT MATCHED THEN
+                INSERT (GrantID, UserID, AccessLevel)
+                VALUES (source.GrantID, source.UserID, source.AccessLevel);";
 
-                using (SqlCommand checkCmd = new SqlCommand(checkQuery, connection))
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
                 {
-                    checkCmd.Parameters.AddWithValue("@GrantID", grantId);
-                    checkCmd.Parameters.AddWithValue("@UserID", userId);
+                    cmd.Parameters.AddWithValue("@GrantID", grantId);
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    cmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
 
                     connection.Open();
-                    int existingCount = (int)checkCmd.ExecuteScalar();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
 
-                    if (existingCount > 0)
+        public static List<(DbUserModel User, string AccessLevel)> GetGrantUserPermissions(int grantId)
+        {
+            var users = new List<(DbUserModel User, string AccessLevel)>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            SELECT u.*, gp.AccessLevel
+            FROM DBUser u
+            JOIN Grant_Permission gp ON u.UserID = gp.UserID
+            WHERE gp.GrantID = @GrantID AND gp.AccessLevel != 'None'";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@GrantID", grantId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        // Update existing permission
-                        string updateQuery = @"
-                    UPDATE Grant_Permission 
-                    SET AccessLevel = @AccessLevel 
-                    WHERE GrantID = @GrantID AND UserID = @UserID";
-
-                        using (SqlCommand updateCmd = new SqlCommand(updateQuery, connection))
+                        while (reader.Read())
                         {
-                            updateCmd.Parameters.AddWithValue("@GrantID", grantId);
-                            updateCmd.Parameters.AddWithValue("@UserID", userId);
-                            updateCmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
-
-                            updateCmd.ExecuteNonQuery();
-                        }
-                    }
-                    else if (accessLevel != "None") // Don't insert None permissions if there's no existing record
-                    {
-                        // Insert new permission
-                        string insertQuery = @"
-                    INSERT INTO Grant_Permission (GrantID, UserID, AccessLevel)
-                    VALUES (@GrantID, @UserID, @AccessLevel)";
-
-                        using (SqlCommand insertCmd = new SqlCommand(insertQuery, connection))
-                        {
-                            insertCmd.Parameters.AddWithValue("@GrantID", grantId);
-                            insertCmd.Parameters.AddWithValue("@UserID", userId);
-                            insertCmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
-
-                            insertCmd.ExecuteNonQuery();
+                            var user = new DbUserModel
+                            {
+                                UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                // Add other user properties as needed
+                            };
+                            string accessLevel = reader.GetString(reader.GetOrdinal("AccessLevel"));
+                            users.Add((user, accessLevel));
                         }
                     }
                 }
             }
+
+            return users;
         }
 
 

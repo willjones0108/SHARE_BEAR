@@ -73,6 +73,47 @@
     </div>
 </form>
 
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Grant Access</h5>
+                <a asp-page="./ManagePermissions" asp-route-id="@Model.Grant.GrantID" class="btn btn-primary btn-sm">
+                    <i class="bi bi-gear"></i> Manage Permissions
+                </a>
+            </div>
+            <div class="card-body">
+                @if (!Model.GrantUsers.Any())
+                {
+                    <p>No additional users have been granted access.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Access Level</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model.GrantUsers)
+                                {
+                                    <tr>
+                                        <td>@(new SelectList(Model.Users, "UserID", "FirstName"))/td>
+                                        <td><span class="badge bg-@(user.AccessLevel == "Edit" ? "success" : "info")">@user.AccessLevel</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
