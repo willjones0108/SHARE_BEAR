@@ -14,7 +14,7 @@ CREATE TABLE Grants (
     Status VARCHAR(50),
     CreatedBy INT,
     GrantLeadID INT,
-    Description TEXT,
+    Description VARCHAR(MAX),
     TrackingStatus NVARCHAR(MAX),
     IsArchived BIT
 );
