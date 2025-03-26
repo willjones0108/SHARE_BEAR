@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using JMUcare.Pages.Dataclasses;
 using JMUcare.Pages.DBclass;
 using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 
 namespace JMUcare.Pages.Grants
 {
@@ -13,6 +15,8 @@ namespace JMUcare.Pages.Grants
 
         public List<DbUserModel> Users { get; set; }
 
+        public List<SelectListItem> StatusOptions { get; private set; }
+
         public int CurrentUserID
         {
             get
@@ -20,6 +24,27 @@ namespace JMUcare.Pages.Grants
                 // Retrieve the user ID from session state
                 return HttpContext.Session.GetInt32("CurrentUserID") ?? 0;
             }
+        }
+
+        public CreateGrantModel()
+        {
+            // Initialize status options with common grant milestones
+            StatusOptions = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "Concept Development", Text = "Concept Development" },
+                new SelectListItem { Value = "Proposal Writing", Text = "Proposal Writing" },
+                new SelectListItem { Value = "Internal Review", Text = "Internal Review" },
+                new SelectListItem { Value = "Submitted", Text = "Submitted" },
+                new SelectListItem { Value = "Under Review", Text = "Under Review" },
+                new SelectListItem { Value = "Revisions Requested", Text = "Revisions Requested" },
+                new SelectListItem { Value = "Approved", Text = "Approved" },
+                new SelectListItem { Value = "Funded", Text = "Funded" },
+                new SelectListItem { Value = "Active", Text = "Active" },
+                new SelectListItem { Value = "Reporting", Text = "Reporting" },
+                new SelectListItem { Value = "Completed", Text = "Completed" },
+                new SelectListItem { Value = "Rejected", Text = "Rejected" },
+                new SelectListItem { Value = "On Hold", Text = "On Hold" }
+            };
         }
 
         public IActionResult OnGet()

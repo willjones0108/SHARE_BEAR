@@ -41,11 +41,8 @@
 
                     <div class="mb-3">
                         <label asp-for="Grant.Status" class="form-label">Status</label>
-                        <select asp-for="Grant.Status" class="form-select">
-                            <option value="Draft">Draft</option>
-                            <option value="Submitted">Submitted</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
+                        <select asp-for="Grant.Status" class="form-select"
+                                asp-items="Model.StatusOptions">
                         </select>
                     </div>
 

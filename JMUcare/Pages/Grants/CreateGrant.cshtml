@@ -30,7 +30,9 @@
 
     <div class="col-md-6">
         <label asp-for="Grant.Status" class="form-label">Status</label>
-        <input asp-for="Grant.Status" class="form-control" />
+        <select asp-for="Grant.Status" class="form-select" asp-items="Model.StatusOptions">
+            <option value="">-- Select Status --</option>
+        </select>
     </div>
 
     <div class="col-12">
