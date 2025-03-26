@@ -10,17 +10,23 @@ namespace JMUcare.Pages.DBclass
     {
         public static SqlConnection JMUcareDBConnection = new SqlConnection();
 
-        private static readonly string JMUcareDBConnString =
-            "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
+       //private static readonly string JMUcareDBConnString =
+            //"Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
 
-        private static readonly string? AuthConnString =
-            "Server=Localhost;Database=AUTH;Trusted_Connection=True";
+        //private static readonly string? AuthConnString =
+            //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
         //private static readonly string JMUcareDBConnString =
         //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
 
         //private static readonly string? AuthConnString =
         //    "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
+
+        private static readonly string JMUcareDBConnString =
+            "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+
+        private static readonly string? AuthConnString =
+            "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
 
         public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
@@ -231,18 +237,33 @@ namespace JMUcare.Pages.DBclass
         {
             using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
             {
-                string sqlQuery = @"
-            INSERT INTO Grant_Permission (GrantID, UserID, AccessLevel)
-            VALUES (@GrantID, @UserID, @AccessLevel)";
+                string checkQuery = @"
+                SELECT COUNT(*) FROM Grant_Permission 
+                WHERE GrantID = @GrantID AND UserID = @UserID";
 
-                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                using (SqlCommand checkCmd = new SqlCommand(checkQuery, connection))
                 {
-                    cmd.Parameters.AddWithValue("@GrantID", grantId);
-                    cmd.Parameters.AddWithValue("@UserID", userId);
-                    cmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
+                    checkCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    checkCmd.Parameters.AddWithValue("@UserID", userId);
 
                     connection.Open();
-                    cmd.ExecuteNonQuery();
+                    int count = (int)checkCmd.ExecuteScalar();
+
+                    if (count == 0)
+                    {
+                        string insertQuery = @"
+                        INSERT INTO Grant_Permission (GrantID, UserID, AccessLevel)
+                        VALUES (@GrantID, @UserID, @AccessLevel)";
+
+                        using (SqlCommand insertCmd = new SqlCommand(insertQuery, connection))
+                        {
+                            insertCmd.Parameters.AddWithValue("@GrantID", grantId);
+                            insertCmd.Parameters.AddWithValue("@UserID", userId);
+                            insertCmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
+
+                            insertCmd.ExecuteNonQuery();
+                        }
+                    }
                 }
             }
         }
