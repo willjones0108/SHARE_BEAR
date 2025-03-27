@@ -1,6 +1,6 @@
 ﻿@page "{id:int}"
 @using JMUcare.Pages.DBclass
-@model JMUcare.Pages.Phases.ViewModel
+@model JMUcare.Pages.Phases.PhaseViewModel
 @{
     ViewData["Title"] = "View Phase";
 }
@@ -23,16 +23,85 @@
                     <strong>Phase Lead:</strong> @Model.Phase.PhaseLeadID
                 </div>
 
-                <a asp-page="Index" class="btn btn-secondary">Back to List</a>
+                <div class="d-flex justify-content-between align-items-center">
+                    <a asp-page="Index" class="btn btn-secondary">Back to List</a>
+                    @if (Model.CanAddProject)
+                    {
+                        <a asp-page="/Sections/CreateProject" asp-route-phaseId="@Model.Id" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add Project
+                        </a>
+                    }
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<h3 class="mt-4">Associated Tasks</h3>
+<div class="d-flex justify-content-between align-items-center mt-4">
+    <h3>Associated Projects</h3>
+    @if (Model.CanAddProject)
+    {
+        <a asp-page="/Sections/CreateProject" asp-route-PhaseID="@Model.Phase.PhaseID" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Project
+        </a>
+    }
+</div>
 
+@if (Model.Projects != null && Model.Projects.Any())
+{
+    <div class="list-group mt-3">
+        @foreach (var project in Model.Projects)
+        {
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@project.Title</strong><br />
+                        <small>@project.Project_Description</small>
+                    </div>
+                    <div>
+                        <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="btn btn-primary btn-sm">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                        @{
+                            string projectAccessLevel = DBClass.GetUserAccessLevelForProject(Model.CurrentUserID, project.ProjectID);
+                            if (projectAccessLevel == "Edit")
+                            {
+                                <a asp-page="/Projects/Edit" asp-route-id="@project.ProjectID" class="btn btn-success btn-sm ms-2">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <h6>Associated Tasks</h6>
+                    @if (Model.ProjectTasks.ContainsKey(project.ProjectID) && Model.ProjectTasks[project.ProjectID].Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var task in Model.ProjectTasks[project.ProjectID])
+                            {
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>@task.TaskContent</strong><br />
+                                            <small>Due: @task.DueDate.ToShortDateString()</small><br />
+                                            <small>Status: @task.Status</small>
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p>No tasks are associated with this project.</p>
+                    }
+                </div>
+            </div>
+        }
+    </div>
 }
 else
 {
-    <p>No tasks are associated with this phase.</p>
+    <p>No projects are associated with this phase.</p>
 }

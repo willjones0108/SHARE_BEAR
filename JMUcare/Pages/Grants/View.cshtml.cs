@@ -25,6 +25,9 @@ namespace JMUcare.Pages.Grants
             }
         }
 
+        public bool CanAddPhase { get; set; }
+        public bool CanAddProject { get; set; } // Added property for adding projects
+
         public IActionResult OnGet()
         {
             if (CurrentUserID == 0)
@@ -47,6 +50,13 @@ namespace JMUcare.Pages.Grants
             {
                 return RedirectToPage("/AccessDenied");
             }
+
+            // Check if the user can add a phase
+            CanAddPhase = accessLevel == "Edit" || DBClass.IsUserAdmin(CurrentUserID);
+
+            // Check if the user can add a project
+            // Same permission level as adding a phase - admins, grant editors with "Edit" access
+            CanAddProject = CanAddPhase || DBClass.IsGrantEditor(CurrentUserID);
 
             // Get the phases associated with the grant
             Phases = DBClass.GetPhasesByGrantId(Id);

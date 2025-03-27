@@ -38,7 +38,23 @@
             </div>
             <div class="form-group">
                 <label asp-for="Project.PhaseID" class="control-label"></label>
-                <select asp-for="Project.PhaseID" class="form-control" asp-items="@(new SelectList(Model.Phases, "PhaseID", "PhaseName"))"></select>
+                @if (Model.PreSelectedPhaseId > 0)
+                {
+                    <input type="hidden" asp-for="Project.PhaseID" value="@Model.PreSelectedPhaseId" />
+                    <select disabled class="form-control">
+                        @foreach (var phase in Model.Phases)
+                        {
+                            if (phase.PhaseID == Model.PreSelectedPhaseId)
+                            {
+                                <option selected>@phase.PhaseName</option>
+                            }
+                        }
+                    </select>
+                }
+                else
+                {
+                    <select asp-for="Project.PhaseID" class="form-control" asp-items="@(new SelectList(Model.Phases, "PhaseID", "PhaseName"))"></select>
+                }
                 <span asp-validation-for="Project.PhaseID" class="text-danger"></span>
             </div>
             <div class="form-group">

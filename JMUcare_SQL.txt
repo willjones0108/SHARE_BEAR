@@ -83,6 +83,7 @@ CREATE TABLE Project (
     TrackingStatus NVARCHAR(MAX),
     IsArchived BIT,
     Project_Description TEXT,
+    ProjectPosition INT,
     FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID)
    
 );
@@ -179,6 +180,7 @@ CREATE TABLE Phase (
     CreatedBy INT,
     PhaseLeadID INT,
     IsArchived BIT,
+    PhasePosition INT,
     FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID),
     FOREIGN KEY (PhaseLeadID) REFERENCES DBUser(UserID)
 );

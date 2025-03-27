@@ -75,13 +75,19 @@ namespace JMUcare.Pages.Grants
         {
             CurrentPermissions = DBClass.GetGrantUserPermissions(Id)
                 .Where(u => !DBClass.IsUserAdmin(u.User.UserID))
-                .ToList();
+                .ToList() ?? new List<(DbUserModel User, string AccessLevel)>();
 
-            // Get all non-admin users who don't already have access
             var currentUserIds = CurrentPermissions.Select(p => p.User.UserID).ToList();
             AvailableUsers = DBClass.GetUsers()
                 .Where(u => !DBClass.IsUserAdmin(u.UserID) && !currentUserIds.Contains(u.UserID))
-                .ToList();
+                .ToList() ?? new List<DbUserModel>();
+
+            if (AvailableUsers == null)
+            {
+                AvailableUsers = new List<DbUserModel>();
+            }
         }
+
+
     }
 }

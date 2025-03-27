@@ -10,11 +10,11 @@ namespace JMUcare.Pages.DBclass
     {
         public static SqlConnection JMUcareDBConnection = new SqlConnection();
 
-       //private static readonly string JMUcareDBConnString =
-           // "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
+        //private static readonly string JMUcareDBConnString =
+        // "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
 
-       // private static readonly string? AuthConnString =
-            //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
+        // private static readonly string? AuthConnString =
+        //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
         //private static readonly string JMUcareDBConnString =
         //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
@@ -22,11 +22,28 @@ namespace JMUcare.Pages.DBclass
         //private static readonly string? AuthConnString =
         //    "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
 
+
+
+
+
+        //Will's Connection Below
+
         private static readonly string JMUcareDBConnString =
-            "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+        "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
         private static readonly string? AuthConnString =
-            "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+        "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+
+
+
+
+        //Original BELOW
+
+        //private static readonly string JMUcareDBConnString =
+        //"Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+
+        //private static readonly string? AuthConnString =
+        //"Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
 
         public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
@@ -616,7 +633,13 @@ namespace JMUcare.Pages.DBclass
                 LEFT JOIN DBUser u ON u.UserID = @UserID
                 LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
                 WHERE 
-                    (pp.UserID = @UserID AND pp.AccessLevel IN ('Read', 'Edit')) OR ur.RoleName = 'Admin'";
+                    (pp.UserID = @UserID AND pp.AccessLevel IN ('Read', 'Edit')) 
+                    OR ur.RoleName = 'Admin'
+                    OR EXISTS (
+                        SELECT 1 
+                        FROM Grant_Permission gp 
+                        WHERE gp.UserID = @UserID AND gp.AccessLevel = 'Edit'
+                    )";
 
                 using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
                 {
@@ -682,7 +705,7 @@ namespace JMUcare.Pages.DBclass
             using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
             {
                 string sqlQuery = @"
-        UPDATE Phases SET
+        UPDATE Phase SET
             PhaseName = @PhaseName,
             Description = @Description,
             Status = @Status,
@@ -971,6 +994,60 @@ WHERE pp.PhaseID = @PhaseID";
             return projects ?? new List<ProjectModel>();
         }
 
+        public static List<ProjectModel> GetProjectsByPhaseId(int phaseId, int userId)
+        {
+            var projects = new List<ProjectModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+                SELECT p.*, pp.PhaseID
+                FROM Project p
+                JOIN Phase_Project pp ON p.ProjectID = pp.ProjectID
+                LEFT JOIN Project_Permission prp ON p.ProjectID = prp.ProjectID
+                LEFT JOIN DBUser u ON u.UserID = @UserID
+                LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+                WHERE pp.PhaseID = @PhaseID
+                AND (
+                    prp.UserID = @UserID AND prp.AccessLevel IN ('Read', 'Edit')
+                    OR ur.RoleName = 'Admin'
+                    OR EXISTS (
+                        SELECT 1 
+                        FROM Grant_Permission gp 
+                        WHERE gp.UserID = @UserID AND gp.AccessLevel = 'Edit'
+                    )
+                )";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            projects.Add(new ProjectModel
+                            {
+                                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                                Title = reader.GetString(reader.GetOrdinal("Title")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("GrantID")),
+                                PhaseID = reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                                ProjectType = reader.GetString(reader.GetOrdinal("ProjectType")),
+                                TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
+                                Project_Description = reader.GetString(reader.GetOrdinal("Project_Description"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return projects ?? new List<ProjectModel>();
+        }
+
         public static string GetUserAccessLevelForProject(int userId, int projectId)
         {
             string accessLevel = "None";
@@ -1072,6 +1149,56 @@ WHERE pp.PhaseID = @PhaseID";
 
             return tasks ?? new List<ProjectTaskModel>();
         }
+
+        public static List<ProjectTaskModel> GetTasksByProjectId(int projectId, int userId)
+        {
+            var tasks = new List<ProjectTaskModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+                SELECT t.*
+                FROM Project_Task t
+                LEFT JOIN Project_Permission pp ON t.ProjectID = pp.ProjectID
+                LEFT JOIN DBUser u ON u.UserID = @UserID
+                LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+                WHERE t.ProjectID = @ProjectID
+                AND (
+                    pp.UserID = @UserID AND pp.AccessLevel IN ('Read', 'Edit')
+                    OR ur.RoleName = 'Admin'
+                    OR EXISTS (
+                        SELECT 1 
+                        FROM Grant_Permission gp 
+                        WHERE gp.UserID = @UserID AND gp.AccessLevel = 'Edit'
+                    )
+                )";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@ProjectID", projectId);
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            tasks.Add(new ProjectTaskModel
+                            {
+                                TaskID = reader.GetInt32(reader.GetOrdinal("TaskID")),
+                                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                                TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
+                                DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
+                                Status = reader.GetString(reader.GetOrdinal("Status"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return tasks ?? new List<ProjectTaskModel>();
+        }
+
         public static List<ProjectModel> GetProjects()
         {
             var projects = new List<ProjectModel>();
@@ -1104,17 +1231,89 @@ WHERE pp.PhaseID = @PhaseID";
             return projects ?? new List<ProjectModel>();
         }
 
+        public static bool IsGrantEditor(int userId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string query = @"
+                SELECT COUNT(*) 
+                FROM Grant_Permission 
+                WHERE UserID = @UserID AND AccessLevel = 'Edit'";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+                    int count = (int)cmd.ExecuteScalar();
+                    return count > 0;
+                }
+            }
+        }
+
+        public static bool IsPhaseEditor(int userId, int phaseId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string query = @"
+                SELECT COUNT(*) 
+                FROM Phase_Permission 
+                WHERE UserID = @UserID AND PhaseID = @PhaseID AND AccessLevel = 'Edit'";
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    connection.Open();
+                    int count = (int)cmd.ExecuteScalar();
+                    return count > 0;
+                }
+            }
+        }
+
+        public static bool CanUserAddProjectToPhase(int userId, int phaseId)
+        {
+            // Check if user is an admin (admins can add projects to any phase)
+            if (IsUserAdmin(userId))
+            {
+                return true;
+            }
+
+            // Check if user is a grant editor (grant editors can add projects to any phase)
+            if (IsGrantEditor(userId))
+            {
+                return true;
+            }
+
+            // Check if user has specific edit permissions for this phase
+            string accessLevel = GetUserAccessLevelForPhase(userId, phaseId);
+            if (accessLevel == "Edit")
+            {
+                return true;
+            }
+
+            // If none of the above, user cannot add projects to this phase
+            return false;
+        }
 
 
+        public static bool IsProjectEditor(int userId, int projectId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string query = @"
+                SELECT COUNT(*) 
+                FROM Project_Permission 
+                WHERE UserID = @UserID AND ProjectID = @ProjectID AND AccessLevel = 'Edit'";
 
-
-
-
-
-
-
-
-
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    cmd.Parameters.AddWithValue("@ProjectID", projectId);
+                    connection.Open();
+                    int count = (int)cmd.ExecuteScalar();
+                    return count > 0;
+                }
+            }
+        }
     }
 }
 

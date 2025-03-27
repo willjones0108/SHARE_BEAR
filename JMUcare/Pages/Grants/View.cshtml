@@ -40,9 +40,18 @@
 
 <div class="d-flex justify-content-between align-items-center mt-4">
     <h3>Associated Phases</h3>
-    <a asp-page="/Phases/CreatePhase" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Add Phase
-    </a>
+    @if (Model.CanAddPhase)
+    {
+        <a asp-page="/Phases/CreatePhase" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Phase
+        </a>
+    }
+    @if (Model.CanAddProject)
+    {
+        <a asp-page="/Sections/CreateProject" asp-route-GrantID="@Model.Grant.GrantID" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Project
+        </a>
+    }
 </div>
 
 @if (Model.Phases.Any())

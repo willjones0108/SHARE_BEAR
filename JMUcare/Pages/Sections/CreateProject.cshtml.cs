@@ -13,6 +13,11 @@ namespace JMUcare.Pages.Projects
         [BindProperty]
         public ProjectModel Project { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int PhaseId { get; set; }
+
+        public int PreSelectedPhaseId { get; set; }
+
         public List<DbUserModel> Users { get; set; }
         public List<PhaseModel> Phases { get; set; } // New property
 
@@ -47,8 +52,17 @@ namespace JMUcare.Pages.Projects
                 return RedirectToPage("/Account/Login");
             }
 
-            // Check if user is an admin
-            if (!DBClass.IsUserAdmin(CurrentUserID))
+            // Check permissions (allow admins, grant editors, and phase editors)
+            bool hasPermission = DBClass.IsUserAdmin(CurrentUserID) || DBClass.IsGrantEditor(CurrentUserID);
+
+            // If not an admin or grant editor, check if user is a phase editor for the specified phase
+            if (!hasPermission && PhaseId > 0)
+            {
+                string accessLevel = DBClass.GetUserAccessLevelForPhase(CurrentUserID, PhaseId);
+                hasPermission = (accessLevel == "Edit");
+            }
+
+            if (!hasPermission)
             {
                 return RedirectToPage("/Shared/AccessDenied");
             }
@@ -56,13 +70,35 @@ namespace JMUcare.Pages.Projects
             // Get list of users and phases for dropdowns
             Users = DBClass.GetUsers(); // this gets non-archived users
             Phases = DBClass.GetPhasesForUser(CurrentUserID); // this gets phases for the current user
+
+            // If PhaseId was provided, store it for use in the form
+            if (PhaseId > 0)
+            {
+                PreSelectedPhaseId = PhaseId;
+                // Pre-select the phase in the model
+                if (Project == null)
+                {
+                    Project = new ProjectModel();
+                }
+                Project.PhaseID = PhaseId;
+            }
+
             return Page();
         }
 
         public IActionResult OnPost()
         {
-            // Re-check admin permissions on post as well for security
-            if (CurrentUserID == 0 || !DBClass.IsUserAdmin(CurrentUserID))
+            // Re-check permissions on post
+            bool hasPermission = DBClass.IsUserAdmin(CurrentUserID) || DBClass.IsGrantEditor(CurrentUserID);
+
+            // If not an admin or grant editor, check if user is a phase editor
+            if (!hasPermission && Project.PhaseID > 0)
+            {
+                string accessLevel = DBClass.GetUserAccessLevelForPhase(CurrentUserID, Project.PhaseID);
+                hasPermission = (accessLevel == "Edit");
+            }
+
+            if (!hasPermission)
             {
                 return RedirectToPage("/Shared/AccessDenied");
             }
@@ -71,6 +107,7 @@ namespace JMUcare.Pages.Projects
             {
                 Users = DBClass.GetUsers(); // repopulate dropdown
                 Phases = DBClass.GetPhasesForUser(CurrentUserID); // repopulate dropdown
+                PreSelectedPhaseId = Project.PhaseID; // Maintain the pre-selected phase
                 return Page();
             }
 
@@ -85,7 +122,8 @@ namespace JMUcare.Pages.Projects
             // Insert Phase_Project record
             DBClass.InsertPhaseProject(Project.PhaseID, projectId);
 
-            return RedirectToPage("/Projects/Index");
+            return RedirectToPage("/phases/index");
         }
     }
 }
+

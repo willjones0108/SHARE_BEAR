@@ -2,16 +2,20 @@ using JMUcare.Pages.Dataclasses;
 using JMUcare.Pages.DBclass;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 
 namespace JMUcare.Pages.Phases
 {
-    public class ViewModel : PageModel
+    public class PhaseViewModel : PageModel  // Changed from ViewModel to PhaseViewModel to avoid confusion
     {
         [BindProperty(SupportsGet = true)]
         public int Id { get; set; }
 
         public PhaseModel Phase { get; set; }
-        //public List<TaskModel> Tasks { get; set; } // Placeholder for tasks
+        public List<ProjectModel> Projects { get; set; }
+        public Dictionary<int, List<ProjectTaskModel>> ProjectTasks { get; set; }
+        public bool CanAddProject { get; set; }
 
         public int CurrentUserID
         {
@@ -44,8 +48,20 @@ namespace JMUcare.Pages.Phases
                 return RedirectToPage("/AccessDenied");
             }
 
-            //// Placeholder for getting tasks associated with the phase
-           // Tasks = new List<TaskModel>(); // Replace with actual method to get tasks
+            // Check if user can add a project (admin, grant editor, or phase editor)
+            CanAddProject = DBClass.IsUserAdmin(CurrentUserID) ||
+                            DBClass.IsGrantEditor(CurrentUserID) ||
+                            accessLevel == "Edit";
+
+            // Get projects associated with this phase
+            Projects = DBClass.GetProjectsByPhaseId(Id);
+
+            // Get tasks associated with each project
+            ProjectTasks = new Dictionary<int, List<ProjectTaskModel>>();
+            foreach (var project in Projects)
+            {
+                ProjectTasks[project.ProjectID] = DBClass.GetTasksByProjectId(project.ProjectID);
+            }
 
             return Page();
         }
