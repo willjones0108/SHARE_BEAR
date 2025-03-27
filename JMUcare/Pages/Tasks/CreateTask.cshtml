@@ -1,0 +1,24 @@
+﻿@page
+@model JMUcare.Pages.Tasks.CreateTaskModel
+
+<h2>Create Task</h2>
+
+<form method="post">
+    <div class="form-group">
+        <label asp-for="Task.ProjectID"></label>
+        <select asp-for="Task.ProjectID" class="form-control" asp-items="@(new SelectList(Model.Projects, "ProjectID", "Title"))"></select>
+    </div>
+    <div class="form-group">
+        <label asp-for="Task.TaskContent"></label>
+        <input asp-for="Task.TaskContent" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Task.DueDate"></label>
+        <input asp-for="Task.DueDate" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Task.Status"></label>
+        <input asp-for="Task.Status" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Create</button>
+</form>

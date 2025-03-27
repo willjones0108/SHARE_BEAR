@@ -13,7 +13,9 @@ namespace JMUcare.Pages.Grants
         public int Id { get; set; }
 
         public GrantModel Grant { get; set; }
-        public List<PhaseModel> Phases { get; set; } // New property
+        public List<PhaseModel> Phases { get; set; }
+        public Dictionary<int, List<ProjectModel>> PhaseProjects { get; set; }
+        public Dictionary<int, List<ProjectTaskModel>> ProjectTasks { get; set; }
 
         public int CurrentUserID
         {
@@ -48,6 +50,21 @@ namespace JMUcare.Pages.Grants
 
             // Get the phases associated with the grant
             Phases = DBClass.GetPhasesByGrantId(Id);
+
+            // Get the projects associated with each phase
+            PhaseProjects = new Dictionary<int, List<ProjectModel>>();
+            ProjectTasks = new Dictionary<int, List<ProjectTaskModel>>();
+            foreach (var phase in Phases)
+            {
+                var projects = DBClass.GetProjectsByPhaseId(phase.PhaseID);
+                PhaseProjects[phase.PhaseID] = projects;
+
+                // Get the tasks associated with each project
+                foreach (var project in projects)
+                {
+                    ProjectTasks[project.ProjectID] = DBClass.GetTasksByProjectId(project.ProjectID);
+                }
+            }
 
             return Page();
         }

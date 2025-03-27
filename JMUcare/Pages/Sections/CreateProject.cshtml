@@ -1,0 +1,57 @@
+﻿@page
+@model JMUcare.Pages.Projects.CreateProjectModel
+@{
+    ViewData["Title"] = "Create Project";
+}
+
+<h1>Create Project</h1>
+
+<h4>Project</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div class="form-group">
+                <label asp-for="Project.Title" class="control-label"></label>
+                <input asp-for="Project.Title" class="form-control" />
+                <span asp-validation-for="Project.Title" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Project.Project_Description" class="control-label"></label>
+                <textarea asp-for="Project.Project_Description" class="form-control"></textarea>
+                <span asp-validation-for="Project.Project_Description" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Project.TrackingStatus" class="control-label"></label>
+                <input asp-for="Project.TrackingStatus" class="form-control" />
+                <span asp-validation-for="Project.TrackingStatus" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Project.ProjectType" class="control-label"></label>
+                <input asp-for="Project.ProjectType" class="form-control" />
+                <span asp-validation-for="Project.ProjectType" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Project.IsArchived" class="control-label"></label>
+                <input asp-for="Project.IsArchived" type="checkbox" class="form-check-input" />
+                <span asp-validation-for="Project.IsArchived" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Project.PhaseID" class="control-label"></label>
+                <select asp-for="Project.PhaseID" class="form-control" asp-items="@(new SelectList(Model.Phases, "PhaseID", "PhaseName"))"></select>
+                <span asp-validation-for="Project.PhaseID" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="/Projects/Index">Back to List</a>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

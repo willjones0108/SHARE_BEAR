@@ -75,21 +75,20 @@ CREATE TABLE Master_Project (
 
 -- Project and Related Tables
 CREATE TABLE Project (
-    ProjectID INT PRIMARY KEY,
+    ProjectID INT PRIMARY KEY IDENTITY(1,1),
     Title VARCHAR(255),
     CreatedBy INT,
     GrantID INT NULL,
-    MasterProjectID INT NULL,
-    ProjectType VARCHAR(50), -- 'Grant', 'Master', 'Both', 'Standalone'
+    ProjectType VARCHAR(50), 
     TrackingStatus NVARCHAR(MAX),
     IsArchived BIT,
     Project_Description TEXT,
-    FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID),
-    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID)
+   
 );
 
 CREATE TABLE Project_Task (
-    TaskID INT PRIMARY KEY,
+    TaskID INT PRIMARY KEY IDENTITY(1,1),
     ProjectID INT,
     TaskContent TEXT,
     DueDate DATE,

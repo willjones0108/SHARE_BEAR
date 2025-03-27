@@ -10,11 +10,11 @@ namespace JMUcare.Pages.DBclass
     {
         public static SqlConnection JMUcareDBConnection = new SqlConnection();
 
-       private static readonly string JMUcareDBConnString =
-            "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
+       //private static readonly string JMUcareDBConnString =
+           // "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
 
-        private static readonly string? AuthConnString =
-            "Server=Localhost;Database=AUTH;Trusted_Connection=True";
+       // private static readonly string? AuthConnString =
+            //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
         //private static readonly string JMUcareDBConnString =
         //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
@@ -22,11 +22,11 @@ namespace JMUcare.Pages.DBclass
         //private static readonly string? AuthConnString =
         //    "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
 
-       // private static readonly string JMUcareDBConnString =
-            //"Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+        private static readonly string JMUcareDBConnString =
+            "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
 
-        //private static readonly string? AuthConnString =
-            //"Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+        private static readonly string? AuthConnString =
+            "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
 
         public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
@@ -867,6 +867,245 @@ namespace JMUcare.Pages.DBclass
 
             return accessLevel;
         }
+        public static int InsertProject(ProjectModel project)
+        {
+            int newProjectId;
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        INSERT INTO Project (
+            Title,
+            CreatedBy,
+            GrantID,
+            ProjectType,
+            TrackingStatus,
+            IsArchived,
+            Project_Description
+        )
+        OUTPUT INSERTED.ProjectID
+        VALUES (
+            @Title,
+            @CreatedBy,
+            @GrantID,
+            @ProjectType,
+            @TrackingStatus,
+            @IsArchived,
+            @Project_Description
+        )";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@Title", project.Title);
+                    cmd.Parameters.AddWithValue("@CreatedBy", project.CreatedBy);
+                    cmd.Parameters.AddWithValue("@GrantID", project.GrantID ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@ProjectType", project.ProjectType);
+                    cmd.Parameters.AddWithValue("@TrackingStatus", project.TrackingStatus ?? "");
+                    cmd.Parameters.AddWithValue("@IsArchived", project.IsArchived);
+                    cmd.Parameters.AddWithValue("@Project_Description", project.Project_Description ?? "");
+
+                    connection.Open();
+                    newProjectId = (int)cmd.ExecuteScalar();
+                }
+            }
+
+            return newProjectId;
+        }
+
+        public static void InsertPhaseProject(int phaseId, int projectId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        INSERT INTO Phase_Project (PhaseID, ProjectID)
+        VALUES (@PhaseID, @ProjectID)";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    cmd.Parameters.AddWithValue("@ProjectID", projectId);
+
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+        public static List<ProjectModel> GetProjectsByPhaseId(int phaseId)
+        {
+            var projects = new List<ProjectModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+SELECT p.*, pp.PhaseID
+FROM Project p
+JOIN Phase_Project pp ON p.ProjectID = pp.ProjectID
+WHERE pp.PhaseID = @PhaseID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            projects.Add(new ProjectModel
+                            {
+                                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                                Title = reader.GetString(reader.GetOrdinal("Title")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("GrantID")),
+                                PhaseID = reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                                ProjectType = reader.GetString(reader.GetOrdinal("ProjectType")),
+                                TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
+                                Project_Description = reader.GetString(reader.GetOrdinal("Project_Description"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return projects ?? new List<ProjectModel>();
+        }
+
+        public static string GetUserAccessLevelForProject(int userId, int projectId)
+        {
+            string accessLevel = "None";
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string adminQuery = @"
+        SELECT ur.RoleName 
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID AND ur.RoleName = 'Admin'";
+
+                using (SqlCommand adminCmd = new SqlCommand(adminQuery, connection))
+                {
+                    adminCmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+                    var adminResult = adminCmd.ExecuteScalar();
+
+                    if (adminResult != null)
+                    {
+                        return "Edit"; // Admins get edit access to all projects
+                    }
+
+                    // Check specific project permission
+                    string permQuery = @"
+            SELECT AccessLevel 
+            FROM Project_Permission 
+            WHERE ProjectID = @ProjectID AND UserID = @UserID";
+
+                    using (SqlCommand permCmd = new SqlCommand(permQuery, connection))
+                    {
+                        permCmd.Parameters.AddWithValue("@ProjectID", projectId);
+                        permCmd.Parameters.AddWithValue("@UserID", userId);
+
+                        var result = permCmd.ExecuteScalar();
+                        if (result != null)
+                        {
+                            accessLevel = result.ToString();
+                        }
+                    }
+                }
+            }
+
+            return accessLevel;
+        }
+        public static void InsertProjectTask(ProjectTaskModel task)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        INSERT INTO Project_Task (ProjectID, TaskContent, DueDate, Status)
+        VALUES (@ProjectID, @TaskContent, @DueDate, @Status)";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@ProjectID", task.ProjectID);
+                    cmd.Parameters.AddWithValue("@TaskContent", task.TaskContent);
+                    cmd.Parameters.AddWithValue("@DueDate", task.DueDate);
+                    cmd.Parameters.AddWithValue("@Status", task.Status);
+
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public static List<ProjectTaskModel> GetTasksByProjectId(int projectId)
+        {
+            var tasks = new List<ProjectTaskModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        SELECT TaskID, ProjectID, TaskContent, DueDate, Status
+        FROM Project_Task
+        WHERE ProjectID = @ProjectID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@ProjectID", projectId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            tasks.Add(new ProjectTaskModel
+                            {
+                                TaskID = reader.GetInt32(reader.GetOrdinal("TaskID")),
+                                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                                TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
+                                DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
+                                Status = reader.GetString(reader.GetOrdinal("Status"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return tasks ?? new List<ProjectTaskModel>();
+        }
+        public static List<ProjectModel> GetProjects()
+        {
+            var projects = new List<ProjectModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        SELECT ProjectID, Title
+        FROM Project
+        WHERE IsArchived = 0";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            projects.Add(new ProjectModel
+                            {
+                                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                                Title = reader.GetString(reader.GetOrdinal("Title"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return projects ?? new List<ProjectModel>();
+        }
+
+
+
 
 
 
