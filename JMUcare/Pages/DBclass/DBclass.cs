@@ -840,53 +840,168 @@ namespace JMUcare.Pages.DBclass
             }
         }
 
-
         public static string GetUserAccessLevelForPhase(int userId, int phaseId)
         {
             string accessLevel = "None";
 
             using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
             {
+                connection.Open();
+
                 // First check if user is an admin
-                string adminQuery = @"
-        SELECT ur.RoleName 
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID AND ur.RoleName = 'Admin'";
-
-                using (SqlCommand adminCmd = new SqlCommand(adminQuery, connection))
+                if (IsUserAdmin(userId))
                 {
-                    adminCmd.Parameters.AddWithValue("@UserID", userId);
-                    connection.Open();
-                    var adminResult = adminCmd.ExecuteScalar();
+                    return "Edit"; // Admins get edit access to all phases
+                }
 
-                    if (adminResult != null)
+                // Check if user has edit access to the parent grant
+                int grantId = 0;
+                string grantQuery = @"
+            SELECT gp.GrantID
+            FROM Grant_Phase gp
+            WHERE gp.PhaseID = @PhaseID";
+
+                using (SqlCommand grantCmd = new SqlCommand(grantQuery, connection))
+                {
+                    grantCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    var grantResult = grantCmd.ExecuteScalar();
+                    if (grantResult != null && grantResult != DBNull.Value)
                     {
-                        return "Edit"; // Admins get edit access to all phases
-                    }
+                        grantId = (int)grantResult;
 
-                    // Check specific phase permission
-                    string permQuery = @"
+                        // If user has edit access to the grant, they have edit access to this phase
+                        string grantAccess = GetUserAccessLevelForGrant(userId, grantId);
+                        if (grantAccess == "Edit")
+                        {
+                            return "Edit";
+                        }
+                    }
+                }
+
+                // Check specific phase permission if grant access didn't provide edit rights
+                string permQuery = @"
             SELECT AccessLevel 
             FROM Phase_Permission 
             WHERE PhaseID = @PhaseID AND UserID = @UserID";
 
-                    using (SqlCommand permCmd = new SqlCommand(permQuery, connection))
-                    {
-                        permCmd.Parameters.AddWithValue("@PhaseID", phaseId);
-                        permCmd.Parameters.AddWithValue("@UserID", userId);
+                using (SqlCommand permCmd = new SqlCommand(permQuery, connection))
+                {
+                    permCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    permCmd.Parameters.AddWithValue("@UserID", userId);
 
-                        var result = permCmd.ExecuteScalar();
-                        if (result != null)
-                        {
-                            accessLevel = result.ToString();
-                        }
+                    var result = permCmd.ExecuteScalar();
+                    if (result != null)
+                    {
+                        accessLevel = result.ToString();
                     }
                 }
             }
 
             return accessLevel;
         }
+
+        public static string GetUserAccessLevelForProject(int userId, int projectId)
+        {
+            string accessLevel = "None";
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                connection.Open();
+
+                // First check if user is an admin
+                if (IsUserAdmin(userId))
+                {
+                    return "Edit"; // Admins get edit access to all projects
+                }
+
+                // Get the phase ID and grant ID for this project
+                int phaseId = 0;
+                int? grantId = null;
+
+                string phaseQuery = @"
+            SELECT pp.PhaseID, p.GrantID
+            FROM Phase_Project pp
+            JOIN Project p ON pp.ProjectID = p.ProjectID
+            WHERE pp.ProjectID = @ProjectID";
+
+                using (SqlCommand phaseCmd = new SqlCommand(phaseQuery, connection))
+                {
+                    phaseCmd.Parameters.AddWithValue("@ProjectID", projectId);
+                    using (var reader = phaseCmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            phaseId = reader.GetInt32(0);
+                            if (!reader.IsDBNull(1))
+                            {
+                                grantId = reader.GetInt32(1);
+                            }
+                        }
+                    }
+                }
+
+                // If project doesn't have a phase or grant, try to get the grant through the phase
+                if (!grantId.HasValue && phaseId > 0)
+                {
+                    string grantQuery = @"
+                SELECT GrantID
+                FROM Grant_Phase
+                WHERE PhaseID = @PhaseID";
+
+                    using (SqlCommand grantCmd = new SqlCommand(grantQuery, connection))
+                    {
+                        grantCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                        var grantResult = grantCmd.ExecuteScalar();
+                        if (grantResult != null && grantResult != DBNull.Value)
+                        {
+                            grantId = (int)grantResult;
+                        }
+                    }
+                }
+
+                // Check if user has edit access to the grant
+                if (grantId.HasValue)
+                {
+                    string grantAccess = GetUserAccessLevelForGrant(userId, grantId.Value);
+                    if (grantAccess == "Edit")
+                    {
+                        return "Edit"; // Grant editors get edit access to all projects in the grant
+                    }
+                }
+
+                // Check if user has edit access to the phase
+                if (phaseId > 0)
+                {
+                    string phaseAccess = GetUserAccessLevelForPhase(userId, phaseId);
+                    if (phaseAccess == "Edit")
+                    {
+                        return "Edit"; // Phase editors get edit access to all projects in the phase
+                    }
+                }
+
+                // Check specific project permission if grant/phase access didn't provide edit rights
+                string permQuery = @"
+            SELECT AccessLevel 
+            FROM Project_Permission 
+            WHERE ProjectID = @ProjectID AND UserID = @UserID";
+
+                using (SqlCommand permCmd = new SqlCommand(permQuery, connection))
+                {
+                    permCmd.Parameters.AddWithValue("@ProjectID", projectId);
+                    permCmd.Parameters.AddWithValue("@UserID", userId);
+
+                    var result = permCmd.ExecuteScalar();
+                    if (result != null)
+                    {
+                        accessLevel = result.ToString();
+                    }
+                }
+            }
+
+            return accessLevel;
+        }
+
+
         public static int InsertProject(ProjectModel project)
         {
             int newProjectId;
@@ -1045,51 +1160,7 @@ WHERE pp.PhaseID = @PhaseID";
             return projects ?? new List<ProjectModel>();
         }
 
-        public static string GetUserAccessLevelForProject(int userId, int projectId)
-        {
-            string accessLevel = "None";
 
-            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
-            {
-                string adminQuery = @"
-        SELECT ur.RoleName 
-        FROM DBUser u
-        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-        WHERE u.UserID = @UserID AND ur.RoleName = 'Admin'";
-
-                using (SqlCommand adminCmd = new SqlCommand(adminQuery, connection))
-                {
-                    adminCmd.Parameters.AddWithValue("@UserID", userId);
-                    connection.Open();
-                    var adminResult = adminCmd.ExecuteScalar();
-
-                    if (adminResult != null)
-                    {
-                        return "Edit"; // Admins get edit access to all projects
-                    }
-
-                    // Check specific project permission
-                    string permQuery = @"
-            SELECT AccessLevel 
-            FROM Project_Permission 
-            WHERE ProjectID = @ProjectID AND UserID = @UserID";
-
-                    using (SqlCommand permCmd = new SqlCommand(permQuery, connection))
-                    {
-                        permCmd.Parameters.AddWithValue("@ProjectID", projectId);
-                        permCmd.Parameters.AddWithValue("@UserID", userId);
-
-                        var result = permCmd.ExecuteScalar();
-                        if (result != null)
-                        {
-                            accessLevel = result.ToString();
-                        }
-                    }
-                }
-            }
-
-            return accessLevel;
-        }
         public static void InsertProjectTask(ProjectTaskModel task)
         {
             using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
@@ -1282,7 +1353,7 @@ WHERE pp.PhaseID = @PhaseID";
 
             // Check if user has specific edit permissions for this phase
             string accessLevel = GetUserAccessLevelForPhase(userId, phaseId);
-            if (accessLevel == "Edit")
+            return accessLevel == "Edit";
             {
                 return true;
             }
@@ -1544,6 +1615,112 @@ WHERE pp.PhaseID = @PhaseID";
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// Gets all user permissions for a specific project
+        /// </summary>
+        /// <param name="projectId">The ID of the project</param>
+        /// <returns>List of users with their permission levels for the project</returns>
+        public static List<(DbUserModel User, string AccessLevel)> GetProjectUserPermissions(int projectId)
+        {
+            var permissions = new List<(DbUserModel User, string AccessLevel)>();
+
+            using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
+            var query = @"
+        SELECT u.UserID, u.FirstName, u.LastName, u.Email, u.UserRoleID, pp.AccessLevel
+        FROM [DBUser] u
+        INNER JOIN Project_Permission pp ON u.UserID = pp.UserID
+        WHERE pp.ProjectID = @ProjectID AND pp.AccessLevel != 'None'
+        ORDER BY u.LastName, u.FirstName";
+
+            using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@ProjectID", projectId);
+
+            connection.Open();
+            using var reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                var user = new DbUserModel
+                {
+                    UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                    Email = reader.GetString(reader.GetOrdinal("Email")),
+                    UserRoleID = reader.GetInt32(reader.GetOrdinal("UserRoleID"))
+                };
+
+                string accessLevel = reader.GetString(reader.GetOrdinal("AccessLevel"));
+                permissions.Add((user, accessLevel));
+            }
+
+            return permissions;
+        }
+        /// <summary>
+        /// Adds or updates a user's permission for a specific project
+        /// </summary>
+        /// <param name="projectId">The ID of the project</param>
+        /// <param name="userId">The ID of the user</param>
+        /// <param name="accessLevel">The access level (Edit, Read, or None)</param>
+        /// <returns>True if operation was successful</returns>
+        public static bool InsertProjectPermission(int projectId, int userId, string accessLevel)
+        {
+            try
+            {
+                using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
+
+                // First check if the permission already exists
+                var checkQuery = "SELECT COUNT(*) FROM Project_Permission WHERE ProjectID = @ProjectID AND UserID = @UserID";
+                using var checkCmd = new System.Data.SqlClient.SqlCommand(checkQuery, connection);
+                checkCmd.Parameters.AddWithValue("@ProjectID", projectId);
+                checkCmd.Parameters.AddWithValue("@UserID", userId);
+
+                connection.Open();
+                int existingCount = (int)checkCmd.ExecuteScalar();
+
+                string query;
+                if (existingCount > 0)
+                {
+                    // Update existing permission
+                    if (accessLevel == "None")
+                    {
+                        // If setting to None, delete the record
+                        query = "DELETE FROM Project_Permission WHERE ProjectID = @ProjectID AND UserID = @UserID";
+                    }
+                    else
+                    {
+                        // Otherwise update the access level
+                        query = "UPDATE Project_Permission SET AccessLevel = @AccessLevel WHERE ProjectID = @ProjectID AND UserID = @UserID";
+                    }
+                }
+                else
+                {
+                    // Insert new permission (only if not None)
+                    if (accessLevel == "None")
+                    {
+                        return true; // Nothing to do if setting a non-existent permission to None
+                    }
+
+                    query = "INSERT INTO Project_Permission (ProjectID, UserID, AccessLevel) VALUES (@ProjectID, @UserID, @AccessLevel)";
+                }
+
+                using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@ProjectID", projectId);
+                cmd.Parameters.AddWithValue("@UserID", userId);
+
+                if (accessLevel != "None")
+                {
+                    cmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
+                }
+
+                cmd.ExecuteNonQuery();
+                return true;
+            }
+            catch (System.Exception)
+            {
+                return false;
+            }
         }
 
 
