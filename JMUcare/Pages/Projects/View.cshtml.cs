@@ -30,35 +30,50 @@ namespace JMUcare.Pages.Projects
                 return RedirectToPage("/HashedLogin/HashedLogin");
             }
 
-            // Get project data and associated tasks
-            Project = GetProjectById(Id);
-
-            if (Project == null)
+            try
             {
-                return NotFound();
-            }
+                // Get project data and associated tasks
+                Project = GetProjectById(Id);
 
-            // Check permissions - user must have project edit/view permission, phase edit/view permission, grant view/edit permission or admin role
-            if (!HasAccessToProject(CurrentUserID, Id))
+                if (Project == null)
+                {
+                    // Instead of returning NotFound(), set an error message and continue
+                    TempData["ErrorMessage"] = "Project not found or could not be loaded.";
+                    return Page(); // Return the page with the error message
+                }
+
+                // Check permissions - user must have project edit/view permission, phase edit/view permission, grant view/edit permission or admin role
+                if (!HasAccessToProject(CurrentUserID, Id))
+                {
+                    return RedirectToPage("/Shared/AccessDenied");
+                }
+
+                // Initialize properties with default values to prevent nulls
+                PhaseName = string.Empty;
+                GrantName = string.Empty;
+                Tasks = new List<ProjectTaskModel>();
+
+                // Get related data
+                Tasks = DBClass.GetTasksByProjectId(Id) ?? new List<ProjectTaskModel>();
+                GetRelatedInfo();
+
+                // Set permission flags
+                CanEditProject = HasEditPermission(CurrentUserID, Id);
+                CanAddTask = CanEditProject; // Same permission for adding tasks as editing project
+
+                return Page();
+            }
+            catch (Exception ex)
             {
-                return RedirectToPage("/Shared/AccessDenied");
+                // Log the exception
+                Console.WriteLine($"Error loading project: {ex.Message}");
+
+                // Set an error message
+                TempData["ErrorMessage"] = "An error occurred while loading the project data.";
+                return Page();
             }
-
-            // Initialize properties with default values to prevent nulls
-            PhaseName = string.Empty;
-            GrantName = string.Empty;
-            Tasks = new List<ProjectTaskModel>();
-
-            // Get related data
-            Tasks = DBClass.GetTasksByProjectId(Id) ?? new List<ProjectTaskModel>();
-            GetRelatedInfo();
-
-            // Set permission flags
-            CanEditProject = HasEditPermission(CurrentUserID, Id);
-            CanAddTask = CanEditProject; // Same permission for adding tasks as editing project
-
-            return Page();
         }
+
 
 
         private ProjectModel GetProjectById(int projectId)

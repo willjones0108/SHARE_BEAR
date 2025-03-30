@@ -4,13 +4,23 @@ using JMUcare.Pages.Dataclasses;
 using JMUcare.Pages.DBclass;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Threading;
 
 namespace JMUcare.Pages.Projects
 {
     public class AddTaskModel : PageModel
     {
         [BindProperty]
-        public ProjectTaskModel Task { get; set; }
+        public int ProjectID { get; set; }
+
+        [BindProperty]
+        public string TaskContent { get; set; }
+
+        [BindProperty]
+        public DateTime DueDate { get; set; }
+
+        [BindProperty]
+        public string Status { get; set; }
 
         public int CurrentUserID => HttpContext.Session.GetInt32("CurrentUserID") ?? 0;
 
@@ -22,17 +32,48 @@ namespace JMUcare.Pages.Projects
             }
 
             // Check permissions
-            bool hasPermission = HasEditPermissionForProject(CurrentUserID, Task.ProjectID);
+            bool hasPermission = HasEditPermissionForProject(CurrentUserID, ProjectID);
             if (!hasPermission)
             {
                 return RedirectToPage("/Shared/AccessDenied");
             }
 
-            // Insert task
-            DBClass.InsertProjectTask(Task);
+            try
+            {
+                // Create task model from form fields
+                var task = new ProjectTaskModel
+                {
+                    ProjectID = ProjectID,
+                    TaskContent = TaskContent,
+                    DueDate = DueDate,
+                    Status = Status
+                };
 
-            // Redirect to project view
-            return RedirectToPage("/Projects/View", new { id = Task.ProjectID });
+                // Insert task
+                DBClass.InsertProjectTask(task);
+
+                // Add a small delay to ensure database operations complete
+                // This helps prevent the race condition where data retrieval happens before 
+                // the insert operation is fully committed
+                Thread.Sleep(500); // 500ms delay
+
+                // Add success message to TempData that can be displayed on the View page
+                TempData["SuccessMessage"] = "Task added successfully.";
+
+                // Redirect to project view
+                return RedirectToPage("/Projects/View", new { id = ProjectID });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error adding task: {ex.Message}");
+
+                // Add error message to TempData
+                TempData["ErrorMessage"] = "An error occurred while adding the task.";
+
+                // Redirect to project view
+                return RedirectToPage("/Projects/View", new { id = ProjectID });
+            }
         }
 
         private bool HasEditPermissionForProject(int userId, int projectId)

@@ -1581,41 +1581,47 @@ WHERE pp.PhaseID = @PhaseID";
 
         public static ProjectModel GetProjectById(int projectId)
         {
-            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            try
             {
-                string sqlQuery = @"
+                using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
+                var query = @"
             SELECT p.*, pp.PhaseID 
             FROM Project p
             LEFT JOIN Phase_Project pp ON p.ProjectID = pp.ProjectID
             WHERE p.ProjectID = @ProjectID";
 
-                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
-                {
-                    cmd.Parameters.AddWithValue("@ProjectID", projectId);
-                    connection.Open();
+                using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@ProjectID", projectId);
 
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                connection.Open();
+                using var reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    return new ProjectModel
                     {
-                        if (reader.Read())
-                        {
-                            return new ProjectModel
-                            {
-                                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
-                                Title = reader.GetString(reader.GetOrdinal("Title")),
-                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
-                                GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("GrantID")),
-                                PhaseID = reader.IsDBNull(reader.GetOrdinal("PhaseID")) ? 0 : reader.GetInt32(reader.GetOrdinal("PhaseID")),
-                                ProjectType = reader.GetString(reader.GetOrdinal("ProjectType")),
-                                TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
-                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
-                                Project_Description = reader.GetString(reader.GetOrdinal("Project_Description"))
-                            };
-                        }
-                    }
+                        ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                        Title = reader.GetString(reader.GetOrdinal("Title")),
+                        CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                        GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("GrantID")),
+                        PhaseID = reader.IsDBNull(reader.GetOrdinal("PhaseID")) ? 0 : reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                        ProjectType = reader.GetString(reader.GetOrdinal("ProjectType")),
+                        TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
+                        IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
+                        Project_Description = reader.GetString(reader.GetOrdinal("Project_Description"))
+                    };
                 }
+
+                return null;
             }
-            return null;
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Database error in GetProjectById: {ex.Message}");
+                return null;
+            }
         }
+
 
         /// <summary>
         /// Gets all user permissions for a specific project
