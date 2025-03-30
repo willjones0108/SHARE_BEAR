@@ -59,7 +59,7 @@ namespace JMUcare.Pages.Phases
 
             if (accessLevel != "Edit")
             {
-                return RedirectToPage("/AccessDenied");
+                return RedirectToPage("/Shared/AccessDenied");
             }
 
             // Get list of users for dropdowns
@@ -72,7 +72,7 @@ namespace JMUcare.Pages.Phases
             // Re-check permissions on post as well for security
             if (CurrentUserID == 0 || DBClass.GetUserAccessLevelForPhase(CurrentUserID, Phase.PhaseID) != "Edit")
             {
-                return RedirectToPage("/AccessDenied");
+                return RedirectToPage("/Shared/AccessDenied");
             }
 
             if (!ModelState.IsValid)

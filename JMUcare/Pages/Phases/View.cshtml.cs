@@ -45,7 +45,7 @@ namespace JMUcare.Pages.Phases
 
             if (accessLevel == "None")
             {
-                return RedirectToPage("/AccessDenied");
+                return RedirectToPage("/Shared/AccessDenied");
             }
 
             // Check if user can add a project (admin, grant editor, or phase editor)

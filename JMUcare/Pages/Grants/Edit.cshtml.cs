@@ -99,7 +99,7 @@ namespace JMUcare.Pages.Grants
 
             if (accessLevel != "Edit")
             {
-                return RedirectToPage("/AccessDenied");
+                return RedirectToPage("/Shared/AccessDenied");
             }
 
             // Get the original grant to check for grant lead changes

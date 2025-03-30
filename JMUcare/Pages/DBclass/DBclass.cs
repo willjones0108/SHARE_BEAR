@@ -28,24 +28,25 @@ namespace JMUcare.Pages.DBclass
 
         //Will's Connection Below
 
-        private static readonly string JMUcareDBConnString =
-        "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+
+        public static readonly string JMUcareDBConnString =
+            "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
         private static readonly string? AuthConnString =
-        "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+            "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
 
 
 
 
-        //Original BELOW
+            //Original BELOW
 
-        //private static readonly string JMUcareDBConnString =
-        //"Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+            //private static readonly string JMUcareDBConnString =
+            //"Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
 
-        //private static readonly string? AuthConnString =
-        //"Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+            //private static readonly string? AuthConnString =
+            //"Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
 
-        public const int SaltByteSize = 24; // standard, secure size of salts
+            public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
         public const int Pbkdf2Iterations = 1000; // higher number is more secure but takes longer
         public const int IterationIndex = 0; // used to find first section (number of iterations) of PasswordHash database field
@@ -789,61 +790,57 @@ namespace JMUcare.Pages.DBclass
 
             return users;
         }
+        // Add this method to DBClass.cs
         public static void InsertGrantPhase(int grantId, int phaseId)
         {
             using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
             {
+                connection.Open();
+
+                // First, get the maximum position of existing phases
+                int maxPosition = 0;
+                string positionQuery = @"
+            SELECT ISNULL(MAX(p.PhasePosition), 0)
+            FROM Phase p
+            JOIN Grant_Phase gp ON p.PhaseID = gp.PhaseID
+            WHERE gp.GrantID = @GrantID";
+
+                using (SqlCommand posCmd = new SqlCommand(positionQuery, connection))
+                {
+                    posCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    var result = posCmd.ExecuteScalar();
+                    maxPosition = Convert.ToInt32(result);
+                }
+
+                // Set the new phase position to be after the last phase
+                int newPosition = maxPosition + 1;
+                string updateQuery = @"
+            UPDATE Phase
+            SET PhasePosition = @PhasePosition
+            WHERE PhaseID = @PhaseID";
+
+                using (SqlCommand updateCmd = new SqlCommand(updateQuery, connection))
+                {
+                    updateCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    updateCmd.Parameters.AddWithValue("@PhasePosition", newPosition);
+                    updateCmd.ExecuteNonQuery();
+                }
+
+                // Insert the grant-phase relationship
                 string sqlQuery = @"
-        INSERT INTO Grant_Phase (GrantID, PhaseID)
-        VALUES (@GrantID, @PhaseID)";
+            INSERT INTO Grant_Phase (GrantID, PhaseID)
+            VALUES (@GrantID, @PhaseID)";
 
                 using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
                 {
                     cmd.Parameters.AddWithValue("@GrantID", grantId);
                     cmd.Parameters.AddWithValue("@PhaseID", phaseId);
-
-                    connection.Open();
                     cmd.ExecuteNonQuery();
                 }
             }
         }
-        public static List<PhaseModel> GetPhasesByGrantId(int grantId)
-        {
-            var phases = new List<PhaseModel>();
 
-            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
-            {
-                string sqlQuery = @"
-        SELECT p.*
-        FROM Phase p
-        JOIN Grant_Phase gp ON p.PhaseID = gp.PhaseID
-        WHERE gp.GrantID = @GrantID";
 
-                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
-                {
-                    cmd.Parameters.AddWithValue("@GrantID", grantId);
-                    connection.Open();
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            phases.Add(new PhaseModel
-                            {
-                                PhaseID = reader.GetInt32(reader.GetOrdinal("PhaseID")),
-                                PhaseName = reader.GetString(reader.GetOrdinal("PhaseName")),
-                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
-                                Status = reader.GetString(reader.GetOrdinal("Status")),
-                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
-                                PhaseLeadID = reader.GetInt32(reader.GetOrdinal("PhaseLeadID"))
-                            });
-                        }
-                    }
-                }
-            }
-
-            return phases ?? new List<PhaseModel>();
-        }
         public static string GetUserAccessLevelForPhase(int userId, int phaseId)
         {
             string accessLevel = "None";
@@ -1314,6 +1311,242 @@ WHERE pp.PhaseID = @PhaseID";
                 }
             }
         }
+
+        // Add these methods to DBClass.cs
+
+        public static void UpdatePhasePosition(int phaseId, int newPosition)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            UPDATE Phase SET PhasePosition = @PhasePosition
+            WHERE PhaseID = @PhaseID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    cmd.Parameters.AddWithValue("@PhasePosition", newPosition);
+
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public static void InitializePhasePositions(int grantId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                // First check if positions are already set
+                string checkQuery = @"
+            SELECT COUNT(*) 
+            FROM Phase p
+            JOIN Grant_Phase gp ON p.PhaseID = gp.PhaseID
+            WHERE gp.GrantID = @GrantID AND p.PhasePosition IS NULL";
+
+                connection.Open();
+
+                using (SqlCommand checkCmd = new SqlCommand(checkQuery, connection))
+                {
+                    checkCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    int nullPositionCount = (int)checkCmd.ExecuteScalar();
+
+                    if (nullPositionCount > 0)
+                    {
+                        // Positions need to be initialized
+                        string updateQuery = @"
+                    ;WITH OrderedPhases AS (
+                        SELECT p.PhaseID, ROW_NUMBER() OVER (ORDER BY p.PhaseID) AS RowNum
+                        FROM Phase p
+                        JOIN Grant_Phase gp ON p.PhaseID = gp.PhaseID
+                        WHERE gp.GrantID = @GrantID
+                    )
+                    UPDATE Phase
+                    SET PhasePosition = op.RowNum
+                    FROM Phase p
+                    INNER JOIN OrderedPhases op ON p.PhaseID = op.PhaseID";
+
+                        using (SqlCommand updateCmd = new SqlCommand(updateQuery, connection))
+                        {
+                            updateCmd.Parameters.AddWithValue("@GrantID", grantId);
+                            updateCmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void UpdatePhaseStatusesForGrant(int grantId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                connection.Open();
+
+                // Get all phases for the grant, ordered by position
+                string selectQuery = @"
+            SELECT p.PhaseID, p.PhasePosition, p.Status
+            FROM Phase p
+            JOIN Grant_Phase gp ON p.PhaseID = gp.PhaseID
+            WHERE gp.GrantID = @GrantID
+            ORDER BY p.PhasePosition";
+
+                var phases = new List<(int PhaseId, int Position, string Status)>();
+
+                using (SqlCommand cmd = new SqlCommand(selectQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@GrantID", grantId);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            phases.Add((
+                                reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                                reader.GetInt32(reader.GetOrdinal("PhasePosition")),
+                                reader.GetString(reader.GetOrdinal("Status"))
+                            ));
+                        }
+                    }
+                }
+
+                if (phases.Count == 0) return;
+
+                // First phase is always "In Progress" if not "Completed"
+                var firstPhase = phases.OrderBy(p => p.Position).First();
+                if (firstPhase.Status != "Completed")
+                {
+                    using (SqlCommand cmd = new SqlCommand(
+                        "UPDATE Phase SET Status = 'In Progress' WHERE PhaseID = @PhaseID",
+                        connection))
+                    {
+                        cmd.Parameters.AddWithValue("@PhaseID", firstPhase.PhaseId);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                // Set all phases after a completed phase to "Pending" if they aren't already "In Progress" or "Completed"
+                bool previousPhaseCompleted = false;
+
+                foreach (var phase in phases.OrderBy(p => p.Position))
+                {
+                    if (previousPhaseCompleted && phase.Status != "In Progress" && phase.Status != "Completed")
+                    {
+                        using (SqlCommand cmd = new SqlCommand(
+                            "UPDATE Phase SET Status = 'Pending' WHERE PhaseID = @PhaseID",
+                            connection))
+                        {
+                            cmd.Parameters.AddWithValue("@PhaseID", phase.PhaseId);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    previousPhaseCompleted = phase.Status == "Completed";
+                }
+
+                // Set phases that come after an "In Progress" phase to "Not Started" if they are not already in a specific state
+                bool previousPhaseInProgress = false;
+
+                foreach (var phase in phases.OrderBy(p => p.Position))
+                {
+                    if (previousPhaseInProgress && phase.Status != "In Progress" && phase.Status != "Completed" && phase.Status != "Pending")
+                    {
+                        using (SqlCommand cmd = new SqlCommand(
+                            "UPDATE Phase SET Status = 'Not Started' WHERE PhaseID = @PhaseID",
+                            connection))
+                        {
+                            cmd.Parameters.AddWithValue("@PhaseID", phase.PhaseId);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    previousPhaseInProgress = phase.Status == "In Progress";
+                }
+            }
+        }
+
+        // Replace the existing GetPhasesByGrantId method with this one
+        public static List<PhaseModel> GetPhasesByGrantId(int grantId)
+        {
+            var phases = new List<PhaseModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        SELECT p.*
+        FROM Phase p
+        JOIN Grant_Phase gp ON p.PhaseID = gp.PhaseID
+        WHERE gp.GrantID = @GrantID
+        ORDER BY p.PhasePosition, p.PhaseID";  // Order by position, then ID as fallback
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@GrantID", grantId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            phases.Add(new PhaseModel
+                            {
+                                PhaseID = reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                                PhaseName = reader.GetString(reader.GetOrdinal("PhaseName")),
+                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
+                                Status = reader.GetString(reader.GetOrdinal("Status")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                PhaseLeadID = reader.GetInt32(reader.GetOrdinal("PhaseLeadID")),
+                                PhasePosition = reader.IsDBNull(reader.GetOrdinal("PhasePosition")) ? 0 : reader.GetInt32(reader.GetOrdinal("PhasePosition")),
+                                GrantID = grantId
+                            });
+                        }
+                    }
+                }
+            }
+
+            return phases ?? new List<PhaseModel>();
+        }
+
+        // Add this method to the DBClass if it doesn't already exist
+
+        public static ProjectModel GetProjectById(int projectId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            SELECT p.*, pp.PhaseID 
+            FROM Project p
+            LEFT JOIN Phase_Project pp ON p.ProjectID = pp.ProjectID
+            WHERE p.ProjectID = @ProjectID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@ProjectID", projectId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return new ProjectModel
+                            {
+                                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                                Title = reader.GetString(reader.GetOrdinal("Title")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("GrantID")),
+                                PhaseID = reader.IsDBNull(reader.GetOrdinal("PhaseID")) ? 0 : reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                                ProjectType = reader.GetString(reader.GetOrdinal("ProjectType")),
+                                TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
+                                Project_Description = reader.GetString(reader.GetOrdinal("Project_Description"))
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+
     }
 }
 

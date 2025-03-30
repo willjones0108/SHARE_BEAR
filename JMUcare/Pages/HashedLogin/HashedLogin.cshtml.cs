@@ -1,22 +1,31 @@
 using JMUcare.Pages.DBclass;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.ComponentModel.DataAnnotations;
 
 namespace JMUcare.Pages.HashedLogin
 {
-        public class HashedLoginModel : PageModel
-        {
-            [BindProperty]
-            public string Username { get; set; }
-            [BindProperty]
-            public string Password { get; set; }
+    public class HashedLoginModel : PageModel
+    {
+        [BindProperty]
+        [Required(ErrorMessage = "Username is required")]
+        public string Username { get; set; }
 
-            public void OnGet()
-            {
-            }
+        [BindProperty]
+        [Required(ErrorMessage = "Password is required")]
+        public string Password { get; set; }
+
+        public void OnGet()
+        {
+        }
 
         public IActionResult OnPost()
         {
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+
             if (DBClass.HashedParameterLogin(Username, Password))
             {
                 HttpContext.Session.SetString("username", Username);
@@ -37,8 +46,5 @@ namespace JMUcare.Pages.HashedLogin
                 return Page();
             }
         }
-
     }
 }
-
-

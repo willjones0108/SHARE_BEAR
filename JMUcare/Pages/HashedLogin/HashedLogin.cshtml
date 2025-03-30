@@ -2,11 +2,18 @@
 @model JMUcare.Pages.HashedLogin.HashedLoginModel
 @{
 }
-<form asp-page="HashedLogin">
-    <input asp-for="Username" class="form-control" placeholder="Enter Username" />
+<form asp-page="HashedLogin" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div>
+        <input asp-for="Username" class="form-control" placeholder="Enter Username" />
+        <span asp-validation-for="Username" class="text-danger"></span>
+    </div>
     <br />
-    <label>Enter Password:</label>
-    <input asp-for="Password" class="form-control" type="password" />
+    <div>
+        <label>Enter Password:</label>
+        <input asp-for="Password" class="form-control" type="password" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
     <br />
     <input type="submit" class="btn btn-primary" />
 </form>
@@ -14,10 +21,14 @@
 @{
     if (HttpContext.Session.GetString("username") != null)
     {
-                <p class="text-success">@ViewData["LoginMessage"]</p>
+        <p class="text-success">@ViewData["LoginMessage"]</p>
     }
     else
     {
-                <p class="text-danger">@ViewData["LoginMessage"]</p>
+        <p class="text-danger">@ViewData["LoginMessage"]</p>
     }
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }

@@ -48,7 +48,7 @@ namespace JMUcare.Pages.Grants
 
             if (accessLevel == "None")
             {
-                return RedirectToPage("/AccessDenied");
+                return RedirectToPage("/Shared/AccessDenied");
             }
 
             // Check if the user can add a phase
@@ -78,5 +78,7 @@ namespace JMUcare.Pages.Grants
 
             return Page();
         }
+
+
     }
 }

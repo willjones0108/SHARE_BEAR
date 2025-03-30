@@ -9,6 +9,8 @@ namespace JMUcare.Pages.Dataclasses
         public int CreatedBy { get; set; }
         public int PhaseLeadID { get; set; }
 
+        public int PhasePosition { get; set; }
+
         public int GrantID { get; set; }
 
     }

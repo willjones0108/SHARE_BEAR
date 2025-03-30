@@ -1,0 +1,296 @@
+@page "{id:int}"
+@using JMUcare.Pages.DBclass
+@model JMUcare.Pages.Projects.ViewModel
+@{
+    ViewData["Title"] = "Project Details";
+}
+
+
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-page="/Grants/Index">Grants</a></li>
+                    @if (Model.GrantId.HasValue && !string.IsNullOrEmpty(Model.GrantName))
+                    {
+                        <li class="breadcrumb-item"><a asp-page="/Grants/View" asp-route-id="@Model.GrantId">@Model.GrantName</a></li>
+                    }
+                    @if (Model.PhaseId > 0 && !string.IsNullOrEmpty(Model.PhaseName))
+                    {
+                        <li class="breadcrumb-item"><a asp-page="/Phases/View" asp-route-id="@Model.PhaseId">@Model.PhaseName</a></li>
+                    }
+                    @if (Model.Project != null)
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">@Model.Project.Title</li>
+                    }
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+
+    <!-- Project Details Section -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Project Details</h4>
+                    @if (Model.CanEditProject)
+                    {
+                        <div>
+                            <a asp-page="/Projects/Edit" asp-route-id="@Model.Id" class="btn btn-light btn-sm">
+                                <i class="bi bi-pencil-square"></i> Edit Project
+                            </a>
+                        </div>
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Project Title</h5>
+                                    <p class="card-text fs-6">@Model.Project.Title</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Project Type</h5>
+                                    <p class="card-text fs-6">@Model.Project.ProjectType</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Phase</h5>
+                                    <p class="card-text fs-6">
+                                        @if (Model.PhaseId > 0)
+                                        {
+                                            <a asp-page="/Phases/View" asp-route-id="@Model.PhaseId">@Model.PhaseName</a>
+                                        }
+                                        else
+                                        {
+                                            <span>None</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Tracking Status</h5>
+                                    <p class="card-text fs-6">@Model.Project.TrackingStatus</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Description</h5>
+                                    <p class="card-text fs-6">@Model.Project.Project_Description</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    @if (Model.PhaseId > 0)
+                    {
+                        <a asp-page="/Phases/View" asp-route-id="@Model.PhaseId" class="btn btn-secondary">Back to Phase</a>
+                    }
+                    else if (Model.GrantId.HasValue)
+                    {
+                        <a asp-page="/Grants/View" asp-route-id="@Model.GrantId" class="btn btn-secondary">Back to Grant</a>
+                    }
+                    else
+                    {
+                        <a asp-page="/Grants/Index" class="btn btn-secondary">Back to Grants</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Section -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Tasks</h4>
+                    @if (Model.CanAddTask)
+                    {
+                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                            <i class="bi bi-plus-circle"></i> Add Task
+                        </button>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (Model.Tasks.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Task</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var task in Model.Tasks)
+                                    {
+                                        <tr>
+                                            <td>@task.TaskContent</td>
+                                            <td>@task.DueDate.ToShortDateString()</td>
+                                            <td>
+                                                <span class="badge @(task.Status == "Completed" ? "bg-success" : 
+                                                                    task.Status == "In Progress" ? "bg-primary" : 
+                                                                    task.Status == "Not Started" ? "bg-secondary" : 
+                                                                    "bg-warning")">
+                                                    @task.Status
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (Model.CanEditProject)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#editTaskModal" 
+                                                            data-task-id="@task.TaskID"
+                                                            data-task-content="@task.TaskContent"
+                                                            data-task-duedate="@task.DueDate.ToString("yyyy-MM-dd")"
+                                                            data-task-status="@task.Status">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <p class="mb-0">No tasks have been added to this project yet.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.CanAddTask)
+{
+    <!-- Add Task Modal -->
+    <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" asp-page="/Projects/AddTask">
+                    <input type="hidden" name="ProjectID" value="@Model.Id" />
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="TaskContent" class="form-label">Task Description</label>
+                            <textarea class="form-control" id="TaskContent" name="TaskContent" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="DueDate" class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="DueDate" name="DueDate" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="Status" class="form-label">Status</label>
+                            <select class="form-select" id="Status" name="Status" required>
+                                <option value="Not Started">Not Started</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Blocked">Blocked</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" asp-page="/Projects/EditTask">
+                    <input type="hidden" name="ProjectID" value="@Model.Id" />
+                    <input type="hidden" id="editTaskId" name="TaskID" value="" />
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="editTaskContent" class="form-label">Task Description</label>
+                            <textarea class="form-control" id="editTaskContent" name="TaskContent" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDueDate" class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="editDueDate" name="DueDate" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editStatus" class="form-label">Status</label>
+                            <select class="form-select" id="editStatus" name="Status" required>
+                                <option value="Not Started">Not Started</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Blocked">Blocked</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Edit task modal data binding
+        const editTaskModal = document.getElementById('editTaskModal');
+        if (editTaskModal) {
+            editTaskModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const taskId = button.getAttribute('data-task-id');
+                const taskContent = button.getAttribute('data-task-content');
+                const taskDueDate = button.getAttribute('data-task-duedate');
+                const taskStatus = button.getAttribute('data-task-status');
+
+                const modalTaskId = this.querySelector('#editTaskId');
+                const modalTaskContent = this.querySelector('#editTaskContent');
+                const modalDueDate = this.querySelector('#editDueDate');
+                const modalStatus = this.querySelector('#editStatus');
+
+                modalTaskId.value = taskId;
+                modalTaskContent.value = taskContent;
+                modalDueDate.value = taskDueDate;
+                modalStatus.value = taskStatus;
+            });
+        }
+    </script>
+}
