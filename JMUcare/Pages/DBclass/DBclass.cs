@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Security.Cryptography;
 using JMUcare.Pages.Dataclasses;
 using Microsoft.AspNetCore.Identity;
+using static JMUcare.Pages.Projects.EditTaskModel;
 namespace JMUcare.Pages.DBclass
 {
     public class DBClass
@@ -29,22 +30,22 @@ namespace JMUcare.Pages.DBclass
         //Will's Connection Below
 
 
-        public static readonly string JMUcareDBConnString =
-            "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+       // public static readonly string JMUcareDBConnString =
+            //"Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
-        private static readonly string? AuthConnString =
-            "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+       // private static readonly string? AuthConnString =
+          //  "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
 
 
 
 
             //Original BELOW
 
-            //private static readonly string JMUcareDBConnString =
-            //"Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+       private static readonly string JMUcareDBConnString =
+            "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
 
-            //private static readonly string? AuthConnString =
-            //"Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+        private static readonly string? AuthConnString =
+            "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
 
             public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
@@ -1790,6 +1791,181 @@ WHERE pp.PhaseID = @PhaseID";
                 return false;
             }
         }
+
+        public static ProjectTaskModel GetTaskById(int taskId)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            var query = @"
+        SELECT * FROM Project_Task
+        WHERE TaskID = @TaskID";
+
+            using var cmd = new SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@TaskID", taskId);
+
+            connection.Open();
+            using var reader = cmd.ExecuteReader();
+
+            if (reader.Read())
+            {
+                return new ProjectTaskModel
+                {
+                    TaskID = reader.GetInt32(reader.GetOrdinal("TaskID")),
+                    ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                    TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
+                    DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
+                    Status = reader.GetString(reader.GetOrdinal("Status"))
+                };
+            }
+
+            return null;
+        }
+
+        public static void UpdateTask(ProjectTaskModel task)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            var query = @"
+        UPDATE Project_Task
+        SET TaskContent = @TaskContent,
+            DueDate = @DueDate,
+            Status = @Status
+        WHERE TaskID = @TaskID";
+
+            using var cmd = new SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@TaskID", task.TaskID);
+            cmd.Parameters.AddWithValue("@TaskContent", task.TaskContent);
+            cmd.Parameters.AddWithValue("@DueDate", task.DueDate);
+            cmd.Parameters.AddWithValue("@Status", task.Status);
+
+            connection.Open();
+            cmd.ExecuteNonQuery();
+        }
+
+        public static void LoadTaskAssignments(int taskId, List<TaskAssignmentViewModel> taskAssignments)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            var query = @"
+        SELECT u.UserID, u.FirstName, u.LastName, ptu.Role
+        FROM DBUser u
+        JOIN Project_Task_User ptu ON u.UserID = ptu.UserID
+        WHERE ptu.TaskID = @TaskID";
+
+            using var cmd = new SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@TaskID", taskId);
+
+            connection.Open();
+            using var reader = cmd.ExecuteReader();
+
+            taskAssignments.Clear();
+            while (reader.Read())
+            {
+                taskAssignments.Add(new TaskAssignmentViewModel
+                {
+                    UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                    AccessLevel = reader.GetString(reader.GetOrdinal("Role"))
+                });
+            }
+        }
+
+        public static void LoadAvailableUsers(int taskId, List<DbUserModel> availableUsers)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            var query = @"
+        SELECT u.UserID, u.FirstName, u.LastName, u.Email
+        FROM DBUser u
+        WHERE u.IsArchived = 0
+        AND u.UserID NOT IN (
+            SELECT ptu.UserID
+            FROM Project_Task_User ptu
+            WHERE ptu.TaskID = @TaskID
+        )";
+
+            using var cmd = new SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@TaskID", taskId);
+
+            connection.Open();
+            using var reader = cmd.ExecuteReader();
+
+            availableUsers.Clear();
+            while (reader.Read())
+            {
+                availableUsers.Add(new DbUserModel
+                {
+                    UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                    Email = reader.GetString(reader.GetOrdinal("Email"))
+                });
+            }
+        }
+
+        public static void AddUserToTask(ProjectTaskUserModel taskUser)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            var query = @"
+        INSERT INTO Project_Task_User (TaskID, UserID, Role)
+        VALUES (@TaskID, @UserID, @Role)";
+
+            using var cmd = new SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@TaskID", taskUser.TaskID);
+            cmd.Parameters.AddWithValue("@UserID", taskUser.UserID);
+            cmd.Parameters.AddWithValue("@Role", taskUser.Role);
+
+            connection.Open();
+            cmd.ExecuteNonQuery();
+        }
+
+        public static void RemoveUserFromTask(int taskId, int userId)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            var query = @"
+        DELETE FROM Project_Task_User
+        WHERE TaskID = @TaskID AND UserID = @UserID";
+
+            using var cmd = new SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@TaskID", taskId);
+            cmd.Parameters.AddWithValue("@UserID", userId);
+
+            connection.Open();
+            cmd.ExecuteNonQuery();
+        }
+        public static int AddTask(ProjectTaskModel task)
+        {
+            using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
+            var query = @"
+        INSERT INTO Project_Task (ProjectID, TaskContent, DueDate, Status)
+        OUTPUT INSERTED.TaskID
+        VALUES (@ProjectID, @TaskContent, @DueDate, @Status)";
+
+            using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@ProjectID", task.ProjectID);
+            cmd.Parameters.AddWithValue("@TaskContent", task.TaskContent);
+            cmd.Parameters.AddWithValue("@DueDate", task.DueDate);
+            cmd.Parameters.AddWithValue("@Status", task.Status);
+
+            connection.Open();
+            int taskId = (int)cmd.ExecuteScalar();
+            return taskId;
+        }
+        public static int? GetGrantIdByPhaseId(int phaseId)
+        {
+            using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
+            var query = "SELECT GrantID FROM Grant_Phase WHERE PhaseID = @PhaseID";
+
+            using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+
+            connection.Open();
+            var result = cmd.ExecuteScalar();
+            if (result != null && result != DBNull.Value)
+            {
+                return (int)result;
+            }
+
+            return null;
+        }
+
 
 
 

@@ -34,7 +34,7 @@ namespace JMUcare.Pages.Projects
             try
             {
                 // Get project data and associated tasks
-                Project = GetProjectById(Id);
+                Project = DBClass.GetProjectById(Id);
 
                 if (Project == null)
                 {
@@ -80,39 +80,7 @@ namespace JMUcare.Pages.Projects
 
 
 
-        private ProjectModel GetProjectById(int projectId)
-        {
-            using var connection = new System.Data.SqlClient.SqlConnection(DBClass.JMUcareDBConnString);
-            var query = @"
-                SELECT p.*, pp.PhaseID 
-                FROM Project p
-                LEFT JOIN Phase_Project pp ON p.ProjectID = pp.ProjectID
-                WHERE p.ProjectID = @ProjectID";
 
-            using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
-            cmd.Parameters.AddWithValue("@ProjectID", projectId);
-
-            connection.Open();
-            using var reader = cmd.ExecuteReader();
-
-            if (reader.Read())
-            {
-                return new ProjectModel
-                {
-                    ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
-                    Title = reader.GetString(reader.GetOrdinal("Title")),
-                    CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
-                    GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("GrantID")),
-                    PhaseID = reader.IsDBNull(reader.GetOrdinal("PhaseID")) ? 0 : reader.GetInt32(reader.GetOrdinal("PhaseID")),
-                    ProjectType = reader.GetString(reader.GetOrdinal("ProjectType")),
-                    TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
-                    IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
-                    Project_Description = reader.GetString(reader.GetOrdinal("Project_Description"))
-                };
-            }
-
-            return null;
-        }
 
         private void GetRelatedInfo()
         {
@@ -128,18 +96,7 @@ namespace JMUcare.Pages.Projects
                 // If grant ID is not set directly on project, get it from phase
                 if (!GrantId.HasValue && phase != null)
                 {
-                    using var connection = new System.Data.SqlClient.SqlConnection(DBClass.JMUcareDBConnString);
-                    var query = "SELECT GrantID FROM Grant_Phase WHERE PhaseID = @PhaseID";
-
-                    using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
-                    cmd.Parameters.AddWithValue("@PhaseID", PhaseId);
-
-                    connection.Open();
-                    var result = cmd.ExecuteScalar();
-                    if (result != null && result != DBNull.Value)
-                    {
-                        GrantId = (int)result;
-                    }
+                    GrantId = DBClass.GetGrantIdByPhaseId(PhaseId);
                 }
             }
 
@@ -154,6 +111,8 @@ namespace JMUcare.Pages.Projects
                 GrantName = string.Empty;
             }
         }
+
+
 
         private bool HasAccessToProject(int userId, int projectId)
         {

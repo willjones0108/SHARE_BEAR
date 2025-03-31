@@ -69,7 +69,7 @@ namespace JMUcare.Pages.Projects
             try
             {
                 // Add task
-                int taskId = AddTask();
+                int taskId = DBClass.AddTask(Task);
 
                 TempData["SuccessMessage"] = "Task added successfully.";
                 return RedirectToPage("/Projects/EditTask", new { id = taskId });
@@ -87,23 +87,5 @@ namespace JMUcare.Pages.Projects
             Projects = DBClass.GetProjects().ToList();
         }
 
-        private int AddTask()
-        {
-            using var connection = new System.Data.SqlClient.SqlConnection(DBClass.JMUcareDBConnString);
-            var query = @"
-                INSERT INTO Project_Task (ProjectID, TaskContent, DueDate, Status)
-                OUTPUT INSERTED.TaskID
-                VALUES (@ProjectID, @TaskContent, @DueDate, @Status)";
-
-            using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
-            cmd.Parameters.AddWithValue("@ProjectID", Task.ProjectID);
-            cmd.Parameters.AddWithValue("@TaskContent", Task.TaskContent);
-            cmd.Parameters.AddWithValue("@DueDate", Task.DueDate);
-            cmd.Parameters.AddWithValue("@Status", Task.Status);
-
-            connection.Open();
-            int taskId = (int)cmd.ExecuteScalar();
-            return taskId;
-        }
     }
 }
