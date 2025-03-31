@@ -85,7 +85,7 @@ namespace JMUcare.Pages
             var allTasks = new List<ProjectTaskModel>();
             foreach (var project in allProjects)
             {
-                var tasks = DBClass.GetTasksByProjectId(project.ProjectID);
+                var tasks = DBClass.GetTasksByProjectId(project.ProjectID, CurrentUserID);
                 if (tasks != null)
                 {
                     allTasks.AddRange(tasks);

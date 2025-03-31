@@ -7,6 +7,23 @@
 }
 
 <div class="container-fluid mt-4">
+    <!-- Success and Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <!-- Grant Details Section -->
     <div class="row mb-4">
         <div class="col-md-12">
@@ -22,6 +39,12 @@
                             <a asp-page="/Grants/ManagePermissions" asp-route-id="@Model.Id" class="btn btn-light btn-sm ms-2">
                                 <i class="bi bi-people"></i> Permissions
                             </a>
+                            <form method="post" asp-page-handler="ArchiveGrant" class="d-inline ms-2" onsubmit="return confirmArchive()">
+                                <input type="hidden" name="grantId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-archive"></i> Archive Grant
+                                </button>
+                            </form>
                         </div>
                     }
                 </div>
@@ -124,133 +147,143 @@
         </div>
     </div>
 
-    <form id="reorderForm" method="post" asp-page="/Phases/ReorderPhases">
+    <!-- This is now just a hidden form for submitting phase order, not containing the phases -->
+    <form id="reorderForm" method="post" asp-page="/Phases/ReorderPhases" style="display: none;">
         <input type="hidden" name="GrantId" value="@Model.Id" />
-
-        <div class="row">
-            <div id="phaseContainer" class="d-flex flex-nowrap overflow-auto">
-                @if (Model.Phases.Any())
-                {
-                    @foreach (var phase in Model.Phases)
-                    {
-                        <div class="col-md-4 phase-item mb-3 p-2" data-phase-id="@phase.PhaseID">
-                            <div class="card shadow h-100">
-                                <div class="card-header bg-info text-white">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="drag-handle" style="display: none">
-                                            <i class="bi bi-grip-vertical"></i>
-                                            <span class="dots">⋮⋮</span>
-                                        </div>
-                                        <h5 class="mb-0">@phase.PhaseName</h5>
-                                        <div class="phase-actions">
-                                            @{
-                                                string accessLevel = DBClass.GetUserAccessLevelForPhase(Model.CurrentUserID, phase.PhaseID);
-                                                if (accessLevel == "Edit")
-                                                {
-                                                    <a asp-page="/Phases/Edit" asp-route-id="@phase.PhaseID" class="btn btn-sm btn-light">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </a>
-                                                }
-                                            }
-                                            <a asp-page="/Phases/View" asp-route-id="@phase.PhaseID" class="btn btn-sm btn-light ms-1">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <small class="text-muted">@phase.Description</small>
-                                    </div>
-
-                                    <div class="phase-content">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <h6 class="mb-0">Projects</h6>
-                                            @if (Model.CanAddProject)
-                                            {
-                                                <a asp-page="/Sections/CreateProject" asp-route-PhaseId="@phase.PhaseID" class="btn btn-sm btn-primary">
-                                                    <i class="bi bi-plus-circle"></i> Add Project
-                                                </a>
-                                            }
-                                        </div>
-
-                                        @if (Model.PhaseProjects[phase.PhaseID].Any())
-                                        {
-                                            <div class="project-list">
-                                                @foreach (var project in Model.PhaseProjects[phase.PhaseID])
-                                                {
-                                                    <div class="card mb-2 project-card">
-                                                        <div class="card-header py-2 bg-light">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <h6 class="mb-0">@project.Title</h6>
-                                                                <div>
-                                                                    @{
-                                                                        string projectAccessLevel = DBClass.GetUserAccessLevelForProject(Model.CurrentUserID, project.ProjectID);
-                                                                        if (projectAccessLevel == "Edit")
-                                                                        {
-                                                                            <a asp-page="/Projects/EditProject" asp-route-id="@project.ProjectID" class="btn btn-sm btn-outline-success">
-                                                                                <i class="bi bi-pencil"></i>
-                                                                            </a>
-                                                                        }
-                                                                    }
-                                                                    <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="btn btn-sm btn-outline-primary ms-1">
-                                                                        <i class="bi bi-eye"></i>
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-body py-2">
-                                                            <p class="small mb-2">@project.Project_Description</p>
-
-                                                            @if (Model.ProjectTasks[project.ProjectID].Any())
-                                                            {
-                                                                <h6 class="mt-2 mb-1 small">Tasks</h6>
-                                                                <ul class="list-group list-group-flush small">
-                                                                    @foreach (var task in Model.ProjectTasks[project.ProjectID])
-                                                                    {
-                                                                        <li class="list-group-item py-1 px-2">
-                                                                            <div class="d-flex justify-content-between">
-                                                                                <div>@task.TaskContent</div>
-                                                                                <div class="badge @(task.Status == "Completed" ? "bg-success" : "bg-warning")">
-                                                                                    @task.Status
-                                                                                </div>
-                                                                            </div>
-                                                                            <small class="text-muted">Due: @task.DueDate.ToShortDateString()</small>
-                                                                        </li>
-                                                                    }
-                                                                </ul>
-                                                            }
-                                                            else
-                                                            {
-                                                                <p class="small text-muted mb-0">No tasks defined</p>
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                }
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <p class="small text-muted">No projects are associated with this phase.</p>
-                                        }
-                                    </div>
-                                </div>
-                                <div class="card-footer bg-light">
-                                    <span class="badge @(phase.Status == "Completed" ? "bg-success" :
-                                                      phase.Status == "In Progress" ? "bg-primary" :
-                                                      phase.Status == "Pending" ? "bg-warning" : "bg-secondary")">
-                                        @phase.Status
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                }
-            </div>
-        </div>
+        <!-- Hidden fields for phase IDs will be added by JavaScript -->
     </form>
 
-    @if (!Model.Phases.Any())
+    <!-- Phases content - now outside of the reorderForm -->
+    <div class="row">
+        <div id="phaseContainer" class="d-flex flex-nowrap overflow-auto">
+            @if (Model.Phases.Any())
+            {
+                @foreach (var phase in Model.Phases.Where(p => !p.IsArchived))
+                {
+                    <div class="col-md-4 phase-item mb-3 p-2" data-phase-id="@phase.PhaseID">
+                        <div class="card shadow h-100">
+                            <div class="card-header bg-info text-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="drag-handle" style="display: none">
+                                        <i class="bi bi-grip-vertical"></i>
+                                        <span class="dots">⋮⋮</span>
+                                    </div>
+                                    <h5 class="mb-0">@phase.PhaseName</h5>
+                                    <div class="phase-actions">
+                                        @{
+                                            string accessLevel = DBClass.GetUserAccessLevelForPhase(Model.CurrentUserID, phase.PhaseID);
+                                            if (accessLevel == "Edit")
+                                            {
+                                                <a asp-page="/Phases/Edit" asp-route-id="@phase.PhaseID" class="btn btn-sm btn-light">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <!-- Archive Phase form is now a standalone form, not nested -->
+                                                <form method="post" asp-page-handler="ArchivePhase" class="d-inline">
+                                                    <input type="hidden" name="phaseId" value="@phase.PhaseID" />
+                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                        <i class="bi bi-archive"></i> Archive
+                                                    </button>
+                                                </form>
+                                            }
+                                        }
+                                        <a asp-page="/Phases/View" asp-route-id="@phase.PhaseID" class="btn btn-sm btn-light ms-1">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <small class="text-muted">@phase.Description</small>
+                                </div>
+
+                                <div class="phase-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Projects</h6>
+                                        @if (Model.CanAddProject)
+                                        {
+                                            <a asp-page="/Sections/CreateProject" asp-route-PhaseId="@phase.PhaseID" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-plus-circle"></i> Add Project
+                                            </a>
+                                        }
+                                    </div>
+
+                                    @if (Model.PhaseProjects[phase.PhaseID].Any(p => !p.IsArchived))
+                                    {
+                                        <div class="project-list">
+                                            @foreach (var project in Model.PhaseProjects[phase.PhaseID].Where(p => !p.IsArchived))
+                                            {
+                                                <div class="card mb-2 project-card">
+                                                    <div class="card-header py-2 bg-light">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <h6 class="mb-0">@project.Title</h6>
+                                                            <div>
+                                                                @{
+                                                                    string projectAccessLevel = DBClass.GetUserAccessLevelForProject(Model.CurrentUserID, project.ProjectID);
+                                                                    if (projectAccessLevel == "Edit")
+                                                                    {
+                                                                        <a asp-page="/Projects/EditProject" asp-route-id="@project.ProjectID" class="btn btn-sm btn-outline-success">
+                                                                            <i class="bi bi-pencil"></i>
+                                                                        </a>
+                                                                    }
+                                                                }
+                                                                <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="btn btn-sm btn-outline-primary ms-1">
+                                                                    <i class="bi bi-eye"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body py-2">
+                                                        <p class="small mb-2">@project.Project_Description</p>
+
+                                                        @if (Model.ProjectTasks[project.ProjectID].Any(t => !t.IsArchived))
+                                                        {
+                                                            <h6 class="mt-2 mb-1 small">Tasks</h6>
+                                                            <ul class="list-group list-group-flush small">
+                                                                @foreach (var task in Model.ProjectTasks[project.ProjectID].Where(t => !t.IsArchived))
+                                                                {
+                                                                    <li class="list-group-item py-1 px-2">
+                                                                        <div class="d-flex justify-content-between">
+                                                                            <div>@task.TaskContent</div>
+                                                                            <div class="badge @(task.Status == "Completed" ? "bg-success" : "bg-warning")">
+                                                                                @task.Status
+                                                                            </div>
+                                                                        </div>
+                                                                        <small class="text-muted">Due: @task.DueDate.ToShortDateString()</small>
+                                                                    </li>
+                                                                }
+                                                            </ul>
+                                                        }
+                                                        else
+                                                        {
+                                                            <p class="small text-muted mb-0">No tasks defined</p>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="small text-muted">No projects are associated with this phase.</p>
+                                    }
+                                </div>
+                            </div>
+                            <div class="card-footer bg-light">
+                                <span class="badge @(phase.Status == "Completed" ? "bg-success" :
+                                                  phase.Status == "In Progress" ? "bg-primary" :
+                                                  phase.Status == "Pending" ? "bg-warning" : "bg-secondary")">
+                                    @phase.Status
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    @if (!Model.Phases.Any(p => !p.IsArchived))
     {
         <div class="alert alert-info">
             <p>No phases are associated with this grant.</p>
@@ -310,6 +343,9 @@
             // Reload the page to reset the original order
             location.reload();
         }
+                function confirmArchive() {
+            return confirm("Are you sure you want to archive this grant? This will also archive all associated phases, projects, and tasks.");
+        }
 
         function resetDragMode() {
             isDragMode = false;
@@ -346,7 +382,7 @@
                 phaseIds.push(item.getAttribute('data-phase-id'));
             });
 
-            // Create hidden fields for each phase ID in the form
+            // Get the form and show it (in case it's hidden)
             const form = document.getElementById('reorderForm');
 
             // Clear any existing hidden fields

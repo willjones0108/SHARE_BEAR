@@ -60,7 +60,7 @@ namespace JMUcare.Pages.Phases
             ProjectTasks = new Dictionary<int, List<ProjectTaskModel>>();
             foreach (var project in Projects)
             {
-                ProjectTasks[project.ProjectID] = DBClass.GetTasksByProjectId(project.ProjectID);
+                ProjectTasks[project.ProjectID] = DBClass.GetTasksByProjectId(project.ProjectID, CurrentUserID);
             }
 
             return Page();

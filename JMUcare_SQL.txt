@@ -97,6 +97,7 @@ CREATE TABLE Project_Task (
     TaskPosition INT,
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
 );
+ALTER TABLE Project_Task ADD IsArchived BIT DEFAULT 0;
 
 CREATE TABLE Project_Task_User (
     ProjectTaskUserID INT PRIMARY KEY IDENTITY(1,1),

@@ -301,7 +301,8 @@ namespace JMUcare.Pages.DBclass
         LEFT JOIN DBUser u ON u.UserID = @UserID
         LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
         WHERE 
-            (gp.UserID = @UserID AND gp.AccessLevel IN ('Read', 'Edit')) OR ur.RoleName = 'Admin'";
+            ((gp.UserID = @UserID AND gp.AccessLevel IN ('Read', 'Edit')) OR ur.RoleName = 'Admin')
+            AND g.IsArchived = 0";  // Added this condition to filter out archived grants
 
                 using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
                 {
@@ -314,10 +315,17 @@ namespace JMUcare.Pages.DBclass
                         {
                             grants.Add(new GrantModel
                             {
-                                // Your existing property mappings
                                 GrantID = reader.GetInt32(reader.GetOrdinal("GrantID")),
                                 GrantTitle = reader.GetString(reader.GetOrdinal("GrantTitle")),
-                                // ... rest of your properties
+                                Category = reader.GetString(reader.GetOrdinal("Category")),
+                                FundingSource = reader.GetString(reader.GetOrdinal("FundingSource")),
+                                Amount = reader.GetDecimal(reader.GetOrdinal("Amount")),
+                                Status = reader.GetString(reader.GetOrdinal("Status")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                GrantLeadID = reader.GetInt32(reader.GetOrdinal("GrantLeadID")),
+                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
+                                TrackingStatus = reader.IsDBNull(reader.GetOrdinal("TrackingStatus")) ? "" : reader.GetString(reader.GetOrdinal("TrackingStatus")),
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
                             });
                         }
                     }
@@ -326,6 +334,7 @@ namespace JMUcare.Pages.DBclass
 
             return grants ?? new List<GrantModel>();
         }
+
 
 
 
@@ -1264,6 +1273,7 @@ WHERE pp.PhaseID = @PhaseID";
                 LEFT JOIN DBUser u ON u.UserID = @UserID
                 LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
                 WHERE t.ProjectID = @ProjectID
+                AND t.IsArchived = 0  -- Added filter for non-archived tasks
                 AND (
                     pp.UserID = @UserID AND pp.AccessLevel IN ('Read', 'Edit')
                     OR ur.RoleName = 'Admin'
@@ -1290,7 +1300,8 @@ WHERE pp.PhaseID = @PhaseID";
                                 ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
                                 TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
                                 DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
-                                Status = reader.GetString(reader.GetOrdinal("Status"))
+                                Status = reader.GetString(reader.GetOrdinal("Status")),
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
                             });
                         }
                     }
@@ -1580,7 +1591,7 @@ WHERE pp.PhaseID = @PhaseID";
         FROM Phase p
         JOIN Grant_Phase gp ON p.PhaseID = gp.PhaseID
         WHERE gp.GrantID = @GrantID
-        ORDER BY p.PhasePosition, p.PhaseID";  // Order by position, then ID as fallback
+        ORDER BY p.PhasePosition, p.PhaseID";
 
                 using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
                 {
@@ -1600,7 +1611,9 @@ WHERE pp.PhaseID = @PhaseID";
                                 CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
                                 PhaseLeadID = reader.GetInt32(reader.GetOrdinal("PhaseLeadID")),
                                 PhasePosition = reader.IsDBNull(reader.GetOrdinal("PhasePosition")) ? 0 : reader.GetInt32(reader.GetOrdinal("PhasePosition")),
-                                GrantID = grantId
+                                GrantID = grantId,
+ 
+                                IsArchived = reader.IsDBNull(reader.GetOrdinal("IsArchived")) ? false : reader.GetBoolean(reader.GetOrdinal("IsArchived"))
                             });
                         }
                     }
@@ -1610,7 +1623,8 @@ WHERE pp.PhaseID = @PhaseID";
             return phases ?? new List<PhaseModel>();
         }
 
-        // Add this method to the DBClass if it doesn't already exist
+
+
 
         public static ProjectModel GetProjectById(int projectId)
         {
@@ -1998,6 +2012,236 @@ WHERE pp.PhaseID = @PhaseID";
             int rowsAffected = cmd.ExecuteNonQuery();
             return rowsAffected > 0;
         }
+        public static bool ArchiveProjectAndTasks(int projectId)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                // Archive tasks associated with the project
+                var archiveTasksQuery = "UPDATE Project_Task SET IsArchived = 1 WHERE ProjectID = @ProjectID";
+                using var archiveTasksCmd = new SqlCommand(archiveTasksQuery, connection, transaction);
+                archiveTasksCmd.Parameters.AddWithValue("@ProjectID", projectId);
+                archiveTasksCmd.ExecuteNonQuery();
+
+                // Archive the project
+                var archiveProjectQuery = "UPDATE Project SET IsArchived = 1 WHERE ProjectID = @ProjectID";
+                using var archiveProjectCmd = new SqlCommand(archiveProjectQuery, connection, transaction);
+                archiveProjectCmd.Parameters.AddWithValue("@ProjectID", projectId);
+                archiveProjectCmd.ExecuteNonQuery();
+
+                transaction.Commit();
+                return true;
+            }
+            catch (SqlException ex)
+            {
+                transaction.Rollback();
+                // Log the exception (ex) for debugging purposes
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
+        public static bool ArchiveTask(int taskId)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            var query = "UPDATE Project_Task SET IsArchived = 1 WHERE TaskID = @TaskID";
+
+            using var cmd = new SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@TaskID", taskId);
+
+            connection.Open();
+            int rowsAffected = cmd.ExecuteNonQuery();
+            return rowsAffected > 0;
+        }
+        public static bool ArchivePhase(int phaseId)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                // First check if the phase exists and get its current state
+                var checkQuery = "SELECT IsArchived FROM Phase WHERE PhaseID = @PhaseID";
+                using var checkCmd = new SqlCommand(checkQuery, connection, transaction);
+                checkCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                object currentValue = checkCmd.ExecuteScalar();
+
+                if (currentValue == null)
+                {
+                    Console.WriteLine($"Phase with ID {phaseId} doesn't exist");
+                    transaction.Rollback();
+                    return false;
+                }
+
+                Console.WriteLine($"Current IsArchived value for phase {phaseId}: {currentValue}");
+
+                // Archive tasks associated with projects in the phase
+                var archiveTasksQuery = @"
+            UPDATE Project_Task 
+            SET IsArchived = 1 
+            WHERE ProjectID IN (
+                SELECT ProjectID 
+                FROM Phase_Project 
+                WHERE PhaseID = @PhaseID
+            )";
+                using var archiveTasksCmd = new SqlCommand(archiveTasksQuery, connection, transaction);
+                archiveTasksCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                int tasksAffected = archiveTasksCmd.ExecuteNonQuery();
+                Console.WriteLine($"Tasks archived: {tasksAffected}");
+
+                // Archive projects associated with the phase
+                var archiveProjectsQuery = @"
+            UPDATE Project 
+            SET IsArchived = 1 
+            WHERE ProjectID IN (
+                SELECT ProjectID 
+                FROM Phase_Project 
+                WHERE PhaseID = @PhaseID
+            )";
+                using var archiveProjectsCmd = new SqlCommand(archiveProjectsQuery, connection, transaction);
+                archiveProjectsCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                int projectsAffected = archiveProjectsCmd.ExecuteNonQuery();
+                Console.WriteLine($"Projects archived: {projectsAffected}");
+
+                // Archive the phase
+                var archivePhaseQuery = "UPDATE Phase SET IsArchived = 1 WHERE PhaseID = @PhaseID";
+                using var archivePhaseCmd = new SqlCommand(archivePhaseQuery, connection, transaction);
+                archivePhaseCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                int phaseAffected = archivePhaseCmd.ExecuteNonQuery();
+                Console.WriteLine($"Phase affected rows: {phaseAffected}");
+
+                if (phaseAffected == 0)
+                {
+                    throw new Exception($"Failed to update IsArchived for phase {phaseId}");
+                }
+
+                transaction.Commit();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                Console.WriteLine($"Exception in ArchivePhase: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+        public static bool ArchiveGrant(int grantId)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                // Get all phases associated with this grant
+                var phasesQuery = @"
+            SELECT PhaseID 
+            FROM Grant_Phase 
+            WHERE GrantID = @GrantID";
+
+                List<int> phaseIds = new List<int>();
+
+                using (var phasesCmd = new SqlCommand(phasesQuery, connection, transaction))
+                {
+                    phasesCmd.Parameters.AddWithValue("@GrantID", grantId);
+
+                    using var reader = phasesCmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        phaseIds.Add(reader.GetInt32(0));
+                    }
+                }
+
+                // Archive all tasks associated with projects in all phases
+                var archiveTasksQuery = @"
+            UPDATE Project_Task 
+            SET IsArchived = 1 
+            WHERE ProjectID IN (
+                SELECT p.ProjectID 
+                FROM Project p
+                JOIN Phase_Project pp ON p.ProjectID = pp.ProjectID
+                WHERE pp.PhaseID IN (
+                    SELECT PhaseID 
+                    FROM Grant_Phase 
+                    WHERE GrantID = @GrantID
+                )
+            )";
+
+                using (var archiveTasksCmd = new SqlCommand(archiveTasksQuery, connection, transaction))
+                {
+                    archiveTasksCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    archiveTasksCmd.ExecuteNonQuery();
+                }
+
+                // Archive projects associated with all phases
+                var archiveProjectsQuery = @"
+            UPDATE Project 
+            SET IsArchived = 1 
+            WHERE ProjectID IN (
+                SELECT pp.ProjectID 
+                FROM Phase_Project pp
+                JOIN Grant_Phase gp ON pp.PhaseID = gp.PhaseID
+                WHERE gp.GrantID = @GrantID
+            )";
+
+                using (var archiveProjectsCmd = new SqlCommand(archiveProjectsQuery, connection, transaction))
+                {
+                    archiveProjectsCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    archiveProjectsCmd.ExecuteNonQuery();
+                }
+
+                // Archive all phases associated with the grant
+                var archivePhaseQuery = @"
+            UPDATE Phase 
+            SET IsArchived = 1 
+            WHERE PhaseID IN (
+                SELECT PhaseID 
+                FROM Grant_Phase 
+                WHERE GrantID = @GrantID
+            )";
+
+                using (var archivePhaseCmd = new SqlCommand(archivePhaseQuery, connection, transaction))
+                {
+                    archivePhaseCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    archivePhaseCmd.ExecuteNonQuery();
+                }
+
+                // Finally, archive the grant itself
+                var archiveGrantQuery = "UPDATE Grants SET IsArchived = 1 WHERE GrantID = @GrantID";
+                using (var archiveGrantCmd = new SqlCommand(archiveGrantQuery, connection, transaction))
+                {
+                    archiveGrantCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    int rowsAffected = archiveGrantCmd.ExecuteNonQuery();
+
+                    if (rowsAffected == 0)
+                    {
+                        // Grant not found or already archived
+                        transaction.Rollback();
+                        return false;
+                    }
+                }
+
+                transaction.Commit();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                Console.WriteLine($"Error archiving grant: {ex.Message}");
+                return false;
+            }
+        }
+
+
+
+
+
+
+
 
 
 

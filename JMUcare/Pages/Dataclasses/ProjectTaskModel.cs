@@ -9,6 +9,8 @@
         public string Status { get; set; }
         public int PhasePosition { get; set; }
 
+        public bool IsArchived { get; set; }
+
         public List<DbUserModel> AssignedUsers { get; set; } = new List<DbUserModel>();
     }
 }

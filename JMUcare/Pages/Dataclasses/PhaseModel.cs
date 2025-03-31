@@ -10,6 +10,7 @@ namespace JMUcare.Pages.Dataclasses
         public int PhaseLeadID { get; set; }
 
         public int PhasePosition { get; set; }
+        public bool IsArchived { get; set; }
 
         public int GrantID { get; set; }
 

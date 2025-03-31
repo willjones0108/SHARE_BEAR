@@ -72,7 +72,7 @@ namespace JMUcare.Pages.Grants
                 // Get the tasks associated with each project
                 foreach (var project in projects)
                 {
-                    ProjectTasks[project.ProjectID] = DBClass.GetTasksByProjectId(project.ProjectID);
+                    ProjectTasks[project.ProjectID] = DBClass.GetTasksByProjectId(project.ProjectID, CurrentUserID);
                 }
             }
 
@@ -91,6 +91,19 @@ namespace JMUcare.Pages.Grants
 
             return RedirectToPage(new { id = Id });
         }
+        public IActionResult OnPostArchivePhase(int phaseId)
+{
+    if (DBClass.ArchivePhase(phaseId))
+    {
+        TempData["SuccessMessage"] = "Phase and its associated projects and tasks archived successfully.";
+    }
+    else
+    {
+        TempData["ErrorMessage"] = "An error occurred while archiving the phase.";
+    }
+
+    return RedirectToPage(new { id = Id });
+}
 
 
     }
