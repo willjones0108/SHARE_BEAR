@@ -1986,6 +1986,18 @@ WHERE pp.PhaseID = @PhaseID";
             connection.Open();
             cmd.ExecuteNonQuery();
         }
+        public static bool DeleteTask(int taskId)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            var query = "DELETE FROM Project_Task WHERE TaskID = @TaskID";
+
+            using var cmd = new SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@TaskID", taskId);
+
+            connection.Open();
+            int rowsAffected = cmd.ExecuteNonQuery();
+            return rowsAffected > 0;
+        }
 
 
 

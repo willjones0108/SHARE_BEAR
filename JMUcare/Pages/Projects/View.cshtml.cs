@@ -189,5 +189,18 @@ namespace JMUcare.Pages.Projects
 
             return false;
         }
+        public IActionResult OnPostDeleteTask(int taskId)
+        {
+            if (DBClass.DeleteTask(taskId))
+            {
+                TempData["SuccessMessage"] = "Task deleted successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "An error occurred while deleting the task.";
+            }
+
+            return RedirectToPage(new { id = Id });
+        }
     }
 }
