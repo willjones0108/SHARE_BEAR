@@ -1965,6 +1965,28 @@ WHERE pp.PhaseID = @PhaseID";
 
             return null;
         }
+        public static void UpdateProject(ProjectModel project)
+        {
+            using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
+            var query = @"
+        UPDATE Project SET
+            Title = @Title,
+            Project_Description = @Project_Description,
+            TrackingStatus = @TrackingStatus,
+            ProjectType = @ProjectType
+        WHERE ProjectID = @ProjectID";
+
+            using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@ProjectID", project.ProjectID);
+            cmd.Parameters.AddWithValue("@Title", project.Title);
+            cmd.Parameters.AddWithValue("@Project_Description", project.Project_Description ?? "");
+            cmd.Parameters.AddWithValue("@TrackingStatus", project.TrackingStatus);
+            cmd.Parameters.AddWithValue("@ProjectType", project.ProjectType);
+
+            connection.Open();
+            cmd.ExecuteNonQuery();
+        }
+
 
 
 

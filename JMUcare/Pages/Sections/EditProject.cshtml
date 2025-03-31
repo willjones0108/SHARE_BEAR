@@ -1,0 +1,58 @@
+﻿@page "{id:int}"
+@model JMUcare.Pages.Projects.EditProjectModel
+@{
+    ViewData["Title"] = "Edit Project";
+}
+
+<h2>Edit Project</h2>
+
+@if (Model.HasEditPermissionForProject(Model.CurrentUserID, Model.Project.ProjectID))
+{
+    <form method="post">
+        <input type="hidden" asp-for="Project.ProjectID" />
+
+        <div class="mb-3">
+            <label asp-for="Project.Title" class="form-label">Title</label>
+            <input asp-for="Project.Title" class="form-control" />
+            <span asp-validation-for="Project.Title" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Project.Project_Description" class="form-label">Description</label>
+            <textarea asp-for="Project.Project_Description" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Project.Project_Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Project.TrackingStatus" class="form-label">Tracking Status</label>
+            <select asp-for="Project.TrackingStatus" class="form-select">
+                <option value="Not Started">Not Started</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Blocked">Blocked</option>
+            </select>
+            <span asp-validation-for="Project.TrackingStatus" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Project.ProjectType" class="form-label">Project Type</label>
+            <input asp-for="Project.ProjectType" class="form-control" />
+            <span asp-validation-for="Project.ProjectType" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a asp-page="/Projects/View" asp-route-id="@Model.Project.ProjectID" class="btn btn-secondary">Cancel</a>
+    </form>
+}
+else
+{
+    <div class="alert alert-danger">
+        You do not have permission to edit this project.
+    </div>
+}
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
