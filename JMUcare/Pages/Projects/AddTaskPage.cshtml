@@ -1,0 +1,81 @@
+﻿@page
+@model JMUcare.Pages.Projects.AddTaskPageModel
+@{
+    ViewData["Title"] = "Add Task";
+}
+
+<h2>Add Task</h2>
+
+<form method="post">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Task.ProjectID" class="form-label">Project</label>
+                        @if (Model.IsProjectPreselected && Model.SelectedProject != null)
+                        {
+                            <input type="hidden" asp-for="Task.ProjectID" />
+                            <input type="text" class="form-control" disabled value="@Model.SelectedProject.Title" />
+                        }
+                        else
+                        {
+                            <select asp-for="Task.ProjectID" class="form-select" required>
+                                <option value="">-- Select Project --</option>
+                                @foreach (var project in Model.Projects)
+                                {
+                                    <option value="@project.ProjectID">@project.Title</option>
+                                }
+                            </select>
+                        }
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Task.TaskContent" class="form-label">Task Description</label>
+                        <textarea asp-for="Task.TaskContent" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Task.DueDate" class="form-label">Due Date</label>
+                        <input type="date" asp-for="Task.DueDate" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Task.Status" class="form-label">Status</label>
+                        <select asp-for="Task.Status" class="form-select" required>
+                            <option value="Not Started" selected>Not Started</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">Next</button>
+                        @if (Model.IsProjectPreselected)
+                        {
+                            <a asp-page="/Projects/View" asp-route-id="@Model.Task.ProjectID" class="btn btn-secondary">Back to Project</a>
+                        }
+                        else
+                        {
+                            <a asp-page="/Projects/Index" class="btn btn-secondary">Cancel</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="alert alert-info">
+            <small>
+                <i class="bi bi-info-circle"></i>
+                You can assign users to this task once it has been created.
+            </small>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

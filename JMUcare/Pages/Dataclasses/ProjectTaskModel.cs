@@ -7,5 +7,8 @@
         public string TaskContent { get; set; }
         public DateTime DueDate { get; set; }
         public string Status { get; set; }
+        public int PhasePosition { get; set; }
+
+        public List<DbUserModel> AssignedUsers { get; set; } = new List<DbUserModel>();
     }
 }

@@ -1166,8 +1166,8 @@ WHERE pp.PhaseID = @PhaseID";
             using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
             {
                 string sqlQuery = @"
-        INSERT INTO Project_Task (ProjectID, TaskContent, DueDate, Status)
-        VALUES (@ProjectID, @TaskContent, @DueDate, @Status)";
+            INSERT INTO Project_Task (ProjectID, TaskContent, DueDate, Status)
+            VALUES (@ProjectID, @TaskContent, @DueDate, @Status)";
 
                 using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
                 {
@@ -1208,8 +1208,39 @@ WHERE pp.PhaseID = @PhaseID";
                                 ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
                                 TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
                                 DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
-                                Status = reader.GetString(reader.GetOrdinal("Status"))
+                                Status = reader.GetString(reader.GetOrdinal("Status")),
+                                AssignedUsers = new List<DbUserModel>() // Initialize empty list
                             });
+                        }
+                    }
+                }
+
+                // For each task, get the assigned users
+                foreach (var task in tasks)
+                {
+                    string userQuery = @"
+            SELECT u.UserID, u.FirstName, u.LastName, u.Email, ptu.Role
+            FROM DBUser u
+            JOIN Project_Task_User ptu ON u.UserID = ptu.UserID
+            WHERE ptu.TaskID = @TaskID";
+
+                    using (SqlCommand userCmd = new SqlCommand(userQuery, connection))
+                    {
+                        userCmd.Parameters.AddWithValue("@TaskID", task.TaskID);
+
+                        using (SqlDataReader userReader = userCmd.ExecuteReader())
+                        {
+                            while (userReader.Read())
+                            {
+                                task.AssignedUsers.Add(new DbUserModel
+                                {
+                                    UserID = userReader.GetInt32(userReader.GetOrdinal("UserID")),
+                                    FirstName = userReader.GetString(userReader.GetOrdinal("FirstName")),
+                                    LastName = userReader.GetString(userReader.GetOrdinal("LastName")),
+                                    Email = userReader.GetString(userReader.GetOrdinal("Email"))
+                                    // Add other properties as needed
+                                });
+                            }
                         }
                     }
                 }
@@ -1217,6 +1248,7 @@ WHERE pp.PhaseID = @PhaseID";
 
             return tasks ?? new List<ProjectTaskModel>();
         }
+
 
         public static List<ProjectTaskModel> GetTasksByProjectId(int projectId, int userId)
         {
@@ -1728,6 +1760,37 @@ WHERE pp.PhaseID = @PhaseID";
                 return false;
             }
         }
+        public static bool DeleteTaskAndUsers(int taskId)
+        {
+            using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
+            connection.Open();
+
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                // First delete the task user assignments
+                var deleteTaskUsersQuery = "DELETE FROM Project_Task_User WHERE TaskID = @TaskID";
+                using var deleteTaskUsersCmd = new System.Data.SqlClient.SqlCommand(deleteTaskUsersQuery, connection, transaction);
+                deleteTaskUsersCmd.Parameters.AddWithValue("@TaskID", taskId);
+                deleteTaskUsersCmd.ExecuteNonQuery();
+
+                // Then delete the task itself
+                var deleteTaskQuery = "DELETE FROM Project_Task WHERE TaskID = @TaskID";
+                using var deleteTaskCmd = new System.Data.SqlClient.SqlCommand(deleteTaskQuery, connection, transaction);
+                deleteTaskCmd.Parameters.AddWithValue("@TaskID", taskId);
+                deleteTaskCmd.ExecuteNonQuery();
+
+                transaction.Commit();
+                return true;
+            }
+            catch
+            {
+                transaction.Rollback();
+                return false;
+            }
+        }
+
 
 
     }

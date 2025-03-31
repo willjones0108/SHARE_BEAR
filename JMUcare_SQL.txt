@@ -94,6 +94,7 @@ CREATE TABLE Project_Task (
     TaskContent TEXT,
     DueDate DATE,
     Status VARCHAR(50),
+    TaskPosition INT,
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
 );
 

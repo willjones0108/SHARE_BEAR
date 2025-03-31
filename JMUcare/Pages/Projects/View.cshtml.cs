@@ -20,6 +20,7 @@ namespace JMUcare.Pages.Projects
         public string GrantName { get; set; }
         public bool CanEditProject { get; set; }
         public bool CanAddTask { get; set; }
+        public List<DbUserModel> Users { get; set; }
 
         public int CurrentUserID => HttpContext.Session.GetInt32("CurrentUserID") ?? 0;
 
@@ -61,6 +62,9 @@ namespace JMUcare.Pages.Projects
                 CanEditProject = HasEditPermission(CurrentUserID, Id);
                 CanAddTask = CanEditProject; // Same permission for adding tasks as editing project
 
+                // Get all users for task assignment
+                Users = DBClass.GetUsers();
+
                 return Page();
             }
             catch (Exception ex)
@@ -87,10 +91,10 @@ namespace JMUcare.Pages.Projects
 
             using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
             cmd.Parameters.AddWithValue("@ProjectID", projectId);
-            
+
             connection.Open();
             using var reader = cmd.ExecuteReader();
-            
+
             if (reader.Read())
             {
                 return new ProjectModel
@@ -106,7 +110,7 @@ namespace JMUcare.Pages.Projects
                     Project_Description = reader.GetString(reader.GetOrdinal("Project_Description"))
                 };
             }
-            
+
             return null;
         }
 
@@ -151,7 +155,6 @@ namespace JMUcare.Pages.Projects
             }
         }
 
-
         private bool HasAccessToProject(int userId, int projectId)
         {
             // Check if user is admin
@@ -159,14 +162,14 @@ namespace JMUcare.Pages.Projects
             {
                 return true;
             }
-            
+
             // Check project-level permission
             string projectAccess = DBClass.GetUserAccessLevelForProject(userId, projectId);
             if (projectAccess == "Edit" || projectAccess == "Read")
             {
                 return true;
             }
-            
+
             // Check phase-level permission
             if (PhaseId > 0)
             {
@@ -176,7 +179,7 @@ namespace JMUcare.Pages.Projects
                     return true;
                 }
             }
-            
+
             // Check grant-level permission
             if (GrantId.HasValue)
             {
@@ -186,7 +189,7 @@ namespace JMUcare.Pages.Projects
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -197,14 +200,14 @@ namespace JMUcare.Pages.Projects
             {
                 return true;
             }
-            
+
             // Check project-level edit permission
             string projectAccess = DBClass.GetUserAccessLevelForProject(userId, projectId);
             if (projectAccess == "Edit")
             {
                 return true;
             }
-            
+
             // Check phase-level edit permission
             if (PhaseId > 0)
             {
@@ -214,7 +217,7 @@ namespace JMUcare.Pages.Projects
                     return true;
                 }
             }
-            
+
             // Check grant-level edit permission
             if (GrantId.HasValue)
             {
@@ -224,7 +227,7 @@ namespace JMUcare.Pages.Projects
                     return true;
                 }
             }
-            
+
             return false;
         }
     }

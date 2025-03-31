@@ -140,10 +140,11 @@
                         <h4 class="mb-0">Tasks</h4>
                         @if (Model.CanAddTask)
                         {
-                            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                            <a asp-page="/Projects/AddTaskPage" asp-route-projectId="@Model.Id" class="btn btn-light btn-sm">
                                 <i class="bi bi-plus-circle"></i> Add Task
-                            </button>
+                            </a>
                         }
+
                     </div>
                     <div class="card-body">
                         @if (Model.Tasks != null && Model.Tasks.Any())
@@ -155,6 +156,7 @@
                                             <th>Task</th>
                                             <th>Due Date</th>
                                             <th>Status</th>
+                                            <th>Assigned Users</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -173,17 +175,17 @@
                                                     </span>
                                                 </td>
                                                 <td>
+                                                    @foreach (var user in task.AssignedUsers)
+                                                    {
+                                                        <span class="badge bg-secondary">@user.FirstName @user.LastName</span>
+                                                    }
+                                                </td>
+                                                <td>
                                                     @if (Model.CanEditProject)
                                                     {
-                                                        <button type="button" class="btn btn-sm btn-outline-primary"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#editTaskModal"
-                                                                data-task-id="@task.TaskID"
-                                                                data-task-content="@task.TaskContent"
-                                                                data-task-duedate="@task.DueDate.ToString("yyyy-MM-dd")"
-                                                                data-task-status="@task.Status">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </button>
+                                                        <a asp-page="/Projects/EditTask" asp-route-id="@task.TaskID" class="btn btn-sm btn-outline-primary">
+                                                            <i class="bi bi-pencil"></i> Edit
+                                                        </a>
                                                     }
                                                 </td>
                                             </tr>
@@ -224,20 +226,13 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <!-- Display current project (non-editable) -->
-                        <div class="mb-3">
-                            <label for="ProjectDisplay" class="form-label">Project</label>
-                            <select class="form-select" disabled>
-                                <option selected>@Model.Project.Title</option>
-                            </select>
-                        </div>
                         <div class="mb-3">
                             <label for="TaskContent" class="form-label">Task Description</label>
                             <textarea class="form-control" id="TaskContent" name="TaskContent" rows="3" required></textarea>
                         </div>
                         <div class="mb-3">
                             <label for="DueDate" class="form-label">Due Date</label>
-                            <input type="date" class="form-control" id="DueDate" name="DueDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                            <input type="date" class="form-control" id="DueDate" name="DueDate" required />
                         </div>
                         <div class="mb-3">
                             <label for="Status" class="form-label">Status</label>
@@ -248,85 +243,23 @@
                                 <option value="Blocked">Blocked</option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label for="Users" class="form-label">Assign Users</label>
+                            <select class="form-select" id="Users" name="Users" multiple required>
+                                @foreach (var user in Model.Users)
+                                {
+                                    <option value="@user.UserID">@user.FirstName @user.LastName</option>
+                                }
+                            </select>
+                        </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-primary">Add Task</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-
-    <!-- Edit Task Modal -->
-    <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="post" asp-page="/Projects/EditTask">
-                    <input type="hidden" name="ProjectID" value="@Model.Id" />
-                    <input type="hidden" id="editTaskId" name="TaskID" value="" />
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Display current project (non-editable) -->
-                        <div class="mb-3">
-                            <label for="ProjectDisplayEdit" class="form-label">Project</label>
-                            <select class="form-select" disabled>
-                                <option selected>@Model.Project.Title</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editTaskContent" class="form-label">Task Description</label>
-                            <textarea class="form-control" id="editTaskContent" name="TaskContent" rows="3" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editDueDate" class="form-label">Due Date</label>
-                            <input type="date" class="form-control" id="editDueDate" name="DueDate" required />
-                        </div>
-                        <div class="mb-3">
-                            <label for="editStatus" class="form-label">Status</label>
-                            <select class="form-select" id="editStatus" name="Status" required>
-                                <option value="Not Started">Not Started</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Blocked">Blocked</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Task</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 }
 
-@section Scripts {
-    <script>
-        // Edit task modal data binding
-        const editTaskModal = document.getElementById('editTaskModal');
-        if (editTaskModal) {
-            editTaskModal.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget;
-                const taskId = button.getAttribute('data-task-id');
-                const taskContent = button.getAttribute('data-task-content');
-                const taskDueDate = button.getAttribute('data-task-duedate');
-                const taskStatus = button.getAttribute('data-task-status');
-
-                const modalTaskId = this.querySelector('#editTaskId');
-                const modalTaskContent = this.querySelector('#editTaskContent');
-                const modalDueDate = this.querySelector('#editDueDate');
-                const modalStatus = this.querySelector('#editStatus');
-
-                modalTaskId.value = taskId;
-                modalTaskContent.value = taskContent;
-                modalDueDate.value = taskDueDate;
-                modalStatus.value = taskStatus;
-            });
-        }
-    </script>
-}
