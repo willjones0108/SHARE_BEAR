@@ -55,7 +55,7 @@ namespace JMUcare.Pages.Projects
                 Tasks = new List<ProjectTaskModel>();
 
                 // Get related data
-                Tasks = DBClass.GetTasksByProjectId(Id) ?? new List<ProjectTaskModel>();
+                Tasks = DBClass.GetTasksByProjectId(Id, CurrentUserID) ?? new List<ProjectTaskModel>();
                 GetRelatedInfo();
 
                 // Set permission flags
@@ -198,6 +198,19 @@ namespace JMUcare.Pages.Projects
             else
             {
                 TempData["ErrorMessage"] = "An error occurred while deleting the task.";
+            }
+
+            return RedirectToPage(new { id = Id });
+        }
+        public IActionResult OnPostArchiveTask(int taskId)
+        {
+            if (DBClass.ArchiveTask(taskId))
+            {
+                TempData["SuccessMessage"] = "Task archived successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "An error occurred while archiving the task.";
             }
 
             return RedirectToPage(new { id = Id });

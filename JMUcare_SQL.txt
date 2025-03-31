@@ -95,9 +95,9 @@ CREATE TABLE Project_Task (
     DueDate DATE,
     Status VARCHAR(50),
     TaskPosition INT,
+    IsArchived BIT DEFAULT 0,
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
 );
-ALTER TABLE Project_Task ADD IsArchived BIT DEFAULT 0;
 
 CREATE TABLE Project_Task_User (
     ProjectTaskUserID INT PRIMARY KEY IDENTITY(1,1),
