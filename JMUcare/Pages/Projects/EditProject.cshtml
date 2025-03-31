@@ -1,5 +1,5 @@
 ﻿@page "{id:int}"
-@model JMUcare.Pages.Sections.EditProjectModel
+@model JMUcare.Pages.Projects.EditProjectModel
 @{
     ViewData["Title"] = "Edit Project";
 }
@@ -52,5 +52,7 @@ else
 }
 
 @section Scripts {
-    @await Html.PartialAsync("_ValidationScriptsPartial")
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

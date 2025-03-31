@@ -188,7 +188,7 @@
                                                                         string projectAccessLevel = DBClass.GetUserAccessLevelForProject(Model.CurrentUserID, project.ProjectID);
                                                                         if (projectAccessLevel == "Edit")
                                                                         {
-                                                                            <a asp-page="/Projects/Edit" asp-route-id="@project.ProjectID" class="btn btn-sm btn-outline-success">
+                                                                            <a asp-page="/Projects/EditProject" asp-route-id="@project.ProjectID" class="btn btn-sm btn-outline-success">
                                                                                 <i class="bi bi-pencil"></i>
                                                                             </a>
                                                                         }

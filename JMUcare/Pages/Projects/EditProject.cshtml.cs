@@ -1,11 +1,8 @@
+using JMUcare.Pages.DBclass;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using JMUcare.Pages.Dataclasses;
-using JMUcare.Pages.DBclass;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Http;
 
-namespace JMUcare.Pages.Sections
+namespace JMUcare.Pages.Projects
 {
     public class EditProjectModel : PageModel
     {
