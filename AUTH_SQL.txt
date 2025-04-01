@@ -3,3 +3,10 @@ CREATE TABLE dbo.HashedCredentials (
     Username NVARCHAR(50) NOT NULL,
     Password NVARCHAR(MAX) NOT NULL
 );
+
+INSERT INTO HashedCredentials (Username, Password)
+VALUES ('admin', '1000:fF2zbk9sOvF/RDj8S2hVZlgNmNYUMUsz:jJv9Og+6vJq2E+vZ91av8XQil4I=');
+INSERT INTO HashedCredentials (Username, Password) VALUES ('admin', '1000:fF2zbk9sOvF/RDj8S2hVZlgNmNYUMUsz:jJv9Og+6vJq2E+vZ91av8XQil4I=');
+INSERT INTO HashedCredentials (Username, Password) VALUES ('user1', '1000:fF2zbk9sOvF/RDj8S2hVZlgNmNYUMUsz:jJv9Og+6vJq2E+vZ91av8XQil4I=');
+INSERT INTO HashedCredentials (Username, Password) VALUES ('user2', '1000:fF2zbk9sOvF/RDj8S2hVZlgNmNYUMUsz:jJv9Og+6vJq2E+vZ91av8XQil4I=');
+INSERT INTO HashedCredentials (Username, Password) VALUES ('user3', '1000:fF2zbk9sOvF/RDj8S2hVZlgNmNYUMUsz:jJv9Og+6vJq2E+vZ91av8XQil4I=');

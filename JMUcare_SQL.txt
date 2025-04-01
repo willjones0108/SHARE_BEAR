@@ -385,4 +385,80 @@ INSERT INTO UserRole (UserRoleID, RoleName, Description) VALUES
 (4, 'Business Partner', 'External user with limited access to business-related data'),
 (5, 'Employee', 'Internal user with role-based access to projects and data');
 
+INSERT INTO DBUser (FirstName, LastName, Email, Username, UserRoleID, UpdatedAt, IsArchived) VALUES
+('Admin', 'User', 'admin@example.com', 'admin', 1, GETDATE(), 0),
+('User1', 'Example', 'user1@example.com', 'user1', 2, GETDATE(), 0),
+('User2', 'Example', 'user2@example.com', 'user2', 3, GETDATE(), 0),
+('User3', 'Example', 'user3@example.com', 'user3', 4, GETDATE(), 0);
+
+-- Insert initial data into Grants
+INSERT INTO Grants (GrantTitle, Category, FundingSource, Amount, Status, CreatedBy, GrantLeadID, Description, TrackingStatus, IsArchived) VALUES
+('Grant 1', 'Category 1', 'Source 1', 10000.00, 'Active', 1, 1, 'Description 1', 'Tracking 1', 0),
+('Grant 2', 'Category 2', 'Source 2', 20000.00, 'Active', 2, 2, 'Description 2', 'Tracking 2', 0);
+
+-- Insert initial data into Project
+INSERT INTO Project (Title, CreatedBy, GrantID, ProjectType, TrackingStatus, IsArchived, Project_Description, ProjectPosition) VALUES
+('Project 1', 1, 1, 'Type 1', 'Tracking 1', 0, 'Description 1', 1),
+('Project 2', 2, 2, 'Type 2', 'Tracking 2', 0, 'Description 2', 2);
+
+-- Insert initial data into Project_Task
+INSERT INTO Project_Task (ProjectID, TaskContent, DueDate, Status, TaskPosition, IsArchived) VALUES
+(1, 'Task 1', '2023-12-31', 'Pending', 1, 0),
+(2, 'Task 2', '2023-12-31', 'Pending', 2, 0);
+
+-- Insert initial data into User_Permissions
+INSERT INTO User_Permissions (PermissionID, UserID, Permissions, AccessLevel) VALUES
+(1, 1, 'Grant1,Project1', 'Edit'),
+(2, 2, 'Grant2,Project2', 'View');
+
+-- Insert initial data into Grant_Permission
+INSERT INTO Grant_Permission (GrantID, UserID, AccessLevel) VALUES
+(1, 1, 'Edit'),
+(2, 2, 'View'),
+(1, 2, 'View'),
+(2, 3, 'Edit');
+
+-- Insert initial data into Project_Permission
+INSERT INTO Project_Permission (ProjectID, UserID, AccessLevel) VALUES
+(1, 1, 'Edit'),
+(2, 2, 'View'),
+(1, 2, 'View'),
+(2, 3, 'Edit');
+
+-- Insert initial data into Phase
+INSERT INTO Phase (PhaseName, Description, Status, CreatedBy, PhaseLeadID, IsArchived, PhasePosition) VALUES
+('Phase 1', 'Description 1', 'Active', 1, 1, 0, 1),
+('Phase 2', 'Description 2', 'Active', 2, 2, 0, 2);
+
+-- Insert initial data into Grant_Phase
+INSERT INTO Grant_Phase (GrantID, PhaseID) VALUES
+(1, 1),
+(2, 2);
+
+-- Insert initial data into Phase_Project
+INSERT INTO Phase_Project (PhaseID, ProjectID) VALUES
+(1, 1),
+(2, 2);
+
+-- Insert initial data into Phase_Permission
+INSERT INTO Phase_Permission (PhaseID, UserID, AccessLevel) VALUES
+(1, 1, 'Edit'),
+(2, 2, 'View'),
+(1, 2, 'View'),
+(2, 3, 'Edit');
+
+-- Insert initial data into Grant_User
+INSERT INTO Grant_User (GrantUserID, GrantID, UserID, AccessLevel) VALUES
+(1, 1, 1, 'Edit'),
+(2, 2, 2, 'View'),
+(3, 1, 2, 'View'),
+(4, 2, 3, 'Edit');
+
+-- Insert initial data into Project_User
+INSERT INTO Project_User (ProjectUserID, ProjectID, UserID, AccessLevel) VALUES
+(1, 1, 1, 'Edit'),
+(2, 2, 2, 'View'),
+(3, 1, 2, 'View'),
+(4, 2, 3, 'Edit');
+
 
