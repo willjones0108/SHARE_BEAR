@@ -30,22 +30,22 @@ namespace JMUcare.Pages.DBclass
         //Will's Connection Below
 
 
-        public static readonly string JMUcareDBConnString =
-            "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+        //public static readonly string JMUcareDBConnString =
+            //"Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
-        private static readonly string? AuthConnString =
-            "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+        //private static readonly string? AuthConnString =
+           // "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
 
 
 
 
             //Original BELOW
 
-       //private static readonly string JMUcareDBConnString =
-            //"Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+       private static readonly string JMUcareDBConnString =
+            "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
 
-       // private static readonly string? AuthConnString =
-           // "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+       private static readonly string? AuthConnString =
+           "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
 
             public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)

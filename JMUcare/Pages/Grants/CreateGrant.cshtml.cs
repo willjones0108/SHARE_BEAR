@@ -55,6 +55,7 @@ namespace JMUcare.Pages.Grants
                 return RedirectToPage("/Account/Login");
             }
 
+
             // Check if user is an admin
             if (!DBClass.IsUserAdmin(CurrentUserID))
             {

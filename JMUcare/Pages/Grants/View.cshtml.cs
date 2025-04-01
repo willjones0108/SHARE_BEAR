@@ -103,6 +103,19 @@ namespace JMUcare.Pages.Grants
 
     return RedirectToPage(new { id = Id });
 }
+        public IActionResult OnPostArchiveGrant(int grantId)
+        {
+            if (DBClass.ArchiveGrant(grantId))
+            {
+                TempData["SuccessMessage"] = "Grant and its associated phases, projects, and tasks archived successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "An error occurred while archiving the grant.";
+            }
+
+            return RedirectToPage(new { id = grantId });
+        }
 
 
     }
