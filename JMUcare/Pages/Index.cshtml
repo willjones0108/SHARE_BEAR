@@ -146,11 +146,15 @@
                             {
                                 <li class="list-group-item">
                                     <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@task.TaskContent</h5>
+                                        <h5 class="mb-1">
+                                            <a asp-page="/Projects/View" asp-route-id="@task.ProjectID" class="text-decoration-none">
+                                                @task.TaskContent
+                                            </a>
+                                        </h5>
                                         <span class="badge @(task.Status == "Completed" ? "bg-success" :
-                                                         task.Status == "In Progress" ? "bg-primary" :
-                                                         task.Status == "Not Started" ? "bg-secondary" :
-                                                         "bg-warning")">
+                                                     task.Status == "In Progress" ? "bg-primary" :
+                                                     task.Status == "Not Started" ? "bg-secondary" :
+                                                     "bg-warning")">
                                             @task.Status
                                         </span>
                                     </div>
@@ -164,7 +168,7 @@
                 </div>
             </div>
         }
-    </div>
+
 
     <!-- Quick Actions Section -->
     <div class="row mb-4">

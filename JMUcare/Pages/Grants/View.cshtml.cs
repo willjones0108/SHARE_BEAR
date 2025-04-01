@@ -35,12 +35,11 @@ namespace JMUcare.Pages.Grants
                 return RedirectToPage("/Account/Login");
             }
 
-            // Get the grant details
             Grant = DBClass.GetGrantById(Id);
 
             if (Grant == null)
             {
-                return NotFound();
+                return RedirectToPage("/Index"); // Redirect to the dashboard page
             }
 
             // Check if user has permission to view this grant
@@ -55,7 +54,6 @@ namespace JMUcare.Pages.Grants
             CanAddPhase = accessLevel == "Edit" || DBClass.IsUserAdmin(CurrentUserID);
 
             // Check if the user can add a project
-            // Same permission level as adding a phase - admins, grant editors with "Edit" access
             CanAddProject = CanAddPhase || DBClass.IsGrantEditor(CurrentUserID);
 
             // Get the phases associated with the grant
@@ -78,6 +76,7 @@ namespace JMUcare.Pages.Grants
 
             return Page();
         }
+
         public IActionResult OnPostDeleteTask(int taskId)
         {
             if (DBClass.DeleteTask(taskId))

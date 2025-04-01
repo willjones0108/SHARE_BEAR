@@ -189,6 +189,27 @@ namespace JMUcare.Pages.Projects
 
             return false;
         }
+        public IActionResult OnPostArchiveGrant(int grantId)
+        {
+            // Check if user has permission
+            string accessLevel = DBClass.GetUserAccessLevelForGrant(CurrentUserID, grantId);
+            if (accessLevel != "Edit" && !DBClass.IsUserAdmin(CurrentUserID))
+            {
+                return RedirectToPage("/Shared/AccessDenied");
+            }
+
+            if (DBClass.ArchiveGrant(grantId))
+            {
+                TempData["SuccessMessage"] = "Grant and its associated phases, projects, and tasks archived successfully.";
+                return RedirectToPage("/Grants/Index");
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "An error occurred while archiving the grant.";
+                return RedirectToPage(new { id = grantId });
+            }
+        }
+
         public IActionResult OnPostDeleteTask(int taskId)
         {
             if (DBClass.DeleteTask(taskId))

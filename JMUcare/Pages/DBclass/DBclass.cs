@@ -30,22 +30,22 @@ namespace JMUcare.Pages.DBclass
         //Will's Connection Below
 
 
-       // public static readonly string JMUcareDBConnString =
-            //"Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+        public static readonly string JMUcareDBConnString =
+            "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
-       // private static readonly string? AuthConnString =
-          //  "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+        private static readonly string? AuthConnString =
+            "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
 
 
 
 
             //Original BELOW
 
-       private static readonly string JMUcareDBConnString =
-            "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+       //private static readonly string JMUcareDBConnString =
+            //"Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
 
-        private static readonly string? AuthConnString =
-            "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+       // private static readonly string? AuthConnString =
+           // "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
 
             public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
@@ -120,25 +120,19 @@ namespace JMUcare.Pages.DBclass
         }
         public static void CreateHashedUser(string Username, string Password)
         {
-            string loginQuery =
-                "INSERT INTO HashedCredentials (Username,Password) values (@Username, @Password)";
+            string loginQuery = "INSERT INTO HashedCredentials (Username,Password) values (@Username, @Password)";
 
-            SqlCommand cmdLogin = new SqlCommand();
-            cmdLogin.Connection = JMUcareDBConnection;
-            cmdLogin.Connection.ConnectionString = AuthConnString;
+            using (SqlConnection connection = new SqlConnection(AuthConnString))
+            {
+                SqlCommand cmdLogin = new SqlCommand(loginQuery, connection);
+                cmdLogin.Parameters.AddWithValue("@Username", Username);
+                cmdLogin.Parameters.AddWithValue("@Password", HashPassword(Password));
 
-            cmdLogin.CommandText = loginQuery;
-            cmdLogin.Parameters.AddWithValue("@Username", Username);
-            cmdLogin.Parameters.AddWithValue("@Password", HashPassword(Password));
-
-            cmdLogin.Connection.Open();
-
-            // ExecuteScalar() returns back data type Object
-            // Use a typecast to convert this to an int.
-            // Method returns first column of first row.
-            cmdLogin.ExecuteNonQuery();
-
+                connection.Open();
+                cmdLogin.ExecuteNonQuery();
+            }
         }
+
 
         public static void InsertDBUser(DbUserModel dbUser)
         {

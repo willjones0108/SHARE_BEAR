@@ -27,6 +27,8 @@ namespace JMUcare.Pages
         }
 
         public bool IsAdmin { get; set; }
+        public List<ProjectTaskModel> EditableTasks { get; set; } = new List<ProjectTaskModel>();
+
         public List<GrantModel> Grants { get; set; } = new List<GrantModel>();
         public List<ProjectModel> RecentProjects { get; set; } = new List<ProjectModel>();
         public List<PhaseModel> ActivePhases { get; set; } = new List<PhaseModel>();
@@ -93,13 +95,10 @@ namespace JMUcare.Pages
             }
 
             // Get pending/in-progress tasks with the earliest due dates
-            UpcomingTasks = allTasks
-                .Where(t => t.Status == "Not Started" || t.Status == "In Progress")
-                .OrderBy(t => t.DueDate)
-                .Take(5)
-                .ToList();
-
-            PendingTasks = allTasks.Count(t => t.Status == "Not Started" || t.Status == "In Progress");
+            EditableTasks = allTasks
+                 .Where(t => t.AssignedUsers.Any(u => u.UserID == CurrentUserID) && t.Status == "Edit")
+                 .OrderBy(t => t.DueDate)
+                 .ToList();
 
             return Page();
         }
