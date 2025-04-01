@@ -30,11 +30,11 @@ namespace JMUcare.Pages.DBclass
         //Will's Connection Below
 
 
-        public static readonly string JMUcareDBConnString =
-            "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+       // public static readonly string JMUcareDBConnString =
+       //     "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
-       private static readonly string? AuthConnString =
-            "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+       //private static readonly string? AuthConnString =
+       //     "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
 
 
 
