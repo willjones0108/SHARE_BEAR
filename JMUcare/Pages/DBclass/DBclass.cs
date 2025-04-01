@@ -11,11 +11,11 @@ namespace JMUcare.Pages.DBclass
     {
         public static SqlConnection JMUcareDBConnection = new SqlConnection();
 
-        private static readonly string JMUcareDBConnString =
-         "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
+        //private static readonly string JMUcareDBConnString =
+        // "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
 
-        private static readonly string? AuthConnString =
-        "Server=Localhost;Database=AUTH;Trusted_Connection=True";
+        //private static readonly string? AuthConnString =
+        //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
         //private static readonly string JMUcareDBConnString =
         //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
@@ -30,24 +30,24 @@ namespace JMUcare.Pages.DBclass
         //Will's Connection Below
 
 
-        public static readonly string JMUcareDBConnString =
-            "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+        // public static readonly string JMUcareDBConnString =
+        //     "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
-       private static readonly string? AuthConnString =
-            "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
-
-
+        //private static readonly string? AuthConnString =
+        //     "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
 
 
-            //Original BELOW
 
-      //private static readonly string JMUcareDBConnString =
-           // "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
 
-       // private static readonly string? AuthConnString =
-            //"Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+        //Original BELOW
 
-            public const int SaltByteSize = 24; // standard, secure size of salts
+        //private static readonly string JMUcareDBConnString =
+        // "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+
+        // private static readonly string? AuthConnString =
+        //"Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+
+        public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
         public const int Pbkdf2Iterations = 1000; // higher number is more secure but takes longer
         public const int IterationIndex = 0; // used to find first section (number of iterations) of PasswordHash database field
