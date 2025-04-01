@@ -11,12 +11,10 @@ namespace JMUcare.Pages.DBclass
     {
         public static SqlConnection JMUcareDBConnection = new SqlConnection();
 
-        //Orginial DB Connection
-        
         //private static readonly string JMUcareDBConnString =
         // "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
 
-        // private static readonly string? AuthConnString =
+        //private static readonly string? AuthConnString =
         //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
         //private static readonly string JMUcareDBConnString =
@@ -32,24 +30,24 @@ namespace JMUcare.Pages.DBclass
         //Will's Connection Below
 
 
-        //public static readonly string JMUcareDBConnString =
-            //"Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+        // public static readonly string JMUcareDBConnString =
+        //     "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
-       //private static readonly string? AuthConnString =
-            //"Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
-
-
+        //private static readonly string? AuthConnString =
+        //     "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
 
 
-            //Dylan BELOW
 
-      private static readonly string JMUcareDBConnString =
-            "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
 
-       private static readonly string? AuthConnString =
-            "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+        //Original BELOW
 
-            public const int SaltByteSize = 24; // standard, secure size of salts
+        //private static readonly string JMUcareDBConnString =
+        // "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+
+        // private static readonly string? AuthConnString =
+        //"Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+
+        public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
         public const int Pbkdf2Iterations = 1000; // higher number is more secure but takes longer
         public const int IterationIndex = 0; // used to find first section (number of iterations) of PasswordHash database field
@@ -1357,6 +1355,24 @@ WHERE pp.PhaseID = @PhaseID";
                 }
             }
         }
+        public static int GetGrantIdForPhase(int phaseId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            SELECT GrantID 
+            FROM Grant_Phase 
+            WHERE PhaseID = @PhaseID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    connection.Open();
+                    var result = cmd.ExecuteScalar();
+                    return result != null && result != DBNull.Value ? (int)result : 0;
+                }
+            }
+        }
 
         public static bool IsPhaseEditor(int userId, int phaseId)
         {
@@ -2229,116 +2245,6 @@ WHERE pp.PhaseID = @PhaseID";
                 transaction.Rollback();
                 Console.WriteLine($"Error archiving grant: {ex.Message}");
                 return false;
-            }
-        }
-        public static List<MessageModel> GetReceivedMessages(int userId)
-        {
-            List<MessageModel> messages = new List<MessageModel>();
-
-            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
-            {
-                string query = @"
-                SELECT m.MessageID, m.SenderID, u.FirstName + ' ' + u.LastName AS SenderName, 
-                       m.MessageText, m.SentDateTime, m.Status
-                FROM Message m
-                INNER JOIN DBUser u ON m.SenderID = u.UserID
-                WHERE m.RecipientID = @UserID
-                ORDER BY m.SentDateTime DESC";
-
-                SqlCommand cmd = new SqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@UserID", userId);
-                connection.Open();
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        messages.Add(new MessageModel
-                        {
-                            MessageID = reader.GetInt32(0),
-                            SenderID = reader.GetInt32(1),
-                            SenderName = reader.GetString(2),
-                            MessageText = reader.GetString(3),
-                            SentDateTime = reader.GetDateTime(4),
-                            Status = reader.GetString(5)
-                        });
-                    }
-                }
-            }
-            return messages;
-        }
-
-        // Get messages sent by a specific user
-        public static List<MessageModel> GetSentMessages(int userId)
-        {
-            List<MessageModel> messages = new List<MessageModel>();
-
-            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
-            {
-                string query = @"
-                SELECT m.MessageID, m.RecipientID, u.FirstName + ' ' + u.LastName AS RecipientName, 
-                       m.MessageText, m.SentDateTime, m.Status
-                FROM Message m
-                INNER JOIN DBUser u ON m.RecipientID = u.UserID
-                WHERE m.SenderID = @UserID
-                ORDER BY m.SentDateTime DESC";
-
-                SqlCommand cmd = new SqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@UserID", userId);
-                connection.Open();
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        messages.Add(new MessageModel
-                        {
-                            MessageID = reader.GetInt32(0),
-                            RecipientID = reader.GetInt32(1),
-                            RecipientName = reader.GetString(2),
-                            MessageText = reader.GetString(3),
-                            SentDateTime = reader.GetDateTime(4),
-                            Status = reader.GetString(5)
-                        });
-                    }
-                }
-            }
-            return messages;
-        }
-
-        // Insert a new message (send message)
-        public static void SendMessage(int senderId, int recipientId, string messageText)
-        {
-            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
-            {
-                string query = @"
-                INSERT INTO Message (SenderID, RecipientID, MessageText, SentDateTime, Status) 
-                VALUES (@SenderID, @RecipientID, @MessageText, GETDATE(), 'Sent')";
-
-                SqlCommand cmd = new SqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@SenderID", senderId);
-                cmd.Parameters.AddWithValue("@RecipientID", recipientId);
-                cmd.Parameters.AddWithValue("@MessageText", messageText);
-
-                connection.Open();
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        // Mark a message as read
-        public static void MarkMessageAsRead(int messageId)
-        {
-            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
-            {
-                string query = "UPDATE Message SET Status = 'Read' WHERE MessageID = @MessageID";
-
-                using (SqlCommand cmd = new SqlCommand(query, connection))
-                {
-                    cmd.Parameters.AddWithValue("@MessageID", messageId);
-
-                    connection.Open();
-                    cmd.ExecuteNonQuery();
-                }
             }
         }
 

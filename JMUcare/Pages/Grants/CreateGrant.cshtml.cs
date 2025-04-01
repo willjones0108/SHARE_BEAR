@@ -95,7 +95,7 @@ namespace JMUcare.Pages.Grants
             // Optionally also give CreatedBy some permission
             DBClass.InsertGrantPermission(grantId, Grant.CreatedBy, "Edit");
 
-            return RedirectToPage("/Grants/Index");
+            return RedirectToPage("/Grants/View", new { id = grantId });
         }
     }
 }

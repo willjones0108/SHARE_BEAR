@@ -41,6 +41,11 @@
                     @if (isAdminOrGrantEditor)
                     {
                         <div>
+                            <a asp-page="/Grants/Edit"
+                               asp-route-id="@Model.Grant.GrantID"
+                               class="btn btn-success btn-sm ms-2">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
                             <a asp-page="/Grants/ManagePermissions" asp-route-id="@Model.Id" class="btn btn-light btn-sm ms-2">
                                 <i class="bi bi-people"></i> Permissions
                             </a>
