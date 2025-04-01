@@ -11,11 +11,11 @@ namespace JMUcare.Pages.DBclass
     {
         public static SqlConnection JMUcareDBConnection = new SqlConnection();
 
-        //private static readonly string JMUcareDBConnString =
-        // "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
+        private static readonly string JMUcareDBConnString =
+         "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
 
-        // private static readonly string? AuthConnString =
-        //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
+        private static readonly string? AuthConnString =
+        "Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
         //private static readonly string JMUcareDBConnString =
         //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
@@ -30,11 +30,11 @@ namespace JMUcare.Pages.DBclass
         //Will's Connection Below
 
 
-        public static readonly string JMUcareDBConnString =
-            "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+        //public static readonly string JMUcareDBConnString =
+           // "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
-       private static readonly string? AuthConnString =
-            "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+       //private static readonly string? AuthConnString =
+        //    "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
 
 
 
@@ -1352,6 +1352,24 @@ WHERE pp.PhaseID = @PhaseID";
                     connection.Open();
                     int count = (int)cmd.ExecuteScalar();
                     return count > 0;
+                }
+            }
+        }
+        public static int GetGrantIdForPhase(int phaseId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            SELECT GrantID 
+            FROM Grant_Phase 
+            WHERE PhaseID = @PhaseID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                    connection.Open();
+                    var result = cmd.ExecuteScalar();
+                    return result != null && result != DBNull.Value ? (int)result : 0;
                 }
             }
         }

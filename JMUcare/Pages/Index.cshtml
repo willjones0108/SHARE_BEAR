@@ -1,5 +1,7 @@
 ﻿@page
 @model JMUcare.Pages.IndexModel
+@using JMUcare.Pages.DBclass
+
 @{
     ViewData["Title"] = "Home Dashboard";
 }
@@ -76,22 +78,23 @@
             </div>
         }
 
-        <!-- Active Phases Section -->
+        <!-- Active Phases Section - Updated to match Grants section -->
         @if (Model.ActivePhases.Any())
         {
             <div class="col-md-6 mb-4">
                 <div class="card shadow h-100">
                     <div class="card-header dashboard-card-header">
                         <h4 class="mb-0">Active Phases</h4>
+                        <a asp-page="/Phases/Index" class="btn btn-sm btn-outline-primary">View All</a>
                     </div>
                     <div class="card-body">
                         <div class="list-group">
-                            @foreach (var phase in Model.ActivePhases)
+                            @foreach (var phase in Model.ActivePhases.Take(5))
                             {
-                                <a asp-page="/Phases/View" asp-route-id="@phase.PhaseID" class="list-group-item list-group-item-action">
+                                <a asp-page="/Grants/View" asp-route-id="@DBClass.GetGrantIdForPhase(phase.PhaseID)" asp-route-phaseId="@phase.PhaseID" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h5 class="mb-1">@phase.PhaseName</h5>
-                                        <span class="badge bg-primary">@phase.Status</span>
+                                        <small class="text-muted">@phase.Status</small>
                                     </div>
                                     <p class="mb-1 text-truncate">@(phase.Description ?? "No description available")</p>
                                     <small>Grant: @Model.GetGrantName(phase.GrantID)</small>
@@ -141,16 +144,12 @@
                         <h4 class="mb-0">Upcoming Tasks</h4>
                     </div>
                     <div class="card-body">
-                        <ul class="list-group">
+                        <div class="list-group">
                             @foreach (var task in Model.UpcomingTasks)
                             {
-                                <li class="list-group-item">
+                                <a asp-page="/Projects/View" asp-route-id="@task.ProjectID" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">
-                                            <a asp-page="/Projects/View" asp-route-id="@task.ProjectID" class="text-decoration-none">
-                                                @task.TaskContent
-                                            </a>
-                                        </h5>
+                                        <h5 class="mb-1">@task.TaskContent</h5>
                                         <span class="badge @(task.Status == "Completed" ? "bg-success" :
                                                      task.Status == "In Progress" ? "bg-primary" :
                                                      task.Status == "Not Started" ? "bg-secondary" :
@@ -161,14 +160,14 @@
                                     <p class="mb-1">
                                         <strong>Due:</strong> @task.DueDate.ToShortDateString()
                                     </p>
-                                </li>
+                                </a>
                             }
-                        </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         }
-
+    </div>
 
     <!-- Quick Actions Section -->
     <div class="row mb-4">

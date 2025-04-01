@@ -26,33 +26,53 @@ else
     <div class="list-group">
         @foreach (var grant in Model.Grants)
         {
-            <div class="list-group-item">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>@grant.GrantTitle</strong><br />
-                        <small>@grant.Category — $@grant.Amount.ToString("N0")</small>
+            <div class="list-group-item position-relative">
+                <!-- Clickable area covering the grant item except buttons -->
+                <a asp-page="/Grants/View" asp-route-id="@grant.GrantID"
+                   class="stretched-link-except-buttons text-decoration-none text-dark">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>@grant.GrantTitle</strong><br />
+                            <small>@grant.Category — $@grant.Amount.ToString("N0")</small>
+                        </div>
+                        <div style="min-width: 100px;">
+                            <!-- Placeholder for buttons - actual buttons are positioned absolute -->
+                        </div>
                     </div>
-                    <div>
-                        <a asp-page="/Grants/View"
-                           asp-route-id="@grant.GrantID"
-                           class="btn btn-primary btn-sm">
-                            <i class="bi bi-eye"></i> View
-                        </a>
+                </a>
 
-                        @{
-                            string accessLevel = DBClass.GetUserAccessLevelForGrant(Model.CurrentUserID, grant.GrantID);
-                            if (accessLevel == "Edit")
-                            {
-                                <a asp-page="/Grants/Edit"
-                                   asp-route-id="@grant.GrantID"
-                                   class="btn btn-success btn-sm ms-2">
-                                    <i class="bi bi-pencil"></i> Edit
-                                </a>
-                            }
-                        }
-                    </div>
-                </div>
+                <!-- Buttons with special positioning to appear above the stretched link -->
+
             </div>
         }
     </div>
 }
+
+<style>
+    /* Create a special stretched link that doesn't affect certain elements */
+    .stretched-link-except-buttons {
+        position: static;
+    }
+
+        .stretched-link-except-buttons::after {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1;
+            content: "";
+        }
+
+    /* List group item needs to be positioned relative for the stretched link to work */
+    .list-group-item {
+        position: relative;
+        padding: 1rem;
+        cursor: pointer;
+    }
+
+        /* Make the list items have a hover effect */
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+</style>
