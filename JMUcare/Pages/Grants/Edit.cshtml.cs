@@ -137,7 +137,7 @@ namespace JMUcare.Pages.Grants
             // Update grant in the database
             DBClass.UpdateGrant(Grant);
 
-            return RedirectToPage("/Grants/Index");
+            return RedirectToPage("/Grants/View", new { id = Id});
         }
     }
 }
