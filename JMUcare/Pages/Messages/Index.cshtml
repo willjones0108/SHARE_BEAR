@@ -1,0 +1,100 @@
+﻿@page
+@model JMUcare.Pages.Messages.IndexModel
+@{
+    ViewData["Title"] = "Messages";
+}
+<h2 class="mb-4">Messages</h2>
+
+<div class="container">
+    <div class="row">
+        <!-- Received Messages Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h3 class="mb-0">Received Messages</h3>
+                </div>
+                <div class="card-body">
+                    @if (Model.ReceivedMessages.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var message in Model.ReceivedMessages)
+                            {
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong>From:</strong> @message.SenderName <br />
+                                            <strong>Message:</strong> @message.MessageText <br />
+                                            <strong>Sent:</strong> @message.SentDateTime.ToString("g")
+                                        </div>
+                                        <form method="post" asp-page-handler="MarkAsRead" class="ml-3">
+                                            <input type="hidden" name="messageId" value="@message.MessageID" />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Mark as Read</button>
+                                        </form>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No received messages.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sent Messages Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h3 class="mb-0">Sent Messages</h3>
+                </div>
+                <div class="card-body">
+                    @if (Model.SentMessages.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var message in Model.SentMessages)
+                            {
+                                <li class="list-group-item">
+                                    <div>
+                                        <strong>To:</strong> @message.RecipientName <br />
+                                        <strong>Message:</strong> @message.MessageText <br />
+                                        <strong>Sent:</strong> @message.SentDateTime.ToString("g")
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No sent messages.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send a Message Section -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h3 class="mb-0">Send a Message</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="form-group">
+                            <label for="recipient">Recipient:</label>
+                            <select id="recipient" asp-for="SelectedRecipientID" asp-items="@(new SelectList(Model.UserList, "UserID", "FirstName"))" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="messageText">Message:</label>
+                            <textarea id="messageText" asp-for="MessageText" class="form-control" rows="4"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -377,6 +377,20 @@ CREATE TABLE Master_Project_Permission (
     FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
 );
 
+CREATE TABLE Message(
+    MessageID int IDENTITY(1,1) PRIMARY KEY,
+    SenderID int NOT NULL,
+    RecipientID int NOT NULL,
+    MessageText nvarchar(500) NOT NULL,
+    SentDateTime DATETIME DEFAULT GETDATE(),
+    Status varchar(20) NOT NULL CHECK (Status IN ('Sent', 'Read', 'Archived')),
+    
+    FOREIGN KEY (SenderID) REFERENCES DBUser(UserID) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY (RecipientID) REFERENCES DBUser(UserID) ON DELETE NO ACTION ON UPDATE NO ACTION
+);
+
+
+
 -- Insert initial data
 INSERT INTO UserRole (UserRoleID, RoleName, Description) VALUES
 (1, 'Admin', 'Full access to manage users, settings, and data'),
