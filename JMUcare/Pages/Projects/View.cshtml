@@ -121,18 +121,7 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        @if (Model.PhaseId > 0)
-                        {
-                            <a asp-page="/Phases/View" asp-route-id="@Model.PhaseId" class="btn btn-secondary">Back to Phase</a>
-                        }
-                        else if (Model.GrantId.HasValue)
-                        {
-                            <a asp-page="/Grants/View" asp-route-id="@Model.GrantId" class="btn btn-secondary">Back to Grant</a>
-                        }
-                        else
-                        {
-                            <a asp-page="/Grants/Index" class="btn btn-secondary">Back to Grants</a>
-                        }
+                        <a asp-page="/Grants/View" asp-route-id="@Model.GrantId" class="btn btn-secondary">Back to Grant</a>
                     </div>
                 </div>
             </div>
@@ -274,3 +263,4 @@
         </div>
     </div>
 }
+

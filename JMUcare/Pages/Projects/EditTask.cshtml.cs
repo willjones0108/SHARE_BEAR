@@ -92,7 +92,6 @@ namespace JMUcare.Pages.Projects
 
             return Page();
         }
-
         public IActionResult OnPost()
         {
             if (CurrentUserID == 0)
@@ -118,6 +117,7 @@ namespace JMUcare.Pages.Projects
                 return Page();
             }
         }
+
 
         public IActionResult OnPostAddUser(int taskId, int userId, string accessLevel)
         {

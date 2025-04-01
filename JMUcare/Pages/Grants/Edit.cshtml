@@ -40,7 +40,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Grant.Status" class="form-label">Status</label>
+                        <label asp-for="Grant.Status" class="form-label">Grant Status</label>
                         <select asp-for="Grant.Status" class="form-select"
                                 asp-items="Model.StatusOptions">
                         </select>
@@ -60,8 +60,14 @@
 
                     <div class="mb-3">
                         <label asp-for="Grant.TrackingStatus" class="form-label">Tracking Status</label>
-                        <input asp-for="Grant.TrackingStatus" class="form-control" />
+                        <select asp-for="Grant.TrackingStatus" class="form-select">
+                            <option value="Not Started">Not Started</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
                     </div>
+
+
 
                     <div class="mb-3">
                         <button type="submit" class="btn btn-primary">Save</button>

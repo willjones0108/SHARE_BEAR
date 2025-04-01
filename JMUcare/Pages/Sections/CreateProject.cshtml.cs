@@ -122,8 +122,7 @@ namespace JMUcare.Pages.Projects
             // Insert Phase_Project record
             DBClass.InsertPhaseProject(Project.PhaseID, projectId);
 
-            return RedirectToPage("/phases/index");
+            return RedirectToPage("/Projects/View", new { id = projectId });
         }
     }
 }
-

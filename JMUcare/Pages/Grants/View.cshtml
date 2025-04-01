@@ -3,6 +3,14 @@
 @model JMUcare.Pages.Grants.ViewModel
 @{
     ViewData["Title"] = "View Grant";
+
+    // If Grant is null, redirect to Index page
+    if (Model.Grant == null)
+    {
+        Response.Redirect("/Index");
+        return;
+    }
+
     bool isAdminOrGrantEditor = Model.CanAddPhase; // Using CanAddPhase as indicator for admin/grant editor
 }
 
@@ -33,9 +41,6 @@
                     @if (isAdminOrGrantEditor)
                     {
                         <div>
-                            <a asp-page="/Grants/Edit" asp-route-id="@Model.Id" class="btn btn-light btn-sm">
-                                <i class="bi bi-pencil-square"></i> Edit Details
-                            </a>
                             <a asp-page="/Grants/ManagePermissions" asp-route-id="@Model.Id" class="btn btn-light btn-sm ms-2">
                                 <i class="bi bi-people"></i> Permissions
                             </a>
@@ -85,7 +90,7 @@
                         <div class="col-md-4 mb-3">
                             <div class="card h-100">
                                 <div class="card-body">
-                                    <h5 class="card-title">Status</h5>
+                                    <h5 class="card-title">Grant Status</h5>
                                     <p class="card-text fs-6">@Model.Grant.Status</p>
                                 </div>
                             </div>
@@ -186,9 +191,6 @@
                                                 </form>
                                             }
                                         }
-                                        <a asp-page="/Phases/View" asp-route-id="@phase.PhaseID" class="btn btn-sm btn-light ms-1">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -216,20 +218,14 @@
                                                 <div class="card mb-2 project-card">
                                                     <div class="card-header py-2 bg-light">
                                                         <div class="d-flex justify-content-between align-items-center">
-                                                            <h6 class="mb-0">@project.Title</h6>
-                                                            <div>
-                                                                @{
-                                                                    string projectAccessLevel = DBClass.GetUserAccessLevelForProject(Model.CurrentUserID, project.ProjectID);
-                                                                    if (projectAccessLevel == "Edit")
-                                                                    {
-                                                                        <a asp-page="/Projects/EditProject" asp-route-id="@project.ProjectID" class="btn btn-sm btn-outline-success">
-                                                                            <i class="bi bi-pencil"></i>
-                                                                        </a>
-                                                                    }
-                                                                }
-                                                                <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="btn btn-sm btn-outline-primary ms-1">
-                                                                    <i class="bi bi-eye"></i>
+                                                            <h6 class="mb-0">
+                                                                <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="text-decoration-none">
+                                                                    @project.Title
                                                                 </a>
+                                                            </h6>
+                                                            <div>
+                                                                @* Removed the project edit button *@
+ 
                                                             </div>
                                                         </div>
                                                     </div>
@@ -470,6 +466,8 @@
             transition: transform 0.2s ease;
             border-left: 3px solid #6c757d;
         }
+
+            .project-card:hover
 
             .project-card:hover {
                 transform: translateY(-3px);

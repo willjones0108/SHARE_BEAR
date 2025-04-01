@@ -18,6 +18,9 @@ namespace JMUcare.Pages.Phases
 
         public List<SelectListItem> StatusOptions { get; private set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int GrantID { get; set; } // New property
+
         public int CurrentUserID
         {
             get
@@ -39,7 +42,7 @@ namespace JMUcare.Pages.Phases
             };
         }
 
-        public IActionResult OnGet()
+        public IActionResult OnGet(int grantId)
         {
             // Check if user is logged in
             if (CurrentUserID == 0)
@@ -56,6 +59,7 @@ namespace JMUcare.Pages.Phases
             // Get list of users and grants for dropdowns
             Users = DBClass.GetUsers(); // this gets non-archived users
             Grants = DBClass.GetGrantsForUser(CurrentUserID); // this gets grants for the current user
+            GrantID = grantId; // Set the GrantID
             return Page();
         }
 
@@ -89,9 +93,9 @@ namespace JMUcare.Pages.Phases
             DBClass.InsertPhasePermission(phaseId, Phase.CreatedBy, "Edit");
 
             // Insert Grant_Phase record
-            DBClass.InsertGrantPhase(Phase.GrantID, phaseId);
+            DBClass.InsertGrantPhase(GrantID, phaseId);
 
-            return RedirectToPage("/Phases/Index");
+            return RedirectToPage("/Grants/View", new { id = GrantID });
         }
     }
 }

@@ -1,4 +1,4 @@
-@page
+@page "{grantId:int}"
 @model JMUcare.Pages.Phases.CreatePhasesModel
 @{
     ViewData["Title"] = "Create Phase";
@@ -11,6 +11,7 @@
 <div class="row">
     <div class="col-md-4">
         <form method="post">
+            <input type="hidden" asp-for="GrantID" />
             <div class="form-group">
                 <label asp-for="Phase.PhaseName" class="control-label"></label>
                 <input asp-for="Phase.PhaseName" class="form-control" />
@@ -33,7 +34,7 @@
             </div>
             <div class="form-group">
                 <label asp-for="Phase.GrantID" class="control-label"></label>
-                <select asp-for="Phase.GrantID" class="form-control" asp-items="@(new SelectList(Model.Grants, "GrantID", "GrantTitle"))"></select>
+                <select asp-for="Phase.GrantID" class="form-control" asp-items="@(new SelectList(Model.Grants, "GrantID", "GrantTitle"))" disabled="disabled"></select>
                 <span asp-validation-for="Phase.GrantID" class="text-danger"></span>
             </div>
             <div class="form-group">

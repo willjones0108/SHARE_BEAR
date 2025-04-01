@@ -29,15 +29,25 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Task.Status" class="form-label">Status</label>
+                            <label asp-for="Task.Status" class="form-label">Tracking Status</label>
                             <select asp-for="Task.Status" class="form-select">
                                 <option value="Not Started">Not Started</option>
                                 <option value="In Progress">In Progress</option>
                                 <option value="Completed">Completed</option>
-                                <option value="Blocked">Blocked</option>
                             </select>
                             <span asp-validation-for="Task.Status" class="text-danger"></span>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-page="/Projects/View" asp-route-id="@Model.Task.ProjectID" class="btn btn-secondary">Cancel</a>
                     </div>
                 </div>
             </div>
@@ -116,25 +126,6 @@
             </div>
         </div>
     </div>
-
-    <div class="row mt-4">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <form method="post">
-                        <button type="submit" class="btn btn-primary">Save</button>
-                        <a asp-page="/Projects/View" asp-route-id="@Model.Task.ProjectID" class="btn btn-secondary">Cancel</a>
-                    </form>
-                    @if (Model.HasEditPermissionForProject(Model.CurrentUserID, Model.Task.ProjectID))
-                    {
-                        <form method="post" asp-page-handler="DeleteTask" class="mt-3">
-                            <button type="submit" class="btn btn-danger">Delete Task</button>
-                        </form>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
 }
 else
 {
@@ -142,6 +133,8 @@ else
         You do not have permission to view this page.
     </div>
 }
+
+
 
 @section Scripts {
     @{
