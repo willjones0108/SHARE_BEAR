@@ -1,7 +1,7 @@
 ﻿@page
 @model JMUcare.Pages.Phases.EditModel
 @{
-	ViewData["Title"] = "Edit Phase";
+    ViewData["Title"] = "Edit Phase";
 }
 <h2>Edit Phase</h2>
 
@@ -39,13 +39,84 @@
 
                     <div class="mb-3">
                         <button type="submit" class="btn btn-primary">Save</button>
-                        <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+                        <a asp-page="/Grants/View" asp-route-id="@Model.Phase.GrantID" class="btn btn-secondary">Cancel</a>
                     </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase Permissions Section -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Phase Permissions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Access Level</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.PhasePermissions != null)
+                                {
+                                    foreach (var userPerm in Model.PhasePermissions)
+                                    {
+                                        <tr>
+                                            <td>@userPerm.FullName</td>
+                                            <td>
+                                                <span class="badge bg-@(userPerm.AccessLevel == "Edit" ? "success" : "info")">
+                                                    @userPerm.AccessLevel
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <form method="post" asp-page-handler="RemovePermission" class="d-inline">
+                                                    <input type="hidden" name="phaseId" value="@Model.Phase.PhaseID" />
+                                                    <input type="hidden" name="userId" value="@userPerm.UserId" />
+                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                        <i class="bi bi-trash"></i> Remove
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <form method="post" asp-page-handler="AddPermission" class="mt-3">
+                        <input type="hidden" name="phaseId" value="@Model.Phase.PhaseID" />
+                        <div class="mb-3">
+                            <label for="NewPermissionUserId" class="form-label">User</label>
+                            <select asp-for="NewPermissionUserId" class="form-select">
+                                <option value="">Select user...</option>
+                                @foreach (var user in Model.Users)
+                                {
+                                    <option value="@user.UserID">@user.FirstName @user.LastName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="NewPermissionAccessLevel" class="form-label">Access Level</label>
+                            <select asp-for="NewPermissionAccessLevel" class="form-select">
+                                <option value="Read">Read</option>
+                                <option value="Edit">Edit</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Permission</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </form>
+
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

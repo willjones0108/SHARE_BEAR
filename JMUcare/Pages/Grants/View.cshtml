@@ -207,13 +207,20 @@
                                 <div class="phase-content">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <h6 class="mb-0">Projects</h6>
-                                        @if (Model.CanAddProject)
-                                        {
-                                            <a asp-page="/Sections/CreateProject" asp-route-PhaseId="@phase.PhaseID" class="btn btn-sm btn-primary">
-                                                <i class="bi bi-plus-circle"></i> Add Project
-                                            </a>
+                                        @{
+                                            // Check if user is a phase editor for this specific phase
+                                            string phaseAccessLevel = DBClass.GetUserAccessLevelForPhase(Model.CurrentUserID, phase.PhaseID);
+                                            bool canAddProjectToThisPhase = Model.CanAddProject || phaseAccessLevel == "Edit";
+
+                                            if (canAddProjectToThisPhase)
+                                            {
+                                                <a asp-page="/Sections/CreateProject" asp-route-PhaseId="@phase.PhaseID" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-plus-circle"></i> Add Project
+                                                </a>
+                                            }
                                         }
                                     </div>
+
 
                                     @if (Model.PhaseProjects[phase.PhaseID].Any(p => !p.IsArchived))
                                     {
