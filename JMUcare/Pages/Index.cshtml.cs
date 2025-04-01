@@ -60,7 +60,7 @@ namespace JMUcare.Pages
                 var phases = DBClass.GetPhasesByGrantId(grant.GrantID);
                 if (phases != null)
                 {
-                    ActivePhases.AddRange(phases.Where(p => p.Status == "In Progress"));
+                    ActivePhases.AddRange(phases);
                 }
             }
             InProgressPhases = ActivePhases.Count;
@@ -83,7 +83,7 @@ namespace JMUcare.Pages
             }
             RecentProjects = allProjects.OrderByDescending(p => p.ProjectID).Take(5).ToList();
 
-            // Get upcoming tasks
+            // Get all tasks
             var allTasks = new List<ProjectTaskModel>();
             foreach (var project in allProjects)
             {
@@ -95,10 +95,14 @@ namespace JMUcare.Pages
             }
 
             // Get pending/in-progress tasks with the earliest due dates
-            EditableTasks = allTasks
-                 .Where(t => t.AssignedUsers.Any(u => u.UserID == CurrentUserID) && t.Status == "Edit")
-                 .OrderBy(t => t.DueDate)
-                 .ToList();
+            UpcomingTasks = allTasks
+                .Where(t => t.Status == "Pending" || t.Status == "In Progress")
+                .OrderBy(t => t.DueDate)
+                .Take(5)
+                .ToList();
+
+            // Get the number of pending tasks
+            PendingTasks = allTasks.Count;
 
             return Page();
         }
