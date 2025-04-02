@@ -19,11 +19,11 @@ namespace JMUcare.Pages.DBclass
         //private static readonly string? AuthConnString =
         //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
-        private static readonly string JMUcareDBConnString =
-            "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
+        //private static readonly string JMUcareDBConnString =
+        //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
 
-        private static readonly string? AuthConnString =
-            "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
+        //private static readonly string? AuthConnString =
+        //    "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
 
 
 
@@ -43,11 +43,11 @@ namespace JMUcare.Pages.DBclass
 
         //Dylan BELOW
 
-        private static readonly string JMUcareDBConnString =
-             "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+        //private static readonly string JMUcareDBConnString =
+        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
 
-        private static readonly string? AuthConnString =
-             "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+        //private static readonly string? AuthConnString =
+        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
 
         public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
@@ -2397,13 +2397,265 @@ WHERE IsArchived = 0";
             return tasks;
         }
 
+        // TO BE IMPLEMENTED IN THE FUTURE FOR DOCUMENTS
 
 
 
 
+        //public static int InsertDocument(DocumentModel document)
+        //{
+        //    int newDocumentId;
 
+        //    using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+        //    {
+        //        string sqlQuery = @"
+        //    INSERT INTO Documents (
+        //        FileName,
+        //        ContentType,
+        //        FileSize,
+        //        UploadedDate,
+        //        UploadedBy,
+        //        BlobUrl,
+        //        BlobName,
+        //        GrantID,
+        //        PhaseID,
+        //        ProjectID,
+        //        TaskID,
+        //        IsArchived
+        //    )
+        //    OUTPUT INSERTED.DocumentID
+        //    VALUES (
+        //        @FileName,
+        //        @ContentType,
+        //        @FileSize,
+        //        @UploadedDate,
+        //        @UploadedBy,
+        //        @BlobUrl,
+        //        @BlobName,
+        //        @GrantID,
+        //        @PhaseID,
+        //        @ProjectID,
+        //        @TaskID,
+        //        @IsArchived
+        //    )";
 
+        //        using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+        //        {
+        //            cmd.Parameters.AddWithValue("@FileName", document.FileName);
+        //            cmd.Parameters.AddWithValue("@ContentType", document.ContentType);
+        //            cmd.Parameters.AddWithValue("@FileSize", document.FileSize);
+        //            cmd.Parameters.AddWithValue("@UploadedDate", document.UploadedDate);
+        //            cmd.Parameters.AddWithValue("@UploadedBy", document.UploadedBy);
+        //            cmd.Parameters.AddWithValue("@BlobUrl", document.BlobUrl);
+        //            cmd.Parameters.AddWithValue("@BlobName", document.BlobName);
+        //            cmd.Parameters.AddWithValue("@GrantID", document.GrantID ?? (object)DBNull.Value);
+        //            cmd.Parameters.AddWithValue("@PhaseID", document.PhaseID ?? (object)DBNull.Value);
+        //            cmd.Parameters.AddWithValue("@ProjectID", document.ProjectID ?? (object)DBNull.Value);
+        //            cmd.Parameters.AddWithValue("@TaskID", document.TaskID ?? (object)DBNull.Value);
+        //            cmd.Parameters.AddWithValue("@IsArchived", document.IsArchived);
 
+        //            connection.Open();
+        //            newDocumentId = (int)cmd.ExecuteScalar();
+        //        }
+        //    }
+
+        //    return newDocumentId;
+        //}
+
+        //public static List<DocumentModel> GetDocumentsByEntityId(string entityType, int entityId)
+        //{
+        //    var documents = new List<DocumentModel>();
+        //    string columnName;
+
+        //    // Determine which column to use based on entity type
+        //    switch (entityType.ToLower())
+        //    {
+        //        case "grant":
+        //            columnName = "GrantID";
+        //            break;
+        //        case "phase":
+        //            columnName = "PhaseID";
+        //            break;
+        //        case "project":
+        //            columnName = "ProjectID";
+        //            break;
+        //        case "task":
+        //            columnName = "TaskID";
+        //            break;
+        //        default:
+        //            throw new ArgumentException($"Unknown entity type: {entityType}");
+        //    }
+
+        //    using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+        //    {
+        //        string sqlQuery = $@"
+        //    SELECT *
+        //    FROM Documents
+        //    WHERE {columnName} = @EntityID
+        //    AND IsArchived = 0";
+
+        //        using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+        //        {
+        //            cmd.Parameters.AddWithValue("@EntityID", entityId);
+        //            connection.Open();
+
+        //            using (SqlDataReader reader = cmd.ExecuteReader())
+        //            {
+        //                while (reader.Read())
+        //                {
+        //                    documents.Add(new DocumentModel
+        //                    {
+        //                        DocumentID = reader.GetInt32(reader.GetOrdinal("DocumentID")),
+        //                        FileName = reader.GetString(reader.GetOrdinal("FileName")),
+        //                        ContentType = reader.GetString(reader.GetOrdinal("ContentType")),
+        //                        FileSize = reader.GetInt64(reader.GetOrdinal("FileSize")),
+        //                        UploadedDate = reader.GetDateTime(reader.GetOrdinal("UploadedDate")),
+        //                        UploadedBy = reader.GetInt32(reader.GetOrdinal("UploadedBy")),
+        //                        BlobUrl = reader.GetString(reader.GetOrdinal("BlobUrl")),
+        //                        BlobName = reader.GetString(reader.GetOrdinal("BlobName")),
+        //                        GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("GrantID")),
+        //                        PhaseID = reader.IsDBNull(reader.GetOrdinal("PhaseID")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("PhaseID")),
+        //                        ProjectID = reader.IsDBNull(reader.GetOrdinal("ProjectID")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("ProjectID")),
+        //                        TaskID = reader.IsDBNull(reader.GetOrdinal("TaskID")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("TaskID")),
+        //                        IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+        //                    });
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    return documents;
+        //}
+
+        //public static DocumentModel GetDocumentById(int documentId)
+        //{
+        //    using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+        //    {
+        //        string sqlQuery = @"
+        //    SELECT * FROM Documents
+        //    WHERE DocumentID = @DocumentID";
+
+        //        using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+        //        {
+        //            cmd.Parameters.AddWithValue("@DocumentID", documentId);
+        //            connection.Open();
+
+        //            using (SqlDataReader reader = cmd.ExecuteReader())
+        //            {
+        //                if (reader.Read())
+        //                {
+        //                    return new DocumentModel
+        //                    {
+        //                        DocumentID = reader.GetInt32(reader.GetOrdinal("DocumentID")),
+        //                        FileName = reader.GetString(reader.GetOrdinal("FileName")),
+        //                        ContentType = reader.GetString(reader.GetOrdinal("ContentType")),
+        //                        FileSize = reader.GetInt64(reader.GetOrdinal("FileSize")),
+        //                        UploadedDate = reader.GetDateTime(reader.GetOrdinal("UploadedDate")),
+        //                        UploadedBy = reader.GetInt32(reader.GetOrdinal("UploadedBy")),
+        //                        BlobUrl = reader.GetString(reader.GetOrdinal("BlobUrl")),
+        //                        BlobName = reader.GetString(reader.GetOrdinal("BlobName")),
+        //                        GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("GrantID")),
+        //                        PhaseID = reader.IsDBNull(reader.GetOrdinal("PhaseID")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("PhaseID")),
+        //                        ProjectID = reader.IsDBNull(reader.GetOrdinal("ProjectID")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("ProjectID")),
+        //                        TaskID = reader.IsDBNull(reader.GetOrdinal("TaskID")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("TaskID")),
+        //                        IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+        //                    };
+        //                }
+        //            }
+        //        }
+        //    }
+        //    return null;
+        //}
+
+        //public static bool ArchiveDocument(int documentId)
+        //{
+        //    using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+        //    {
+        //        string sqlQuery = @"
+        //    UPDATE Documents SET IsArchived = 1 
+        //    WHERE DocumentID = @DocumentID";
+
+        //        using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+        //        {
+        //            cmd.Parameters.AddWithValue("@DocumentID", documentId);
+        //            connection.Open();
+        //            int rowsAffected = cmd.ExecuteNonQuery();
+        //            return rowsAffected > 0;
+        //        }
+        //    }
+        //}
+
+        //public static bool CanAccessDocument(int userId, int documentId)
+        //{
+        //    using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+        //    {
+        //        // First check if the user is an admin
+        //        if (IsUserAdmin(userId))
+        //        {
+        //            return true;
+        //        }
+
+        //        string sqlQuery = @"
+        //    SELECT d.*
+        //    FROM Documents d
+        //    WHERE d.DocumentID = @DocumentID";
+
+        //        using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+        //        {
+        //            cmd.Parameters.AddWithValue("@DocumentID", documentId);
+        //            connection.Open();
+
+        //            using (SqlDataReader reader = cmd.ExecuteReader())
+        //            {
+        //                if (reader.Read())
+        //                {
+        //                    // Check if document belongs to a grant
+        //                    if (!reader.IsDBNull(reader.GetOrdinal("GrantID")))
+        //                    {
+        //                        int grantId = reader.GetInt32(reader.GetOrdinal("GrantID"));
+        //                        string accessLevel = GetUserAccessLevelForGrant(userId, grantId);
+        //                        if (accessLevel != "None")
+        //                            return true;
+        //                    }
+
+        //                    // Check if document belongs to a phase
+        //                    if (!reader.IsDBNull(reader.GetOrdinal("PhaseID")))
+        //                    {
+        //                        int phaseId = reader.GetInt32(reader.GetOrdinal("PhaseID"));
+        //                        string accessLevel = GetUserAccessLevelForPhase(userId, phaseId);
+        //                        if (accessLevel != "None")
+        //                            return true;
+        //                    }
+
+        //                    // Check if document belongs to a project
+        //                    if (!reader.IsDBNull(reader.GetOrdinal("ProjectID")))
+        //                    {
+        //                        int projectId = reader.GetInt32(reader.GetOrdinal("ProjectID"));
+        //                        string accessLevel = GetUserAccessLevelForProject(userId, projectId);
+        //                        if (accessLevel != "None")
+        //                            return true;
+        //                    }
+
+        //                    // Task permissions are inherited from their project
+        //                    if (!reader.IsDBNull(reader.GetOrdinal("TaskID")))
+        //                    {
+        //                        int taskId = reader.GetInt32(reader.GetOrdinal("TaskID"));
+        //                        // Get the project ID for this task
+        //                        int projectId = GetProjectIdForTask(taskId);
+        //                        if (projectId > 0)
+        //                        {
+        //                            string accessLevel = GetUserAccessLevelForProject(userId, projectId);
+        //                            if (accessLevel != "None")
+        //                                return true;
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    return false;
+        //}
 
 
 

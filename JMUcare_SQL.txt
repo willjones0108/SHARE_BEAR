@@ -18,6 +18,7 @@ CREATE TABLE Grants (
     Description VARCHAR(MAX),
     TrackingStatus NVARCHAR(MAX),
     IsArchived BIT
+    IsProject BIT
 );
 
 -- User Tables
@@ -59,19 +60,6 @@ ADD CONSTRAINT FK_Grants_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES DBUser(Use
 
 ALTER TABLE Grants
 ADD CONSTRAINT FK_Grants_GrantLeadID FOREIGN KEY (GrantLeadID) REFERENCES DBUser(UserID);
-
-CREATE TABLE Master_Project (
-    MasterProjectID INT PRIMARY KEY,
-    Title VARCHAR(255),
-    Description TEXT,
-    Status VARCHAR(50),
-    CreatedBy INT,
-    ProjectLeadID INT,
-    IsArchived BIT,
-    Master_Project_Description TEXT,
-    FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID),
-    FOREIGN KEY (ProjectLeadID) REFERENCES DBUser(UserID)
-);
 
 -- Project and Related Tables
 CREATE TABLE Project (
@@ -271,15 +259,7 @@ CREATE TABLE Grant_Message (
     FOREIGN KEY (SenderID) REFERENCES DBUser(UserID)
 );
 
-CREATE TABLE Grant_File (
-    GrantFileID INT PRIMARY KEY,
-    GrantID INT,
-    FilePath VARCHAR(255),
-    UploadedBy INT,
-    UploadedDateTime DATETIME,
-    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
-    FOREIGN KEY (UploadedBy) REFERENCES DBUser(UserID)
-);
+
 
 CREATE TABLE Grant_Tracking (
     TrackingID INT PRIMARY KEY,
@@ -340,25 +320,9 @@ CREATE TABLE Project_Message (
     FOREIGN KEY (SenderID) REFERENCES DBUser(UserID)
 );
 
-CREATE TABLE Master_Project_Message (
-    MasterProjectMessageID INT PRIMARY KEY,
-    MasterProjectID INT,
-    SenderID INT,
-    MessageText TEXT,
-    SentDateTime DATETIME,
-    FOREIGN KEY (MasterProjectID) REFERENCES Master_Project(MasterProjectID),
-    FOREIGN KEY (SenderID) REFERENCES DBUser(UserID)
-);
 
-CREATE TABLE Project_File (
-    FileID INT PRIMARY KEY,
-    ProjectID INT,
-    FilePath VARCHAR(255),
-    UploadedBy INT,
-    UploadedDateTime DATETIME,
-    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
-    FOREIGN KEY (UploadedBy) REFERENCES DBUser(UserID)
-);
+
+
 
 CREATE TABLE Nested_Project (
     ParentProjectID INT,
@@ -368,14 +332,7 @@ CREATE TABLE Nested_Project (
     FOREIGN KEY (NestedProjectID) REFERENCES Project(ProjectID)
 );
 
-CREATE TABLE Master_Project_Permission (
-    MasterProjectID INT,
-    UserID INT,
-    AccessLevel VARCHAR(50), -- 'Read', 'Edit', etc.
-    PRIMARY KEY (MasterProjectID, UserID),
-    FOREIGN KEY (MasterProjectID) REFERENCES Master_Project(MasterProjectID),
-    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
-);
+
 
 CREATE TABLE Message(
     MessageID int IDENTITY(1,1) PRIMARY KEY,
@@ -388,6 +345,27 @@ CREATE TABLE Message(
     FOREIGN KEY (SenderID) REFERENCES DBUser(UserID) ON DELETE NO ACTION ON UPDATE NO ACTION,
     FOREIGN KEY (RecipientID) REFERENCES DBUser(UserID) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
+
+CREATE TABLE Documents (
+    DocumentID INT IDENTITY(1,1) PRIMARY KEY,
+    FileName NVARCHAR(255) NOT NULL,
+    ContentType NVARCHAR(100) NOT NULL,
+    FileSize BIGINT NOT NULL,
+    UploadedDate DATETIME NOT NULL,
+    UploadedBy INT NOT NULL,
+    BlobUrl NVARCHAR(1000) NOT NULL,
+    BlobName NVARCHAR(255) NOT NULL,
+    GrantID INT NULL,
+    PhaseID INT NULL,
+    ProjectID INT NULL,
+    TaskID INT NULL,
+    IsArchived BIT NOT NULL DEFAULT 0,
+    FOREIGN KEY (UploadedBy) REFERENCES DBUser(UserID),
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (PhaseID) REFERENCES Phase(PhaseID),
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
+    FOREIGN KEY (TaskID) REFERENCES Project_Task(TaskID)
+)
 
 
 
