@@ -9,6 +9,7 @@ Artificial Intelligence (AI) tools were used extensively throughout the developm
 Specifically, the following AI technologies were utilized:
 
 OpenAI GPT-4o & Anthropic Claude 3.7 – for generating and refining content, code, debugging and documentation.
+
 GitHub Copilot – for real-time coding suggestions and automated code completion within the development environment.
 
 These tools were employed to enhance productivity, improve quality, and accelerate development. 
