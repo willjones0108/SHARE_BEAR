@@ -54,7 +54,7 @@ namespace JMUcare.Pages.Grants
             }
 
             DBClass.UpdateGrantPermission(Id, NewPermission.UserID, NewPermission.AccessLevel);
-            return RedirectToPage(new { id = Id });
+            return RedirectToPage("/Grants/View", new { id = Id });
         }
 
 
@@ -68,7 +68,7 @@ namespace JMUcare.Pages.Grants
                 return RedirectToPage("/AccessDenied");
 
             DBClass.UpdateGrantPermission(Id, userId, "None");
-            return RedirectToPage(new { id = Id });
+            return RedirectToPage("/Grants/View", new { id = Id });
         }
 
         private void LoadPageData()
