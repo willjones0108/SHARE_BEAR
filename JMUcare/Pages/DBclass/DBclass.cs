@@ -19,11 +19,11 @@ namespace JMUcare.Pages.DBclass
         //private static readonly string? AuthConnString =
         //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
-        //private static readonly string JMUcareDBConnString =
-        //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
+        private static readonly string JMUcareDBConnString =
+            "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
 
-        //private static readonly string? AuthConnString =
-        //    "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
+        private static readonly string? AuthConnString =
+            "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
 
 
 
@@ -43,11 +43,11 @@ namespace JMUcare.Pages.DBclass
 
         //Dylan BELOW
 
-        //private static readonly string JMUcareDBConnString =
-        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+        private static readonly string JMUcareDBConnString =
+             "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
 
-        // private static readonly string? AuthConnString =
-        //      "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+        private static readonly string? AuthConnString =
+             "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
 
         public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
@@ -2359,6 +2359,44 @@ WHERE pp.PhaseID = @PhaseID";
                 }
             }
         }
+        public static List<ProjectTaskModel> GetAllTasks()
+        {
+            var tasks = new List<ProjectTaskModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+SELECT TaskID, ProjectID, TaskContent, DueDate, Status, TaskPosition, IsArchived
+FROM Project_Task
+WHERE IsArchived = 0";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            tasks.Add(new ProjectTaskModel
+                            {
+                                TaskID = reader.IsDBNull(reader.GetOrdinal("TaskID")) ? 0 : reader.GetInt32(reader.GetOrdinal("TaskID")),
+                                ProjectID = reader.IsDBNull(reader.GetOrdinal("ProjectID")) ? 0 : reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                                TaskContent = reader.IsDBNull(reader.GetOrdinal("TaskContent")) ? string.Empty : reader.GetString(reader.GetOrdinal("TaskContent")),
+                                DueDate = reader.IsDBNull(reader.GetOrdinal("DueDate")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("DueDate")),
+                                Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? string.Empty : reader.GetString(reader.GetOrdinal("Status")),
+                                PhasePosition = reader.IsDBNull(reader.GetOrdinal("TaskPosition")) ? 0 : reader.GetInt32(reader.GetOrdinal("TaskPosition")),
+                                IsArchived = reader.IsDBNull(reader.GetOrdinal("IsArchived")) ? false : reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+
+                            });
+                        }
+                    }
+                }
+            }
+
+            return tasks;
+        }
+
 
 
 
