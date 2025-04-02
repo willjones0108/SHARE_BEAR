@@ -1,0 +1,33 @@
+﻿@page
+@model JMUcare.Pages.Tasks.CalendarModel
+@{
+    ViewData["Title"] = "Task Calendar";
+}
+
+<div class="container mt-4">
+    <h2>Task Calendar</h2>
+    <div id="calendar"></div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: @Html.Raw(Json.Serialize(Model.CalendarEvents)),
+                eventClick: function(info) {
+                    alert('Task: ' + info.event.title + '\nStatus: ' + info.event.extendedProps.status);
+                }
+            });
+            calendar.render();
+        });
+    </script>
+}

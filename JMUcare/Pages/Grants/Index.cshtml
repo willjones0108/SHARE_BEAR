@@ -6,47 +6,51 @@
     ViewData["Title"] = "Your Grants";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Your Grants</h2>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-dark">Your Grants</h2>
 
-    @if (Model.IsUserAdmin())
-    {
-        <a asp-page="/Grants/CreateGrant" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> New +
-        </a>
-    }
-</div>
-
-@if (!Model.Grants.Any())
-{
-    <p>You don't have access to any grants.</p>
-}
-else
-{
-    <div class="list-group">
-        @foreach (var grant in Model.Grants)
+        @if (Model.IsUserAdmin())
         {
-            <div class="list-group-item position-relative">
-                <!-- Clickable area covering the grant item except buttons -->
-                <a asp-page="/Grants/View" asp-route-id="@grant.GrantID"
-                   class="stretched-link-except-buttons text-decoration-none text-dark">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>@grant.GrantTitle</strong><br />
-                            <small>@grant.Category — $@grant.Amount.ToString("N0")</small>
-                        </div>
-                        <div style="min-width: 100px;">
-                            <!-- Placeholder for buttons - actual buttons are positioned absolute -->
-                        </div>
-                    </div>
-                </a>
-
-                <!-- Buttons with special positioning to appear above the stretched link -->
-
-            </div>
+            <a asp-page="/Grants/CreateGrant" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> New +
+            </a>
         }
     </div>
-}
+
+    @if (!Model.Grants.Any())
+    {
+        <div class="alert alert-warning" role="alert">
+            You don't have access to any grants.
+        </div>
+    }
+    else
+    {
+        <div class="list-group">
+            @foreach (var grant in Model.Grants)
+            {
+                <div class="list-group-item position-relative border border-primary rounded mb-2">
+                    <!-- Clickable area covering the grant item except buttons -->
+                    <a asp-page="/Grants/View" asp-route-id="@grant.GrantID"
+                       class="stretched-link-except-buttons text-decoration-none text-dark">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong class="text-primary">@grant.GrantTitle</strong><br />
+                                <small class="text-secondary">@grant.Category — $@grant.Amount.ToString("N0")</small>
+                            </div>
+                            <div style="min-width: 100px;">
+                                <!-- Placeholder for buttons - actual buttons are positioned absolute -->
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Buttons with special positioning to appear above the stretched link -->
+
+                </div>
+            }
+        </div>
+    }
+</div>
 
 <style>
     /* Create a special stretched link that doesn't affect certain elements */
@@ -73,6 +77,6 @@ else
 
         /* Make the list items have a hover effect */
         .list-group-item:hover {
-            background-color: #f8f9fa;
+            background-color: #e9f5ff;
         }
 </style>
