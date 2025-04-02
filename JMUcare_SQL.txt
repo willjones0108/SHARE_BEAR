@@ -18,7 +18,6 @@ CREATE TABLE Grants (
     Description VARCHAR(MAX),
     TrackingStatus NVARCHAR(MAX),
     IsArchived BIT
-    IsProject BIT
 );
 
 -- User Tables

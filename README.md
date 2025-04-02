@@ -1,5 +1,19 @@
 # JMUcare System - Installation and Usage Guide
 
+# Care Bears (Will Jones, Ryan Karlan, Zarin Rahman, Dylan Kerr)
+
+# AI Disclaimer
+
+Artificial Intelligence (AI) tools were used extensively throughout the development of this project. 
+
+Specifically, the following AI technologies were utilized:
+
+OpenAI GPT-4o & Anthropic Claude 3.7 – for generating and refining content, code, debugging and documentation.
+GitHub Copilot – for real-time coding suggestions and automated code completion within the development environment.
+
+These tools were employed to enhance productivity, improve quality, and accelerate development. 
+All AI-generated content was reviewed and validated by the project team to ensure accuracy and appropriateness.
+
 ## Database Setup
 
 ### Setting Up Authentication Database
@@ -15,7 +29,7 @@ CREATE TABLE dbo.HashedCredentials (
     Password NVARCHAR(MAX) NOT NULL
 );
 
--- Create the login stored procedure
+-- Run the code above and then create the login stored procedure
 CREATE PROCEDURE sp_Lab3Login
     @Username NVARCHAR(50)
 AS
@@ -61,19 +75,6 @@ private static readonly string? AuthConnString =
 ```
 
 
-2. **Input Validation**: Always validate user input before processing:
-
-
-```csharp
-if (!ModelState.IsValid)
-{
-    // Repopulate data and return to form
-    return Page();
-}
-
-```
-
-
 ## Using the System
 
 ### Logging In
@@ -82,7 +83,15 @@ if (!ModelState.IsValid)
 2. Enter your username and password 
 3. Click "Login" to access the system
 
+User Account Details
+| Username | Password | Role               | Default Access                                    | 
+|----------|----------|--------------------|---------------------------------------------------| 
+| admin    | Password | Admin              | Full access to all grants, phases, and projects   | 
+| user1    | Password | Contributor        |                                                   | 
+| user2    | Password | Business Partner   |                                                   |
 
+*** Permissions must be redone to be tested. 
+For example user1 must be removed and added to grant 1 to see the action take place.
 
 
 ### Dashboard Navigation
@@ -138,7 +147,7 @@ The main dashboard provides access to:
 
 ### Ordering Phases
 
-Phases are displayed in order of completion. You can manually adjust their order:
+You can manually adjust the phase order:
 
 1. Navigate to the grant view showing all phases and select reorder phases
 2. Use the arrows to reorder phases
@@ -237,7 +246,7 @@ The calendar interface provides several viewing options:
 
 You can navigate between months using the prev/next buttons or jump to today.
 
-### Task Details
+### Calender Task Details
 
 Click on any task in the calendar to view details:
 - Task name
