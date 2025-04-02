@@ -2,7 +2,7 @@
 
 # Team: Care Bears 
 
-# AI Disclaimer
+### AI Disclaimer
 
 Artificial Intelligence (AI) tools were used extensively throughout the development of this project. 
 
