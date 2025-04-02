@@ -3,6 +3,7 @@ using JMUcare.Pages.Dataclasses;
 using System.Collections.Generic;
 using JMUcare.Pages.DBclass;
 using System;
+using Microsoft.AspNetCore.Http;
 
 namespace JMUcare.Pages.Tasks
 {
@@ -12,26 +13,33 @@ namespace JMUcare.Pages.Tasks
 
         public void OnGet()
         {
-            // Get all tasks from the database
-            var tasks = DBClass.GetAllTasks();
+            // Get the current user ID from session
+            int? currentUserId = HttpContext.Session.GetInt32("CurrentUserID");
 
-            // Convert tasks to calendar events
-            foreach (var task in tasks)
+            if (currentUserId.HasValue && currentUserId.Value > 0)
             {
-                // Determine color based on status
-                string color = GetStatusColor(task.Status);
+                // Get authorized tasks for the current user
+                var authorizedTasks = DBClass.GetAuthorizedTasksForUser(currentUserId.Value);
 
-                CalendarEvents.Add(new CalendarEvent
+                // Convert authorized tasks to calendar events
+                foreach (var task in authorizedTasks)
                 {
-                    Title = task.TaskContent,
-                    Start = task.DueDate.ToString("yyyy-MM-dd"),
-                    // Optional: End date if tasks have duration
-                    // End = task.DueDate.AddDays(1).ToString("yyyy-MM-dd"),
-                    AllDay = true,
-                    Status = task.Status,
-                    Color = color
-                });
+                    // Determine color based on status
+                    string color = GetStatusColor(task.Status);
+
+                    CalendarEvents.Add(new CalendarEvent
+                    {
+                        Title = task.TaskContent,
+                        Start = task.DueDate.ToString("yyyy-MM-dd"),
+                        AllDay = true,
+                        Status = task.Status,
+                        Color = color,
+                        TaskID = task.TaskID,
+                        ProjectID = task.ProjectID
+                    });
+                }
             }
+            // If user is not logged in, the calendar will be empty
         }
 
         private string GetStatusColor(string status)
@@ -54,5 +62,7 @@ namespace JMUcare.Pages.Tasks
         public bool AllDay { get; set; }
         public string Status { get; set; }
         public string Color { get; set; }
+        public int TaskID { get; set; }
+        public int ProjectID { get; set; }
     }
 }
