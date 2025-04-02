@@ -2396,6 +2396,74 @@ WHERE IsArchived = 0";
 
             return tasks;
         }
+        public static List<ProjectTaskModel> GetAuthorizedTasksForUser(int userId)
+        {
+            var authorizedTasks = new List<ProjectTaskModel>();
+
+            using (var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString))
+            {
+                connection.Open();
+
+                // This query gets:
+                // 1. Tasks from projects where user has Read/Edit permission
+                // 2. Tasks that user is directly assigned to via Project_Task_User
+                // 3. Tasks accessible via admin role
+                string query = @"
+            SELECT t.TaskID, t.ProjectID, t.TaskContent, t.DueDate, t.Status, t.TaskPosition, t.IsArchived
+            FROM Project_Task t
+            LEFT JOIN Project p ON t.ProjectID = p.ProjectID
+            LEFT JOIN Project_Permission pp ON p.ProjectID = pp.ProjectID AND pp.UserID = @UserID
+            LEFT JOIN Project_Task_User ptu ON t.TaskID = ptu.TaskID AND ptu.UserID = @UserID
+            LEFT JOIN DBUser u ON u.UserID = @UserID
+            LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+            WHERE t.IsArchived = 0 
+            AND (
+                pp.AccessLevel IN ('Read', 'Edit')
+                OR ptu.TaskID IS NOT NULL
+                OR ur.RoleName = 'Admin'
+                OR EXISTS (
+                    SELECT 1 
+                    FROM Phase_Project phpr
+                    JOIN Phase_Permission phper ON phpr.PhaseID = phper.PhaseID
+                    WHERE phpr.ProjectID = p.ProjectID
+                    AND phper.UserID = @UserID
+                    AND phper.AccessLevel IN ('Read', 'Edit')
+                )
+                OR EXISTS (
+                    SELECT 1 
+                    FROM Grant_Permission gp
+                    WHERE gp.GrantID = p.GrantID
+                    AND gp.UserID = @UserID
+                    AND gp.AccessLevel IN ('Read', 'Edit')
+                )
+            )";
+
+                using (var cmd = new System.Data.SqlClient.SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            authorizedTasks.Add(new ProjectTaskModel
+                            {
+                                TaskID = reader.IsDBNull(reader.GetOrdinal("TaskID")) ? 0 : reader.GetInt32(reader.GetOrdinal("TaskID")),
+                                ProjectID = reader.IsDBNull(reader.GetOrdinal("ProjectID")) ? 0 : reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                                TaskContent = reader.IsDBNull(reader.GetOrdinal("TaskContent")) ? string.Empty : reader.GetString(reader.GetOrdinal("TaskContent")),
+                                DueDate = reader.IsDBNull(reader.GetOrdinal("DueDate")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("DueDate")),
+                                Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? string.Empty : reader.GetString(reader.GetOrdinal("Status")),
+                                PhasePosition = reader.IsDBNull(reader.GetOrdinal("TaskPosition")) ? 0 : reader.GetInt32(reader.GetOrdinal("TaskPosition")),
+                                IsArchived = reader.IsDBNull(reader.GetOrdinal("IsArchived")) ? false : reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return authorizedTasks;
+        }
+
 
         // TO BE IMPLEMENTED IN THE FUTURE FOR DOCUMENTS
 
