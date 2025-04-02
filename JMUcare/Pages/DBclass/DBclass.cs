@@ -19,11 +19,11 @@ namespace JMUcare.Pages.DBclass
         //private static readonly string? AuthConnString =
         //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
-        private static readonly string JMUcareDBConnString =
-            "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
+        //private static readonly string JMUcareDBConnString =
+        //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
 
-        private static readonly string? AuthConnString =
-            "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
+        //private static readonly string? AuthConnString =
+        //    "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
 
 
 
@@ -32,11 +32,11 @@ namespace JMUcare.Pages.DBclass
         //Will's Connection Below
 
 
-        //public static readonly string JMUcareDBConnString =
-        //"Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+        public static readonly string JMUcareDBConnString =
+        "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
-        //private static readonly string? AuthConnString =
-        //"Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+        private static readonly string? AuthConnString =
+        "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
 
 
 

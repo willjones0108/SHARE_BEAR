@@ -22,10 +22,15 @@
                 <span asp-validation-for="Project.Project_Description" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Project.TrackingStatus" class="control-label"></label>
-                <input asp-for="Project.TrackingStatus" class="form-control" />
+                <label asp-for="Project.TrackingStatus" class="control-label">Tracking Status</label>
+                <select asp-for="Project.TrackingStatus" class="form-select">
+                    <option value="Not Started">Not Started</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                </select>
                 <span asp-validation-for="Project.TrackingStatus" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Project.ProjectType" class="control-label"></label>
                 <input asp-for="Project.ProjectType" class="form-control" />
