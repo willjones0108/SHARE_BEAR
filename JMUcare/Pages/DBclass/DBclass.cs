@@ -32,22 +32,22 @@ namespace JMUcare.Pages.DBclass
         //Will's Connection Below
 
 
-        public static readonly string JMUcareDBConnString =
-        "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+        //public static readonly string JMUcareDBConnString =
+        //"Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
 
-        private static readonly string? AuthConnString =
-        "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+        //private static readonly string? AuthConnString =
+        //"Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
 
 
 
 
         //Dylan BELOW
 
-        //private static readonly string JMUcareDBConnString =
-        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+        private static readonly string JMUcareDBConnString =
+             "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
 
-        //private static readonly string? AuthConnString =
-        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+        private static readonly string? AuthConnString =
+             "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
 
         public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
@@ -201,31 +201,34 @@ namespace JMUcare.Pages.DBclass
             using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
             {
                 string sqlQuery = @"
-            INSERT INTO Grants (
-                GrantTitle,
-                Category,
-                FundingSource,
-                Amount,
-                Status,
-                CreatedBy,
-                GrantLeadID,
-                Description,
-                TrackingStatus,
-                IsArchived
-            )
-            OUTPUT INSERTED.GrantID
-            VALUES (
-                @GrantTitle,
-                @Category,
-                @FundingSource,
-                @Amount,
-                @Status,
-                @CreatedBy,
-                @GrantLeadID,
-                @Description,
-                @TrackingStatus,
-                @IsArchived
-            )";
+        INSERT INTO Grants (
+            GrantTitle,
+            Category,
+            FundingSource,
+            Amount,
+            Status,
+            CreatedBy,
+            GrantLeadID,
+            Description,
+            TrackingStatus,
+            IsArchived,
+            IsProject
+        )
+        OUTPUT INSERTED.GrantID
+        VALUES (
+            @GrantTitle,
+            @Category,
+            @FundingSource,
+            @Amount,
+            @Status,
+            @CreatedBy,
+            @GrantLeadID,
+            @Description,
+            @TrackingStatus,
+            @IsArchived,
+            @IsProject
+        )";
+                    
 
                 using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
                 {
@@ -239,6 +242,7 @@ namespace JMUcare.Pages.DBclass
                     cmd.Parameters.AddWithValue("@Description", grant.Description ?? "");
                     cmd.Parameters.AddWithValue("@TrackingStatus", grant.TrackingStatus ?? "");
                     cmd.Parameters.AddWithValue("@IsArchived", grant.IsArchived);
+                    cmd.Parameters.AddWithValue("@IsProject", grant.IsProject); // New parameter
 
                     connection.Open();
                     newGrantId = (int)cmd.ExecuteScalar();
@@ -321,7 +325,8 @@ namespace JMUcare.Pages.DBclass
                                 GrantLeadID = reader.GetInt32(reader.GetOrdinal("GrantLeadID")),
                                 Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
                                 TrackingStatus = reader.IsDBNull(reader.GetOrdinal("TrackingStatus")) ? "" : reader.GetString(reader.GetOrdinal("TrackingStatus")),
-                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
+                                IsProject = reader.GetBoolean(reader.GetOrdinal("IsProject")) // New field
                             });
                         }
                     }
@@ -330,9 +335,6 @@ namespace JMUcare.Pages.DBclass
 
             return grants ?? new List<GrantModel>();
         }
-
-
-
 
         public static int GetUserIdByUsername(string username)
         {
@@ -426,7 +428,8 @@ namespace JMUcare.Pages.DBclass
                                 GrantLeadID = reader.GetInt32(reader.GetOrdinal("GrantLeadID")),
                                 Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
                                 TrackingStatus = reader.IsDBNull(reader.GetOrdinal("TrackingStatus")) ? "" : reader.GetString(reader.GetOrdinal("TrackingStatus")),
-                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
+                                IsProject = reader.GetBoolean(reader.GetOrdinal("IsProject")) // New field
                             };
                         }
                     }
@@ -448,7 +451,8 @@ namespace JMUcare.Pages.DBclass
                 Status = @Status,
                 GrantLeadID = @GrantLeadID,
                 Description = @Description,
-                TrackingStatus = @TrackingStatus
+                TrackingStatus = @TrackingStatus,
+                IsProject = @IsProject
             WHERE GrantID = @GrantID";
 
                 using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
@@ -462,7 +466,8 @@ namespace JMUcare.Pages.DBclass
                     cmd.Parameters.AddWithValue("@GrantLeadID", grant.GrantLeadID);
                     cmd.Parameters.AddWithValue("@Description", grant.Description ?? "");
                     cmd.Parameters.AddWithValue("@TrackingStatus", grant.TrackingStatus ?? "");
-
+                    cmd.Parameters.AddWithValue("@IsProject", grant.IsProject); // New parameter
+        
                     connection.Open();
                     cmd.ExecuteNonQuery();
                 }
@@ -1023,6 +1028,7 @@ namespace JMUcare.Pages.DBclass
             TrackingStatus,
             IsArchived,
             Project_Description
+            DueDate
         )
         OUTPUT INSERTED.ProjectID
         VALUES (
@@ -1033,6 +1039,7 @@ namespace JMUcare.Pages.DBclass
             @TrackingStatus,
             @IsArchived,
             @Project_Description
+            @DueDate
         )";
 
                 using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
@@ -1044,6 +1051,7 @@ namespace JMUcare.Pages.DBclass
                     cmd.Parameters.AddWithValue("@TrackingStatus", project.TrackingStatus ?? "");
                     cmd.Parameters.AddWithValue("@IsArchived", project.IsArchived);
                     cmd.Parameters.AddWithValue("@Project_Description", project.Project_Description ?? "");
+                    cmd.Parameters.AddWithValue("@DueDate", project.DueDate);
 
                     connection.Open();
                     newProjectId = (int)cmd.ExecuteScalar();

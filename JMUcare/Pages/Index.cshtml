@@ -7,241 +7,152 @@
 }
 
 <div class="container-fluid dashboard-container">
+    <!-- Welcome Banner -->
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="welcome-banner card shadow">
                 <div class="card-body">
                     <h2 class="welcome-title">Welcome back, @Model.CurrentUsername</h2>
-                    <p class="welcome-subtitle">This is your personalized JMUcare dashboard</p>
+                    <p class="welcome-subtitle">JMUcare Dashboard</p>
                 </div>
             </div>
         </div>
     </div>
 
-    @if (Model.IsAdmin)
-    {
-        <!-- Admin Stats Summary Row -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="stat-card card shadow text-center">
-                    <div class="card-body">
-                        <h1 class="stat-number">@Model.TotalGrants</h1>
-                        <p class="stat-label">Grants</p>
-                    </div>
+    <!-- Calendar Section -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0">Calendar</h4>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card card shadow text-center">
-                    <div class="card-body">
-                        <h1 class="stat-number">@Model.InProgressPhases</h1>
-                        <p class="stat-label">Active Phases</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card card shadow text-center">
-                    <div class="card-body">
-                        <h1 class="stat-number">@Model.PendingTasks</h1>
-                        <p class="stat-label">Pending Tasks</p>
-                    </div>
+                <div class="card-body">
+                    <div id="calendar" class="calendar-container"></div>
                 </div>
             </div>
         </div>
-    }
+    </div>
 
+    <!-- Grants and Projects Sections -->
     <div class="row">
-        <!-- Grants Section -->
-        @if (Model.Grants.Any())
-        {
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-header dashboard-card-header">
-                        <h4 class="mb-0">Your Grants</h4>
-                        <a asp-page="/Grants/Index" class="btn btn-sm btn-outline-primary">View All</a>
-                    </div>
-                    <div class="card-body">
+        <!-- Grants Section (Non-Active) -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header">
+                    <h4 class="mb-0">My Grants</h4>
+                </div>
+                <div class="card-body">
+                    @{
+                        // Filter to show only non-active grants
+                        var pendingGrants = Model.Grants?.Where(g => g.Status != "Active").ToList();
+                    }
+
+                    @if (pendingGrants != null && pendingGrants.Any())
+                    {
                         <div class="list-group">
-                            @foreach (var grant in Model.Grants.Take(5))
+                            @foreach (var grant in pendingGrants)
                             {
                                 <a asp-page="/Grants/View" asp-route-id="@grant.GrantID" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h5 class="mb-1">@grant.GrantTitle</h5>
-                                        <small class="text-muted">@grant.Status</small>
+                                        <span class="badge bg-primary">@grant.Status</span>
                                     </div>
-                                    <p class="mb-1 text-truncate">@(grant.Description ?? "No description available")</p>
+                                    <p class="mb-1">@(grant.Description?.Length > 100 ? grant.Description.Substring(0, 97) + "..." : grant.Description ?? "No description available")</p>
                                     <small>Funding: $@grant.Amount.ToString("N0")</small>
                                 </a>
                             }
                         </div>
-                    </div>
-                </div>
-            </div>
-        }
-
-        <!-- Active Phases Section - Updated to match Grants section -->
-        @if (Model.ActivePhases.Any())
-        {
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-header dashboard-card-header">
-                        <h4 class="mb-0">Active Phases</h4>
-                        <a asp-page="/Phases/Index" class="btn btn-sm btn-outline-primary">View All</a>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            @foreach (var phase in Model.ActivePhases.Take(5))
+                        <div class="text-center mt-3">
+                            <a asp-page="/Grants/Index" class="btn btn-outline-primary">View All Grants</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-clipboard-x" style="font-size: 2.5rem; color: #ccc;"></i>
+                            <p class="mt-3">No pending grants available</p>
+                            @if (Model.IsAdmin)
                             {
-                                <a asp-page="/Grants/View" asp-route-id="@DBClass.GetGrantIdForPhase(phase.PhaseID)" asp-route-phaseId="@phase.PhaseID" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@phase.PhaseName</h5>
-                                        <small class="text-muted">@phase.Status</small>
-                                    </div>
-                                    <p class="mb-1 text-truncate">@(phase.Description ?? "No description available")</p>
-                                    <small>Grant: @Model.GetGrantName(phase.GrantID)</small>
+                                <a asp-page="/Grants/CreateGrant" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle"></i> Create New Grant
                                 </a>
                             }
                         </div>
-                    </div>
+                    }
                 </div>
             </div>
-        }
-    </div>
+        </div>
 
-    <div class="row">
-        <!-- Recent Projects Section -->
-        @if (Model.RecentProjects.Any())
-        {
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-header dashboard-card-header">
-                        <h4 class="mb-0">Recent Projects</h4>
-                    </div>
-                    <div class="card-body">
+        <!-- Projects Section (Active Grants) -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header">
+                    <h4 class="mb-0">My Projects</h4>
+                </div>
+                <div class="card-body">
+                    @{
+                        // Filter to show only active grants as projects
+                        var activeProjects = Model.Grants?.Where(g => g.Status == "Active").ToList();
+                    }
+
+                    @if (activeProjects != null && activeProjects.Any())
+                    {
                         <div class="list-group">
-                            @foreach (var project in Model.RecentProjects)
+                            @foreach (var project in activeProjects)
                             {
-                                <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="list-group-item list-group-item-action">
+                                <a asp-page="/Grants/View" asp-route-id="@project.GrantID" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@project.Title</h5>
-                                        <small class="text-muted">@project.ProjectType</small>
+                                        <h5 class="mb-1">@project.GrantTitle</h5>
+                                        <span class="badge bg-success">Active Project</span>
                                     </div>
-                                    <p class="mb-1 text-truncate">@(project.Project_Description ?? "No description available")</p>
-                                    <small>Phase: @Model.GetProjectPhase(project.ProjectID)</small>
+                                    <p class="mb-1">@(project.Description?.Length > 100 ? project.Description.Substring(0, 97) + "..." : project.Description ?? "No description available")</p>
+                                    <small>Funding: $@project.Amount.ToString("N0")</small>
                                 </a>
                             }
                         </div>
-                    </div>
-                </div>
-            </div>
-        }
-
-        <!-- Upcoming Tasks Section -->
-        @if (Model.UpcomingTasks.Any())
-        {
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-header dashboard-card-header">
-                        <h4 class="mb-0">Upcoming Tasks</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            @foreach (var task in Model.UpcomingTasks)
-                            {
-                                <a asp-page="/Projects/View" asp-route-id="@task.ProjectID" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@task.TaskContent</h5>
-                                        <span class="badge @(task.Status == "Completed" ? "bg-success" :
-                                                     task.Status == "In Progress" ? "bg-primary" :
-                                                     task.Status == "Not Started" ? "bg-secondary" :
-                                                     "bg-warning")">
-                                            @task.Status
-                                        </span>
-                                    </div>
-                                    <p class="mb-1">
-                                        <strong>Due:</strong> @task.DueDate.ToShortDateString()
-                                    </p>
-                                </a>
-                            }
+                        <div class="text-center mt-3">
+                            <a asp-page="/Projects/Index" class="btn btn-outline-success">View All Projects</a>
                         </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-kanban" style="font-size: 2.5rem; color: #ccc;"></i>
+                            <p class="mt-3">No active projects</p>
+                            <p class="text-muted">Projects appear when grants become active</p>
+                        </div>
+                    }
                 </div>
             </div>
-        }
+        </div>
     </div>
 
     <!-- Quick Actions Section -->
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="card shadow">
-                <div class="card-header dashboard-card-header">
+                <div class="card-header">
                     <h4 class="mb-0">Quick Actions</h4>
                 </div>
-                <div class="card-body">
-                    <div class="row">
+                <div class="card-body text-center">
+                    <div class="d-flex justify-content-around">
                         @if (Model.IsAdmin)
                         {
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <a asp-page="/Grants/CreateGrant" class="btn btn-primary btn-lg w-100 quick-action-btn">
-                                    <i class="bi bi-plus-circle"></i><br />
-                                    New Grant
-                                </a>
-                            </div>
+                            <a asp-page="/Grants/CreateGrant" class="btn btn-primary mx-2">
+                                <i class="bi bi-plus-circle"></i> New Grant
+                            </a>
                         }
-                        <div class="col-md-3 col-sm-6 mb-3">
-                            <a asp-page="/Grants/Index" class="btn btn-outline-primary btn-lg w-100 quick-action-btn">
-                                <i class="bi bi-journal-text"></i><br />
-                                View Grants
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-3">
-                            <a href="#" onclick="window.print(); return false;" class="btn btn-outline-secondary btn-lg w-100 quick-action-btn">
-                                <i class="bi bi-printer"></i><br />
-                                Print Dashboard
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-3">
-                            <a asp-page="/HashedLogin/Logout" class="btn btn-outline-danger btn-lg w-100 quick-action-btn">
-                                <i class="bi bi-box-arrow-right"></i><br />
-                                Logout
-                            </a>
-                        </div>
+                        <a href="#" onclick="window.print(); return false;" class="btn btn-outline-secondary mx-2">
+                            <i class="bi bi-printer"></i> Print Dashboard
+                        </a>
+                        <a asp-page="/HashedLogin/Logout" class="btn btn-outline-danger mx-2">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Empty State Messages -->
-    @if (!Model.Grants.Any() && !Model.ActivePhases.Any() && !Model.RecentProjects.Any() && !Model.UpcomingTasks.Any())
-    {
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card shadow">
-                    <div class="card-body text-center py-5">
-                        <i class="bi bi-info-circle text-primary" style="font-size: 3rem;"></i>
-                        <h3 class="mt-3">No Data Available</h3>
-                        <p class="text-muted">
-                            You don't have any grants, phases, projects, or tasks assigned to you yet.
-                            @if (Model.IsAdmin)
-                            {
-                                <span>As an admin, you can create a new grant to get started.</span>
-                            }
-                            else
-                            {
-                                <span>Please contact your administrator for access to relevant resources.</span>
-                            }
-                        </p>
-                        @if (Model.IsAdmin)
-                        {
-                            <a asp-page="/Grants/CreateGrant" class="btn btn-primary mt-3">
-                                <i class="bi bi-plus-circle"></i> Create New Grant
-                            </a>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
 </div>
 
 @section Scripts {
@@ -251,7 +162,22 @@
             // Highlight the current navigation item
             $('a[href="/Index"]').addClass('active');
 
-            // You could add chart initialization or other dashboard widgets here
+            // Calendar initialization
+            try {
+                $('#calendar').fullCalendar({
+                    header: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'month,agendaWeek,agendaDay'
+                    },
+                    height: 450,
+                    editable: false,
+                    eventLimit: true
+                });
+            } catch (e) {
+                console.log("Calendar library not loaded. Please include FullCalendar or similar library.");
+                $('#calendar').html('<div class="text-center py-5"><p>Calendar functionality requires additional libraries.</p></div>');
+            }
         });
     </script>
 }

@@ -1,4 +1,3 @@
-
 -- Base Tables
 CREATE TABLE UserRole (
     UserRoleID INT PRIMARY KEY,
@@ -17,7 +16,8 @@ CREATE TABLE Grants (
     GrantLeadID INT,
     Description VARCHAR(MAX),
     TrackingStatus NVARCHAR(MAX),
-    IsArchived BIT
+    IsArchived BIT,
+    IsProject BIT -- New field to indicate if the grant is a project
 );
 
 -- User Tables
@@ -71,6 +71,7 @@ CREATE TABLE Project (
     IsArchived BIT,
     Project_Description TEXT,
     ProjectPosition INT,
+    DueDate DATE,
     FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID)
    
 );
@@ -383,9 +384,9 @@ INSERT INTO DBUser (FirstName, LastName, Email, Username, UserRoleID, UpdatedAt,
 ('User3', 'Example', 'user3@example.com', 'user3', 4, GETDATE(), 0);
 
 -- Insert initial data into Grants
-INSERT INTO Grants (GrantTitle, Category, FundingSource, Amount, Status, CreatedBy, GrantLeadID, Description, TrackingStatus, IsArchived) VALUES
-('Grant 1', 'Category 1', 'Source 1', 10000.00, 'Active', 1, 1, 'Description 1', 'Tracking 1', 0),
-('Grant 2', 'Category 2', 'Source 2', 20000.00, 'Active', 2, 2, 'Description 2', 'Tracking 2', 0);
+INSERT INTO Grants (GrantTitle, Category, FundingSource, Amount, Status, CreatedBy, GrantLeadID, Description, TrackingStatus, IsArchived, IsProject) VALUES
+('Grant 1', 'Category 1', 'Source 1', 10000.00, 'Active', 1, 1, 'Description 1', 'Tracking 1', 0, 0),
+('Grant 2', 'Category 2', 'Source 2', 20000.00, 'Active', 2, 2, 'Description 2', 'Tracking 2', 0, 0);
 
 -- Insert initial data into Project
 INSERT INTO Project (Title, CreatedBy, GrantID, ProjectType, TrackingStatus, IsArchived, Project_Description, ProjectPosition) VALUES
