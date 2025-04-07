@@ -1,69 +1,145 @@
 ﻿@page
 @model JMUcare.Pages.Dataclasses.HashedLogin.CreateHashedLoginModel
 @{
-    ViewData["Title"] = "Create Hashed Login";
+    ViewData["Title"] = "Create New User";
 }
-<div class="container mt-5">
+
+<style>
+    .login-container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .logo {
+        display: block;
+        margin: 0 auto 20px;
+        max-width: 300px;
+    }
+
+    .background-container {
+        height: 100vh;
+        width: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -1;
+    }
+
+    .btn-jmu-purple {
+        background-color: #450084;
+        border-color: #450084;
+        color: white;
+    }
+
+        .btn-jmu-purple:hover {
+            background-color: #33006b;
+            border-color: #33006b;
+            color: white;
+        }
+
+    .card {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .card-header-jmu {
+        background-color: #450084;
+        color: white;
+        border-bottom: 3px solid #CBB677;
+        padding: 15px 20px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #450084;
+    }
+
+    .form-control:focus {
+        border-color: #CBB677;
+        box-shadow: 0 0 0 0.2rem rgba(203, 182, 119, 0.25);
+    }
+</style>
+
+<div class="background-container" style="background-image: url('@Url.Content("~/images/landscape.jpg")'); background-size: cover; background-position: center;"></div>
+<div class="container mt-5 login-container">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header-jmu">
                     <h4 class="mb-0">Create New User</h4>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
+                    <img src="~/images/JMU Care-purple.png" alt="Company Logo" class="logo mb-4" />
                     <form method="post">
-                        <div class="form-group">
-                            <label asp-for="UserRoleID" class="control-label">Select User Role</label>
-                            <select asp-for="UserRoleID" class="form-control">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstName" class="form-label">First Name</label>
+                                <input asp-for="FirstName" class="form-control" placeholder="Enter First Name" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastName" class="form-label">Last Name</label>
+                                <input asp-for="LastName" class="form-control" placeholder="Enter Last Name" required />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" type="email" placeholder="Enter Email" required />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Username" class="form-label">Username</label>
+                                <input asp-for="Username" class="form-control" placeholder="Enter Username" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Password" class="form-label">Password</label>
+                                <input asp-for="Password" class="form-control" type="password" placeholder="Enter Password" required />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="UserRoleID" class="form-label">User Role</label>
+                            <select asp-for="UserRoleID" class="form-control" required>
                                 <option value="">-- Select Role --</option>
                                 <option value="1">Admin</option>
                                 <option value="2">Contributor</option>
                                 <option value="3">Viewer</option>
                             </select>
                         </div>
-                        <div class="form-group mt-3">
-                            <label asp-for="FirstName" class="control-label">First Name</label>
-                            <input asp-for="FirstName" class="form-control" placeholder="Enter First Name" />
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="UpdatedAt" class="form-label">Updated At</label>
+                                <input asp-for="UpdatedAt" class="form-control" type="datetime-local" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IsArchived" class="form-label">Account Status</label>
+                                <select asp-for="IsArchived" class="form-control">
+                                    <option value="0">Active</option>
+                                    <option value="1">Archived</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-group mt-3">
-                            <label asp-for="LastName" class="control-label">Last Name</label>
-                            <input asp-for="LastName" class="form-control" placeholder="Enter Last Name" />
-                        </div>
-                        <div class="form-group mt-3">
-                            <label asp-for="Email" class="control-label">Email</label>
-                            <input asp-for="Email" class="form-control" type="email" placeholder="Enter Email" />
-                        </div>
-                        <div class="form-group mt-3">
-                            <label asp-for="Username" class="control-label">Enter Username</label>
-                            <input asp-for="Username" class="form-control" placeholder="Enter Username" />
-                        </div>
-                        <div class="form-group mt-3">
-                            <label asp-for="Password" class="control-label">Enter Password</label>
-                            <input asp-for="Password" class="form-control" type="password" placeholder="Enter Password" />
-                        </div>
-                        <div class="form-group mt-3">
-                            <label asp-for="UpdatedAt" class="control-label">Updated At</label>
-                            <input asp-for="UpdatedAt" class="form-control" type="datetime-local" />
-                        </div>
-                        <div class="form-group mt-3">
-                            <label asp-for="IsArchived" class="control-label">Is Archived</label>
-                            <select asp-for="IsArchived" class="form-control">
-                                <option value="0">No</option>
-                                <option value="1">Yes</option>
-                            </select>
-                        </div>
-                        <div class="form-group mt-4">
-                            <button type="submit" class="btn btn-primary w-100">Create User</button>
+
+                        <div class="d-grid gap-2 mb-3 mt-4">
+                            <button type="submit" class="btn btn-jmu-purple">Create User</button>
+                            <a href="@Url.Page("/HashedLogin/HashedLogin")" class="btn btn-outline-secondary">Cancel</a>
                         </div>
                     </form>
-                    <div class="mt-3">
-                        @if (ViewData["UserCreate"] != null)
-                        {
-                            <p class="text-success">@ViewData["UserCreate"]</p>
-                        }
-                    </div>
+
+                    @if (ViewData["UserCreate"] != null)
+                    {
+                        <div class="alert alert-success mt-3">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            @ViewData["UserCreate"]
+                        </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
