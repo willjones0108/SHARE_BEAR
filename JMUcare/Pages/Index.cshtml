@@ -10,132 +10,22 @@
 <div class="row mb-4">
     <div class="col-md-12">
         <div class="card shadow">
-            <div class="card-header">
+            <div class="card-header jmu-header">
                 <h4 class="mb-0">Calendar</h4>
             </div>
             <div class="card-body">
-                <div id="calendar" class="calendar-container"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-    <!-- Grants and Projects Sections -->
-    <div class="row">
-        <!-- Grants Section (Non-Active) -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header">
-                    <h4 class="mb-0">My Grants</h4>
-                </div>
-                <div class="card-body">
-                    @{
-                        // Filter to show only non-active grants
-                        var pendingGrants = Model.Grants?.Where(g => g.Status != "Active").ToList();
-                    }
-
-                    @if (pendingGrants != null && pendingGrants.Any())
-                    {
-                        <div class="list-group">
-                            @foreach (var grant in pendingGrants)
-                            {
-                                <a asp-page="/Grants/View" asp-route-id="@grant.GrantID" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@grant.GrantTitle</h5>
-                                        <span class="badge bg-primary">@grant.Status</span>
-                                    </div>
-                                    <p class="mb-1">@(grant.Description?.Length > 100 ? grant.Description.Substring(0, 97) + "..." : grant.Description ?? "No description available")</p>
-                                    <small>Funding: $@grant.Amount.ToString("N0")</small>
-                                </a>
-                            }
-                        </div>
-                        <div class="text-center mt-3">
-                            <a asp-page="/Grants/Index" class="btn btn-outline-primary">View All Grants</a>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-                            <i class="bi bi-clipboard-x" style="font-size: 2.5rem; color: #ccc;"></i>
-                            <p class="mt-3">No pending grants available</p>
-                            @if (Model.IsAdmin)
-                            {
-                                <a asp-page="/Grants/CreateGrant" class="btn btn-primary">
-                                    <i class="bi bi-plus-circle"></i> Create New Grant
-                                </a>
-                            }
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- Projects Section (Active Grants) -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header">
-                    <h4 class="mb-0">My Projects</h4>
-                </div>
-                <div class="card-body">
-                    @{
-                        // Filter to show only active grants as projects
-                        var activeProjects = Model.Grants?.Where(g => g.Status == "Active").ToList();
-                    }
-
-                    @if (activeProjects != null && activeProjects.Any())
-                    {
-                        <div class="list-group">
-                            @foreach (var project in activeProjects)
-                            {
-                                <a asp-page="/Grants/View" asp-route-id="@project.GrantID" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@project.GrantTitle</h5>
-                                        <span class="badge bg-success">Active Project</span>
-                                    </div>
-                                    <p class="mb-1">@(project.Description?.Length > 100 ? project.Description.Substring(0, 97) + "..." : project.Description ?? "No description available")</p>
-                                    <small>Funding: $@project.Amount.ToString("N0")</small>
-                                </a>
-                            }
-                        </div>
-                        <div class="text-center mt-3">
-                            <a asp-page="/Projects/Index" class="btn btn-outline-success">View All Projects</a>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-                            <i class="bi bi-kanban" style="font-size: 2.5rem; color: #ccc;"></i>
-                            <p class="mt-3">No active projects</p>
-                            <p class="text-muted">Projects appear when grants become active</p>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions Section -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow">
-                <div class="card-header">
-                    <h4 class="mb-0">Quick Actions</h4>
-                </div>
-                <div class="card-body text-center">
-                    <div class="d-flex justify-content-around">
-                        @if (Model.IsAdmin)
-                        {
-                            <a asp-page="/Grants/CreateGrant" class="btn btn-primary mx-2">
-                                <i class="bi bi-plus-circle"></i> New Grant
-                            </a>
-                        }
-                        <a href="#" onclick="window.print(); return false;" class="btn btn-outline-secondary mx-2">
-                            <i class="bi bi-printer"></i> Print Dashboard
-                        </a>
-                        <a asp-page="/HashedLogin/Logout" class="btn btn-outline-danger mx-2">
-                            <i class="bi bi-box-arrow-right"></i> Logout
-                        </a>
+                <div id="weekly-calendar" class="weekly-calendar-container">
+                    <div class="week-header d-flex justify-content-between mb-3">
+                        <button id="prev-week" class="btn btn-sm jmu-btn-outline">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </button>
+                        <h6 id="week-title" class="mb-0 pt-1 jmu-title">This Week</h6>
+                        <button id="next-week" class="btn btn-sm jmu-btn-outline">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div id="day-boxes" class="day-boxes d-flex justify-content-between">
+                        <!-- Day boxes will be inserted here by JavaScript -->
                     </div>
                 </div>
             </div>
@@ -143,29 +33,354 @@
     </div>
 </div>
 
+<!-- Grants and Projects Sections -->
+<div class="row">
+    <!-- Grants Section (Non-Active) -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header jmu-header">
+                <h4 class="mb-0">My Grants</h4>
+            </div>
+            <div class="card-body">
+                @{
+                    // Filter to show only non-active grants
+                    var pendingGrants = Model.Grants?.Where(g => g.Status != "Active").ToList();
+                }
+
+                @if (pendingGrants != null && pendingGrants.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var grant in pendingGrants)
+                        {
+                            <a asp-page="/Grants/View" asp-route-id="@grant.GrantID" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@grant.GrantTitle</h5>
+                                    <span class="badge jmu-badge-primary">@grant.Status</span>
+                                </div>
+                                <p class="mb-1">@(grant.Description?.Length > 100 ? grant.Description.Substring(0, 97) + "..." : grant.Description ?? "No description available")</p>
+                                <small>Funding: $@grant.Amount.ToString("N0")</small>
+                            </a>
+                        }
+                    </div>
+                    <div class="text-center mt-3">
+                        <a asp-page="/Grants/Index" class="btn jmu-btn-outline">View All Grants</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-clipboard-x" style="font-size: 2.5rem; color: #8D8D8D;"></i>
+                        <p class="mt-3">No pending grants available</p>
+                        @if (Model.IsAdmin)
+                        {
+                            <a asp-page="/Grants/CreateGrant" class="btn jmu-btn-primary">
+                                <i class="bi bi-plus-circle"></i> Create New Grant
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Section (Active Grants) -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header jmu-header">
+                <h4 class="mb-0">My Projects</h4>
+            </div>
+            <div class="card-body">
+                @{
+                    // Filter to show only active grants as projects
+                    var activeProjects = Model.Grants?.Where(g => g.Status == "Active").ToList();
+                }
+
+                @if (activeProjects != null && activeProjects.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var project in activeProjects)
+                        {
+                            <a asp-page="/Grants/View" asp-route-id="@project.GrantID" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@project.GrantTitle</h5>
+                                    <span class="badge jmu-badge-success">Active Project</span>
+                                </div>
+                                <p class="mb-1">@(project.Description?.Length > 100 ? project.Description.Substring(0, 97) + "..." : project.Description ?? "No description available")</p>
+                                <small>Funding: $@project.Amount.ToString("N0")</small>
+                            </a>
+                        }
+                    </div>
+                    <div class="text-center mt-3">
+                        <a asp-page="/Projects/Index" class="btn jmu-btn-success">View All Projects</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-kanban" style="font-size: 2.5rem; color: #8D8D8D;"></i>
+                        <p class="mt-3">No active projects</p>
+                        <p class="text-muted">Projects appear when grants become active</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Section -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header jmu-header">
+                <h4 class="mb-0">Quick Actions</h4>
+            </div>
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-around">
+                    @if (Model.IsAdmin)
+                    {
+                        <a asp-page="/Grants/CreateGrant" class="btn jmu-btn-primary mx-2">
+                            <i class="bi bi-plus-circle"></i> New Grant
+                        </a>
+                    }
+                    <a href="#" onclick="window.print(); return false;" class="btn jmu-btn-outline mx-2">
+                        <i class="bi bi-printer"></i> Print Dashboard
+                    </a>
+                    <a asp-page="/HashedLogin/Logout" class="btn jmu-btn-danger mx-2">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <style>
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
+        }
+
+        /* Header styles */
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+        }
+
+        /* Button styles */
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-success {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .jmu-btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+
+        /* Badge styles */
+        .jmu-badge-primary {
+            background-color: var(--jmu-purple);
+        }
+
+        .jmu-badge-success {
+            background-color: #28a745;
+        }
+
+        /* Calendar styles */
+        .day-box {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px;
+            min-height: 80px;
+            flex-basis: 0;
+            flex-grow: 1;
+            margin: 0 3px;
+            max-width: calc(14.28% - 6px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background-color: white;
+        }
+
+        .day-header {
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .day-number {
+            font-size: 1.1rem;
+            color: var(--jmu-purple);
+        }
+
+        .day-name {
+            font-size: 0.7rem;
+            color: var(--jmu-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .event-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .event-item {
+            font-size: 0.75rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+            cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+
+            .event-item:hover {
+                background-color: var(--jmu-light-gray);
+            }
+
+        .current-day {
+            background-color: #f8f9fa;
+            border: 2px solid var(--jmu-gold);
+        }
+
+        .weekly-calendar-container {
+            background-color: white;
+            border-radius: 5px;
+        }
+
+        .week-header {
+            align-items: center;
+        }
+    </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'listWeek',  // Changed to list view of current week
-                headerToolbar: {
-                    left: 'prev,next',
-                    center: 'title',
-                    right: ''
-                },
-                height: 200,  // Reduced height
-                aspectRatio: 2,  // Make it wider than tall
-                duration: { days: 7 },  // Show one week
-                events: @Html.Raw(Json.Serialize(Model.CalendarEvents)),
-                eventClick: function(info) {
-                    window.location.href = '/Projects/View?id=' + info.event.extendedProps.projectId;
-                }
+            // Calendar events from server
+            const events = @Html.Raw(Json.Serialize(Model.CalendarEvents));
+            console.log("Calendar events:", events); // Debug
+
+            // Current date and week calculation
+            let currentDate = new Date();
+            let currentWeekStart = new Date(currentDate);
+            currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay());
+
+            // Initialize weekly calendar
+            renderWeek(currentWeekStart);
+
+            // Attach event listeners to navigation buttons
+            document.getElementById('prev-week').addEventListener('click', function() {
+                currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+                renderWeek(currentWeekStart);
             });
-            calendar.render();
+
+            document.getElementById('next-week').addEventListener('click', function() {
+                currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+                renderWeek(currentWeekStart);
+            });
+
+            // Function to render the week
+            function renderWeek(startDate) {
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const dayBoxesContainer = document.getElementById('day-boxes');
+                dayBoxesContainer.innerHTML = '';
+
+                // Update week title
+                const endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + 6);
+                document.getElementById('week-title').textContent =
+                    `${monthNames[startDate.getMonth()]} ${startDate.getDate()} - ${monthNames[endDate.getMonth()]} ${endDate.getDate()}, ${endDate.getFullYear()}`;
+
+                // Create day boxes
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(startDate);
+                    day.setDate(day.getDate() + i);
+
+                    const isToday = day.toDateString() === new Date().toDateString();
+                    const dateStr = day.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+                    const dayBox = document.createElement('div');
+                    dayBox.className = `day-box ${isToday ? 'current-day' : ''}`;
+
+                    // Day header with day name and number
+                    const dayHeader = document.createElement('div');
+                    dayHeader.className = 'day-header';
+                    dayHeader.innerHTML = `<div class="day-name">${dayNames[day.getDay()]}</div><div class="day-number">${day.getDate()}</div>`;
+                    dayBox.appendChild(dayHeader);
+
+                    // Find events for this day
+                    const dayEvents = events.filter(event => {
+                        const eventDate = event.start ? event.start.split('T')[0] : null; // Get YYYY-MM-DD part
+                        return eventDate === dateStr;
+                    });
+
+                    // Add events to the day box
+                    if (dayEvents.length > 0) {
+                        dayEvents.forEach(event => {
+                            const eventItem = document.createElement('div');
+                            eventItem.className = 'event-item';
+                            eventItem.innerHTML = `<span class="event-dot" style="background-color: ${event.color || '#007bff'}"></span>${event.title || 'Untitled Event'}`;
+                            eventItem.addEventListener('click', function() {
+                                // Check if property is projectId or ProjectId
+                                const projectId = event.projectId || event.ProjectId;
+                                if (projectId) {
+                                    window.location.href = '/Projects/View?id=' + projectId;
+                                }
+                            });
+                            dayBox.appendChild(eventItem);
+                        });
+                    } else if (isToday) {
+                        const noEventItem = document.createElement('div');
+                        noEventItem.className = 'text-muted small text-center mt-3';
+                        noEventItem.textContent = 'No events today';
+                        dayBox.appendChild(noEventItem);
+                    }
+
+                    dayBoxesContainer.appendChild(dayBox);
+                }
+            }
         });
     </script>
 }
-
