@@ -2516,7 +2516,7 @@ WHERE IsArchived = 0";
                                 TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
                                 IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
                                 Project_Description = reader.GetString(reader.GetOrdinal("Project_Description")),
-                                DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate"))
+                                DueDate = reader.IsDBNull(reader.GetOrdinal("DueDate")) ? DateTime.Now : reader.GetDateTime(reader.GetOrdinal("DueDate"))
                             });
                         }
                     }

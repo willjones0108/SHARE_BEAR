@@ -6,32 +6,20 @@
     ViewData["Title"] = "Home Dashboard";
 }
 
-<div class="container-fluid dashboard-container">
-    <!-- Welcome Banner -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="welcome-banner card shadow">
-                <div class="card-body">
-                    <h2 class="welcome-title">Welcome back, @Model.CurrentUsername</h2>
-                    <p class="welcome-subtitle">JMUcare Dashboard</p>
-                </div>
+<!-- Calendar Section -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0">Calendar</h4>
+            </div>
+            <div class="card-body">
+                <div id="calendar" class="calendar-container"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Calendar Section -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow">
-                <div class="card-header">
-                    <h4 class="mb-0">Calendar</h4>
-                </div>
-                <div class="card-body">
-                    <div id="calendar" class="calendar-container"></div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Grants and Projects Sections -->
     <div class="row">
@@ -156,28 +144,28 @@
 </div>
 
 @section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <script>
-        // Dashboard initialization
-        $(document).ready(function() {
-            // Highlight the current navigation item
-            $('a[href="/Index"]').addClass('active');
-
-            // Calendar initialization
-            try {
-                $('#calendar').fullCalendar({
-                    header: {
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'month,agendaWeek,agendaDay'
-                    },
-                    height: 450,
-                    editable: false,
-                    eventLimit: true
-                });
-            } catch (e) {
-                console.log("Calendar library not loaded. Please include FullCalendar or similar library.");
-                $('#calendar').html('<div class="text-center py-5"><p>Calendar functionality requires additional libraries.</p></div>');
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'listWeek',  // Changed to list view of current week
+                headerToolbar: {
+                    left: 'prev,next',
+                    center: 'title',
+                    right: ''
+                },
+                height: 200,  // Reduced height
+                aspectRatio: 2,  // Make it wider than tall
+                duration: { days: 7 },  // Show one week
+                events: @Html.Raw(Json.Serialize(Model.CalendarEvents)),
+                eventClick: function(info) {
+                    window.location.href = '/Projects/View?id=' + info.event.extendedProps.projectId;
+                }
+            });
+            calendar.render();
         });
     </script>
 }
+
