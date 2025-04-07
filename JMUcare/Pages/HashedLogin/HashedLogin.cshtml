@@ -3,14 +3,46 @@
 @{
     ViewData["Title"] = "Login";
 }
-<div class="container mt-5">
+<style>
+    .login-container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .logo {
+        display: block;
+        margin: 0 auto 20px;
+        max-width: 300px;
+    }
+
+    .background-container {
+        height: 100vh;
+        width: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -1;
+    }
+
+    .btn-jmu-purple {
+        background-color: #450084;
+        border-color: #450084;
+        color: white;
+    }
+
+        .btn-jmu-purple:hover {
+            background-color: #33006b;
+            border-color: #33006b;
+            color: white;
+        }
+</style>
+<div class="background-container" style="background-image: url('@Url.Content("~/images/landscape.jpg")'); background-size: cover; background-position: center;"></div>
+<div class="container mt-5 login-container">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Login</h4>
-                </div>
                 <div class="card-body">
+                    <img src="~/images/JMU Care-purple.png" alt="Company Logo" class="logo" />
                     <form asp-page="HashedLogin" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                         <div class="form-group">
@@ -24,7 +56,7 @@
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
                         <div class="form-group mt-4">
-                            <button type="submit" class="btn btn-primary w-100">Login</button>
+                            <button type="submit" class="btn btn-jmu-purple w-100">Login</button>
                         </div>
                     </form>
                     <div class="mt-3">
