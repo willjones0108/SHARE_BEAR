@@ -18,24 +18,23 @@ namespace JMUcare.Pages.Tasks
 
             if (currentUserId.HasValue && currentUserId.Value > 0)
             {
-                // Get authorized tasks for the current user
-                var authorizedTasks = DBClass.GetAuthorizedTasksForUser(currentUserId.Value);
+                // Get authorized projects for the current user
+                var authorizedProjects = DBClass.GetProjectsByUserId(currentUserId.Value);
 
-                // Convert authorized tasks to calendar events
-                foreach (var task in authorizedTasks)
+                // Convert authorized projects to calendar events
+                foreach (var project in authorizedProjects)
                 {
                     // Determine color based on status
-                    string color = GetStatusColor(task.Status);
+                    string color = GetStatusColor(project.TrackingStatus);
 
                     CalendarEvents.Add(new CalendarEvent
                     {
-                        Title = task.TaskContent,
-                        Start = task.DueDate.ToString("yyyy-MM-dd"),
+                        Title = project.Title,
+                        Start = project.DueDate.ToString("yyyy-MM-dd"),
                         AllDay = true,
-                        Status = task.Status,
+                        Status = project.TrackingStatus,
                         Color = color,
-                        TaskID = task.TaskID,
-                        ProjectID = task.ProjectID
+                        ProjectID = project.ProjectID
                     });
                 }
             }
@@ -62,7 +61,6 @@ namespace JMUcare.Pages.Tasks
         public bool AllDay { get; set; }
         public string Status { get; set; }
         public string Color { get; set; }
-        public int TaskID { get; set; }
         public int ProjectID { get; set; }
     }
 }

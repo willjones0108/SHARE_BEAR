@@ -1027,7 +1027,7 @@ namespace JMUcare.Pages.DBclass
             ProjectType,
             TrackingStatus,
             IsArchived,
-            Project_Description
+            Project_Description,
             DueDate
         )
         OUTPUT INSERTED.ProjectID
@@ -1038,7 +1038,7 @@ namespace JMUcare.Pages.DBclass
             @ProjectType,
             @TrackingStatus,
             @IsArchived,
-            @Project_Description
+            @Project_Description,
             @DueDate
         )";
 
@@ -1052,7 +1052,7 @@ namespace JMUcare.Pages.DBclass
                     cmd.Parameters.AddWithValue("@IsArchived", project.IsArchived);
                     cmd.Parameters.AddWithValue("@Project_Description", project.Project_Description ?? "");
                     cmd.Parameters.AddWithValue("@DueDate", project.DueDate);
-
+             
                     connection.Open();
                     newProjectId = (int)cmd.ExecuteScalar();
                 }
@@ -2471,6 +2471,62 @@ WHERE IsArchived = 0";
 
             return authorizedTasks;
         }
+
+        public static List<ProjectModel> GetProjectsByUserId(int userId)
+        {
+            var projects = new List<ProjectModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        SELECT p.*, pp2.PhaseID
+        FROM Project p
+        LEFT JOIN Project_Permission pp ON p.ProjectID = pp.ProjectID
+        LEFT JOIN DBUser u ON u.UserID = @UserID
+        LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        LEFT JOIN Phase_Project pp2 ON p.ProjectID = pp2.ProjectID
+        WHERE p.IsArchived = 0
+        AND (
+            pp.UserID = @UserID AND pp.AccessLevel IN ('Read', 'Edit')
+            OR ur.RoleName = 'Admin'
+            OR EXISTS (
+                SELECT 1 
+                FROM Grant_Permission gp 
+                WHERE gp.UserID = @UserID AND gp.AccessLevel = 'Edit'
+            )
+        )";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            projects.Add(new ProjectModel
+                            {
+                                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                                Title = reader.GetString(reader.GetOrdinal("Title")),
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("GrantID")),
+                                PhaseID = reader.IsDBNull(reader.GetOrdinal("PhaseID")) ? 0 : reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                                ProjectType = reader.GetString(reader.GetOrdinal("ProjectType")),
+                                TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
+                                Project_Description = reader.GetString(reader.GetOrdinal("Project_Description")),
+                                DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return projects;
+        }
+
+
 
 
         // TO BE IMPLEMENTED IN THE FUTURE FOR DOCUMENTS
