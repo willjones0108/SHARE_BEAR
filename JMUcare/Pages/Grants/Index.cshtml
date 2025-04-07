@@ -3,80 +3,452 @@
 @using JMUcare.Pages.DBclass
 
 @{
-    ViewData["Title"] = "Your Grants";
+    ViewData["Title"] = "Your Pending Grants";
 }
 
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-dark">Your Grants</h2>
-
-        @if (Model.IsUserAdmin())
-        {
-            <a asp-page="/Grants/CreateGrant" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> New +
-            </a>
-        }
-    </div>
-
-    @if (!Model.Grants.Any())
-    {
-        <div class="alert alert-warning" role="alert">
-            You don't have access to any grants.
+<div class="container mt-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header jmu-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Your Pending Grants</h3>
+                @if (Model.IsUserAdmin())
+                {
+                    <a asp-page="/Grants/CreateGrant" class="btn jmu-btn-light">
+                        <i class="bi bi-plus-circle"></i> Create New Grant
+                    </a>
+                }
+            </div>
         </div>
-    }
-    else
-    {
-        <div class="list-group">
-            @foreach (var grant in Model.Grants)
+        <div class="card-body">
+            @if (!Model.Grants.Any(g => g.Status != "Active"))
             {
-                <div class="list-group-item position-relative border border-primary rounded mb-2">
-                    <!-- Clickable area covering the grant item except buttons -->
-                    <a asp-page="/Grants/View" asp-route-id="@grant.GrantID"
-                       class="stretched-link-except-buttons text-decoration-none text-dark">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong class="text-primary">@grant.GrantTitle</strong><br />
-                                <small class="text-secondary">@grant.Category — $@grant.Amount.ToString("N0")</small>
-                            </div>
-                            <div style="min-width: 100px;">
-                                <!-- Placeholder for buttons - actual buttons are positioned absolute -->
+                <div class="text-center py-5">
+                    <i class="bi bi-clipboard-x" style="font-size: 3rem; color: #8D8D8D;"></i>
+                    <p class="mt-3 text-muted">No pending grants available</p>
+                    @if (Model.IsUserAdmin())
+                    {
+                        <a asp-page="/Grants/CreateGrant" class="btn jmu-btn-primary mt-2">
+                            <i class="bi bi-plus-circle"></i> Create Your First Grant
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var grant in Model.Grants.Where(g => g.Status != "Active"))
+                    {
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card grant-card h-100">
+                                <div class="card-header grant-card-header">
+                                    <div class="d-flex align-items-center">
+                                        <div class="grant-icon-container">
+                                            <i class="bi bi-file-earmark-text grant-icon"></i>
+                                        </div>
+                                        <h5 class="card-title mb-0 ms-2 text-truncate">@grant.GrantTitle</h5>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar jmu-progress-bar" role="progressbar"
+                                                 style="width: @GetGrantProgressPercentage(grant.Status)%"
+                                                 aria-valuenow="@GetGrantProgressPercentage(grant.Status)"
+                                                 aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <small class="text-muted">Application progress</small>
+                                            <span class="badge jmu-badge-@GetBadgeClass(grant.Status)">@grant.Status</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="status-indicator mb-3">
+                                        <div class="application-steps d-flex justify-content-between">
+                                            <div class="step @(IsStepComplete(grant.Status, "Draft") ? "step-complete" : "")">
+                                                <div class="step-icon">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </div>
+                                                <div class="step-text">Draft</div>
+                                            </div>
+                                            <div class="step @(IsStepComplete(grant.Status, "Submitted") ? "step-complete" : "")">
+                                                <div class="step-icon">
+                                                    <i class="bi bi-send"></i>
+                                                </div>
+                                                <div class="step-text">Submit</div>
+                                            </div>
+                                            <div class="step @(IsStepComplete(grant.Status, "Review") ? "step-complete" : "")">
+                                                <div class="step-icon">
+                                                    <i class="bi bi-search"></i>
+                                                </div>
+                                                <div class="step-text">Review</div>
+                                            </div>
+                                            <div class="step @(IsStepComplete(grant.Status, "Approved") ? "step-complete" : "")">
+                                                <div class="step-icon">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </div>
+                                                <div class="step-text">Approve</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <p class="card-text small">
+                                        @(grant.Description?.Length > 100 ? grant.Description.Substring(0, 97) + "..." : grant.Description ?? "No description available")
+                                    </p>
+                                    <div class="grant-details">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <span class="funding-amount">$@grant.Amount.ToString("N0")</span>
+                                                <div class="small text-muted">@grant.Category</div>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="small text-muted">Source</div>
+                                                <div class="source-name">@grant.FundingSource</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent border-0 d-flex">
+                                    <a asp-page="/Grants/View" asp-route-id="@grant.GrantID" class="btn jmu-btn-outline flex-grow-1 me-2">
+                                        View Details
+                                    </a>
+                                    @if (Model.IsUserAdmin())
+                                    {
+                                        <a asp-page="/Grants/Edit" asp-route-id="@grant.GrantID" class="btn btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    }
+                                </div>
                             </div>
                         </div>
-                    </a>
-
-                    <!-- Buttons with special positioning to appear above the stretched link -->
-
+                    }
                 </div>
             }
         </div>
-    }
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header jmu-header-secondary">
+            <h3 class="mb-0">Want to see active projects?</h3>
+        </div>
+        <div class="card-body text-center py-4">
+            <p class="mb-4">View all your active grants that have been converted to projects.</p>
+            <a asp-page="/Grants/ProjectIndex" class="btn jmu-btn-success">
+                <i class="bi bi-folder-check"></i> View Active Projects
+            </a>
+        </div>
+    </div>
 </div>
 
-<style>
-    /* Create a special stretched link that doesn't affect certain elements */
-    .stretched-link-except-buttons {
-        position: static;
+@functions {
+    public string GetBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "submitted" => "info",
+            "draft" => "warning",
+            "review" => "secondary",
+            "approved" => "success",
+            "rejected" => "danger",
+            _ => "primary"
+        };
     }
 
-        .stretched-link-except-buttons::after {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 1;
-            content: "";
-        }
-
-    /* List group item needs to be positioned relative for the stretched link to work */
-    .list-group-item {
-        position: relative;
-        padding: 1rem;
-        cursor: pointer;
+    public string GetStatusDescription(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "submitted" => "Pending approval",
+            "draft" => "Not yet submitted",
+            "review" => "Under review",
+            "approved" => "Ready to activate",
+            "rejected" => "Not approved",
+            _ => "Processing"
+        };
     }
 
-        /* Make the list items have a hover effect */
-        .list-group-item:hover {
-            background-color: #e9f5ff;
+    public int GetGrantProgressPercentage(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "draft" => 25,
+            "submitted" => 50,
+            "review" => 75,
+            "approved" => 90,
+            "active" => 100,
+            "rejected" => 50,
+            _ => 10
+        };
+    }
+
+    public bool IsStepComplete(string currentStatus, string stepName)
+    {
+        var statusOrder = new Dictionary<string, int> {
+            { "draft", 1 },
+            { "submitted", 2 },
+            { "review", 3 },
+            { "approved", 4 },
+            { "active", 5 },
+            { "rejected", 0 }
+        };
+
+        if (!statusOrder.TryGetValue(currentStatus.ToLower(), out int currentValue) ||
+            !statusOrder.TryGetValue(stepName.ToLower(), out int stepValue))
+            return false;
+
+        return currentValue >= stepValue;
+    }
+}
+
+@section Scripts {
+    <style>
+        /* JMU Custom Variables */
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
         }
-</style>
+
+        /* JMU Header Styling */
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-header-secondary {
+            background-color: var(--jmu-dark-purple);
+            color: white;
+            border-bottom: 2px solid var(--jmu-gold);
+        }
+
+        /* JMU Button Styling */
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-light {
+            background-color: white;
+            color: var(--jmu-purple);
+            border-color: white;
+        }
+
+            .jmu-btn-light:hover {
+                background-color: #f8f9fa;
+                color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-success {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+            .jmu-btn-success:hover {
+                background-color: #218838;
+                color: white;
+                border-color: #1e7e34;
+            }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+
+        /* JMU Badge Styling */
+        .jmu-badge-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+        }
+
+        .jmu-badge-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .jmu-badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .jmu-badge-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .jmu-badge-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .jmu-badge-secondary {
+            background-color: var(--jmu-gray);
+            color: white;
+        }
+
+        /* Progress Bar */
+        .jmu-progress-bar {
+            background-color: var(--jmu-purple);
+            background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
+            background-size: 1rem 1rem;
+        }
+
+        /* Application Steps */
+        .application-steps {
+            margin: 10px 0;
+            position: relative;
+        }
+
+            .application-steps::before {
+                content: '';
+                position: absolute;
+                top: 15px;
+                left: 10%;
+                right: 10%;
+                height: 2px;
+                background-color: #e9ecef;
+                z-index: 1;
+            }
+
+        .step {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 22%;
+        }
+
+        .step-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            color: var(--jmu-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .step-text {
+            font-size: 0.7rem;
+            color: var(--jmu-gray);
+            text-align: center;
+        }
+
+        .step-complete .step-icon {
+            background-color: var(--jmu-purple);
+            color: white;
+        }
+
+        .step-complete .step-text {
+            color: var(--jmu-dark-purple);
+            font-weight: 600;
+        }
+
+        /* Grant Card Styling */
+        .grant-card {
+            border: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+            .grant-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            }
+
+        .grant-card-header {
+            background-color: var(--jmu-light-gray);
+            border-bottom: 2px solid var(--jmu-gold);
+            padding: 0.75rem 1rem;
+        }
+
+        .grant-card .card-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .grant-icon-container {
+            width: 32px;
+            height: 32px;
+            background-color: var(--jmu-purple);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grant-icon {
+            color: white;
+            font-size: 1rem;
+        }
+
+        .status-indicator {
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .source-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--jmu-dark-purple);
+        }
+
+        .funding-amount {
+            font-weight: 600;
+            color: var(--jmu-dark-purple);
+            font-size: 1.1rem;
+        }
+
+        .grant-details {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        /* Container styling */
+        .container {
+            max-width: 1200px;
+            padding-bottom: 2rem;
+        }
+
+        /* Card styling */
+        .card {
+            border-radius: 8px;
+            overflow: hidden;
+            border: none;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .card-footer {
+            padding: 1rem;
+        }
+    </style>
+}
+

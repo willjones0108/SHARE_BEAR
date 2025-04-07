@@ -1,0 +1,257 @@
+﻿@page
+@model JMUcare.Pages.Grants.ProjectIndexModel
+@using JMUcare.Pages.DBclass
+
+@{
+    ViewData["Title"] = "Your Active Projects";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header jmu-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Your Active Projects</h3>
+                <div>
+                    <a asp-page="/Projects/CreateProject" class="btn jmu-btn-light me-2">
+                        <i class="bi bi-plus-circle"></i> New Project
+                    </a>
+                    <a asp-page="/Dashboard" class="btn jmu-btn-outline">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (!Model.Grants.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-folder2-open" style="font-size: 3rem; color: #8D8D8D;"></i>
+                    <p class="mt-3 text-muted">No active projects available</p>
+                    <p class="text-muted">Projects appear when grants become active</p>
+                    <a asp-page="/Grants/Index" class="btn jmu-btn-primary mt-2">
+                        <i class="bi bi-arrow-left"></i> View Pending Grants
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var grant in Model.Grants)
+                    {
+                        var projectCount = Model.GetProjectCount(grant.GrantID);
+                        var phaseCount = Model.GetPhaseCount(grant.GrantID);
+
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card project-card h-100">
+                                <div class="card-header project-card-header">
+                                    <div class="d-flex align-items-center">
+                                        <div class="project-icon-container">
+                                            <i class="bi bi-folder2-open project-icon"></i>
+                                        </div>
+                                        <h5 class="card-title mb-0 ms-2 text-truncate">@grant.GrantTitle</h5>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar jmu-progress-bar" role="progressbar"
+                                                 style="width: @Math.Round(Model.GetCompletionPercentage(grant.GrantID))%"
+                                                 aria-valuenow="@Math.Round(Model.GetCompletionPercentage(grant.GrantID))"
+                                                 aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <small class="text-muted">@Model.GetCompletedProjectCount(grant.GrantID) of @projectCount @(projectCount == 1 ? "project" : "projects") complete</small>
+                                            <span class="badge jmu-badge-success">@grant.TrackingStatus</span>
+                                        </div>
+                                    </div>
+                                    <p class="card-text">
+                                        @(grant.Description?.Length > 100 ? grant.Description.Substring(0, 97) + "..." : grant.Description ?? "No description available")
+                                    </p>
+                                    <div class="project-details">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="funding-amount">$@grant.Amount.ToString("N0")</span>
+                                            <span class="small text-muted">@Model.GetPhasesProgressSummary(grant.GrantID)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent border-0 d-flex">
+                                    <a asp-page="/Grants/View" asp-route-id="@grant.GrantID" class="btn jmu-btn-outline flex-grow-1">
+                                        View Project
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header jmu-header-secondary">
+            <h3 class="mb-0">Need to check your pending grants?</h3>
+        </div>
+        <div class="card-body text-center py-4">
+            <p class="mb-4">View all your pending grants that are not yet active projects.</p>
+            <a asp-page="/Grants/Index" class="btn jmu-btn-primary">
+                <i class="bi bi-file-earmark-text"></i> View Pending Grants
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        /* JMU Custom Variables */
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
+            --jmu-success: #28a745;
+        }
+
+        /* JMU Header Styling */
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-header-secondary {
+            background-color: var(--jmu-dark-purple);
+            color: white;
+            border-bottom: 2px solid var(--jmu-gold);
+        }
+
+        /* JMU Button Styling */
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-light {
+            background-color: white;
+            color: var(--jmu-purple);
+            border-color: white;
+        }
+
+            .jmu-btn-light:hover {
+                background-color: #f8f9fa;
+                color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+
+        /* JMU Badge Styling */
+        .jmu-badge-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+        }
+
+        .jmu-badge-success {
+            background-color: var(--jmu-success);
+            color: white;
+        }
+
+        /* Progress Bar */
+        .jmu-progress-bar {
+            background-color: var(--jmu-purple);
+            background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
+            background-size: 1rem 1rem;
+        }
+
+        /* Project Card Styling */
+        .project-card {
+            border: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+            .project-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            }
+
+        .project-card-header {
+            background-color: var(--jmu-light-gray);
+            border-bottom: 2px solid var(--jmu-gold);
+            padding: 0.75rem 1rem;
+        }
+
+        .project-card .card-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .project-icon-container {
+            width: 32px;
+            height: 32px;
+            background-color: var(--jmu-purple);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .project-icon {
+            color: white;
+            font-size: 1rem;
+        }
+
+        .project-details {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .funding-amount {
+            font-weight: 600;
+            color: var(--jmu-dark-purple);
+            font-size: 1.1rem;
+        }
+
+        /* Container styling */
+        .container {
+            max-width: 1200px;
+            padding-bottom: 2rem;
+        }
+
+        /* Card styling */
+        .card {
+            border-radius: 8px;
+            overflow: hidden;
+            border: none;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .card-footer {
+            padding: 1rem;
+        }
+    </style>
+}
+
