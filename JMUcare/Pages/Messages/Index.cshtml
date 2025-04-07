@@ -3,14 +3,14 @@
 @{
     ViewData["Title"] = "Messages";
 }
-<h2 class="mb-4">Messages</h2>
+<h2 class="mb-4 jmu-title">Messages</h2>
 
 <div class="container">
     <div class="row">
         <!-- Received Messages Section -->
         <div class="col-md-6 mb-4">
             <div class="card shadow">
-                <div class="card-header">
+                <div class="card-header jmu-header">
                     <h3 class="mb-0">Received Messages</h3>
                 </div>
                 <div class="card-body">
@@ -28,7 +28,7 @@
                                         </div>
                                         <form method="post" asp-page-handler="MarkAsRead" class="ml-3">
                                             <input type="hidden" name="messageId" value="@message.MessageID" />
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">Mark as Read</button>
+                                            <button type="submit" class="btn btn-sm jmu-btn-outline">Mark as Read</button>
                                         </form>
                                     </div>
                                 </li>
@@ -46,7 +46,7 @@
         <!-- Sent Messages Section -->
         <div class="col-md-6 mb-4">
             <div class="card shadow">
-                <div class="card-header">
+                <div class="card-header jmu-header">
                     <h3 class="mb-0">Sent Messages</h3>
                 </div>
                 <div class="card-body">
@@ -78,7 +78,7 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card shadow">
-                <div class="card-header">
+                <div class="card-header jmu-header">
                     <h3 class="mb-0">Send a Message</h3>
                 </div>
                 <div class="card-body">
@@ -91,10 +91,57 @@
                             <label for="messageText">Message:</label>
                             <textarea id="messageText" asp-for="MessageText" class="form-control" rows="4"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary">Send</button>
+                        <button type="submit" class="btn jmu-btn-primary">Send</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <style>
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
+        }
+
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+        }
+
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+    </style>
+}
