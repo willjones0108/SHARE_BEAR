@@ -11,11 +11,11 @@ namespace JMUcare.Pages.DBclass
     {
         public static SqlConnection JMUcareDBConnection = new SqlConnection();
 
-        //private static readonly string JMUcareDBConnString =
-        // "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
+        private static readonly string JMUcareDBConnString =
+         "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
 
-        //private static readonly string? AuthConnString =
-        //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
+        private static readonly string? AuthConnString =
+        "Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
         //private static readonly string JMUcareDBConnString =
         //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
