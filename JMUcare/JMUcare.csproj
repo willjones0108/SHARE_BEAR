@@ -11,4 +11,9 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="wwwroot\images\JMU Care-purple.png" />
+    <None Include="wwwroot\images\landscape.jpg" />
+  </ItemGroup>
+
 </Project>

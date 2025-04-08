@@ -6,252 +6,583 @@
     ViewData["Title"] = "Home Dashboard";
 }
 
-<div class="container-fluid dashboard-container">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="welcome-banner card shadow">
-                <div class="card-body">
-                    <h2 class="welcome-title">Welcome back, @Model.CurrentUsername</h2>
-                    <p class="welcome-subtitle">This is your personalized JMUcare dashboard</p>
+<!-- Calendar Section -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header jmu-header">
+                <h4 class="mb-0">Calendar</h4>
+            </div>
+            <div class="card-body">
+                <div id="weekly-calendar" class="weekly-calendar-container">
+                    <div class="week-header d-flex justify-content-between mb-3">
+                        <button id="prev-week" class="btn btn-sm jmu-btn-outline">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </button>
+                        <h6 id="week-title" class="mb-0 pt-1 jmu-title">This Week</h6>
+                        <button id="next-week" class="btn btn-sm jmu-btn-outline">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div id="day-boxes" class="day-boxes d-flex justify-content-between">
+                        <!-- Day boxes will be inserted here by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    @if (Model.IsAdmin)
-    {
-        <!-- Admin Stats Summary Row -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="stat-card card shadow text-center">
-                    <div class="card-body">
-                        <h1 class="stat-number">@Model.TotalGrants</h1>
-                        <p class="stat-label">Grants</p>
-                    </div>
-                </div>
+<!-- Grants and Projects Sections -->
+<div class="row">
+    <!-- Grants Section (Non-Active) -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header jmu-header">
+                <h4 class="mb-0">My Grants</h4>
             </div>
-            <div class="col-md-4">
-                <div class="stat-card card shadow text-center">
-                    <div class="card-body">
-                        <h1 class="stat-number">@Model.InProgressPhases</h1>
-                        <p class="stat-label">Active Phases</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card card shadow text-center">
-                    <div class="card-body">
-                        <h1 class="stat-number">@Model.PendingTasks</h1>
-                        <p class="stat-label">Pending Tasks</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
+            <div class="card-body">
+                @{
+                    // Filter to show only non-active grants
+                    var pendingGrants = Model.Grants?.Where(g => g.Status != "Active").ToList();
+                }
 
-    <div class="row">
-        <!-- Grants Section -->
-        @if (Model.Grants.Any())
-        {
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-header dashboard-card-header">
-                        <h4 class="mb-0">Your Grants</h4>
-                        <a asp-page="/Grants/Index" class="btn btn-sm btn-outline-primary">View All</a>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            @foreach (var grant in Model.Grants.Take(5))
-                            {
-                                <a asp-page="/Grants/View" asp-route-id="@grant.GrantID" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@grant.GrantTitle</h5>
-                                        <small class="text-muted">@grant.Status</small>
-                                    </div>
-                                    <p class="mb-1 text-truncate">@(grant.Description ?? "No description available")</p>
-                                    <small>Funding: $@grant.Amount.ToString("N0")</small>
-                                </a>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-
-        <!-- Active Phases Section - Updated to match Grants section -->
-        @if (Model.ActivePhases.Any())
-        {
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-header dashboard-card-header">
-                        <h4 class="mb-0">Active Phases</h4>
-                        <a asp-page="/Phases/Index" class="btn btn-sm btn-outline-primary">View All</a>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            @foreach (var phase in Model.ActivePhases.Take(5))
-                            {
-                                <a asp-page="/Grants/View" asp-route-id="@DBClass.GetGrantIdForPhase(phase.PhaseID)" asp-route-phaseId="@phase.PhaseID" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@phase.PhaseName</h5>
-                                        <small class="text-muted">@phase.Status</small>
-                                    </div>
-                                    <p class="mb-1 text-truncate">@(phase.Description ?? "No description available")</p>
-                                    <small>Grant: @Model.GetGrantName(phase.GrantID)</small>
-                                </a>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-
-    <div class="row">
-        <!-- Recent Projects Section -->
-        @if (Model.RecentProjects.Any())
-        {
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-header dashboard-card-header">
-                        <h4 class="mb-0">Recent Projects</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            @foreach (var project in Model.RecentProjects)
-                            {
-                                <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@project.Title</h5>
-                                        <small class="text-muted">@project.ProjectType</small>
-                                    </div>
-                                    <p class="mb-1 text-truncate">@(project.Project_Description ?? "No description available")</p>
-                                    <small>Phase: @Model.GetProjectPhase(project.ProjectID)</small>
-                                </a>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-
-        <!-- Upcoming Tasks Section -->
-        @if (Model.UpcomingTasks.Any())
-        {
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-header dashboard-card-header">
-                        <h4 class="mb-0">Upcoming Tasks</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            @foreach (var task in Model.UpcomingTasks)
-                            {
-                                <a asp-page="/Projects/View" asp-route-id="@task.ProjectID" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@task.TaskContent</h5>
-                                        <span class="badge @(task.Status == "Completed" ? "bg-success" :
-                                                     task.Status == "In Progress" ? "bg-primary" :
-                                                     task.Status == "Not Started" ? "bg-secondary" :
-                                                     "bg-warning")">
-                                            @task.Status
-                                        </span>
-                                    </div>
-                                    <p class="mb-1">
-                                        <strong>Due:</strong> @task.DueDate.ToShortDateString()
-                                    </p>
-                                </a>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-
-    <!-- Quick Actions Section -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow">
-                <div class="card-header dashboard-card-header">
-                    <h4 class="mb-0">Quick Actions</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        @if (Model.IsAdmin)
+                @if (pendingGrants != null && pendingGrants.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var grant in pendingGrants)
                         {
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <a asp-page="/Grants/CreateGrant" class="btn btn-primary btn-lg w-100 quick-action-btn">
-                                    <i class="bi bi-plus-circle"></i><br />
-                                    New Grant
-                                </a>
-                            </div>
+                            <a asp-page="/Grants/View" asp-route-id="@grant.GrantID" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@grant.GrantTitle</h5>
+                                    <span class="badge jmu-badge-@GetStatusBadgeClass(grant.Status)">@grant.Status</span>
+                                </div>
+                                <div class="mb-2 progress-container">
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar jmu-progress-bar"
+                                             role="progressbar"
+                                             style="width: @GetGrantProgressPercentage(grant.Status)%"
+                                             aria-valuenow="@GetGrantProgressPercentage(grant.Status)"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted progress-text">@GetStatusDescription(grant.Status)</small>
+                                </div>
+                                <p class="mb-1">@(grant.Description?.Length > 100 ? grant.Description.Substring(0, 97) + "..." : grant.Description ?? "No description available")</p>
+                                <small>Funding: $@grant.Amount.ToString("N0")</small>
+                            </a>
                         }
-                        <div class="col-md-3 col-sm-6 mb-3">
-                            <a asp-page="/Grants/Index" class="btn btn-outline-primary btn-lg w-100 quick-action-btn">
-                                <i class="bi bi-journal-text"></i><br />
-                                View Grants
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-3">
-                            <a href="#" onclick="window.print(); return false;" class="btn btn-outline-secondary btn-lg w-100 quick-action-btn">
-                                <i class="bi bi-printer"></i><br />
-                                Print Dashboard
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-sm-6 mb-3">
-                            <a asp-page="/HashedLogin/Logout" class="btn btn-outline-danger btn-lg w-100 quick-action-btn">
-                                <i class="bi bi-box-arrow-right"></i><br />
-                                Logout
-                            </a>
-                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Empty State Messages -->
-    @if (!Model.Grants.Any() && !Model.ActivePhases.Any() && !Model.RecentProjects.Any() && !Model.UpcomingTasks.Any())
-    {
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card shadow">
-                    <div class="card-body text-center py-5">
-                        <i class="bi bi-info-circle text-primary" style="font-size: 3rem;"></i>
-                        <h3 class="mt-3">No Data Available</h3>
-                        <p class="text-muted">
-                            You don't have any grants, phases, projects, or tasks assigned to you yet.
-                            @if (Model.IsAdmin)
-                            {
-                                <span>As an admin, you can create a new grant to get started.</span>
-                            }
-                            else
-                            {
-                                <span>Please contact your administrator for access to relevant resources.</span>
-                            }
-                        </p>
+                    <div class="text-center mt-3">
+                        <a asp-page="/Grants/Index" class="btn jmu-btn-outline">View All Grants</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-clipboard-x" style="font-size: 2.5rem; color: #8D8D8D;"></i>
+                        <p class="mt-3">No pending grants available</p>
                         @if (Model.IsAdmin)
                         {
-                            <a asp-page="/Grants/CreateGrant" class="btn btn-primary mt-3">
+                            <a asp-page="/Grants/CreateGrant" class="btn jmu-btn-primary">
                                 <i class="bi bi-plus-circle"></i> Create New Grant
                             </a>
                         }
                     </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Section (Active Grants) -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header jmu-header">
+                <h4 class="mb-0">My Projects</h4>
+            </div>
+            <div class="card-body">
+                @{
+                    // Filter to show only active grants as projects
+                    var activeProjects = Model.Grants?.Where(g => g.Status == "Active").ToList();
+                }
+
+                @if (activeProjects != null && activeProjects.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var project in activeProjects)
+                        {
+                            <a asp-page="/Grants/View" asp-route-id="@project.GrantID" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@project.GrantTitle</h5>
+                                    <span class="badge jmu-badge-success">Active Project</span>
+                                </div>
+                                <div class="mb-2 progress-container">
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar jmu-project-progress"
+                                             role="progressbar"
+                                             style="width: @GetProjectProgressPercentage(project.TrackingStatus)%"
+                                             aria-valuenow="@GetProjectProgressPercentage(project.TrackingStatus)"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted progress-text">@project.TrackingStatus</small>
+                                        <small class="progress-percentage">@GetProjectProgressPercentage(project.TrackingStatus)%</small>
+                                    </div>
+                                </div>
+                                <p class="mb-1">@(project.Description?.Length > 100 ? project.Description.Substring(0, 97) + "..." : project.Description ?? "No description available")</p>
+                                <small>Funding: $@project.Amount.ToString("N0")</small>
+                            </a>
+                        }
+                    </div>
+                    <div class="text-center mt-3">
+                        <a asp-page="/Grants/ProjectIndex" class="btn jmu-btn-success">View All Projects</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-kanban" style="font-size: 2.5rem; color: #8D8D8D;"></i>
+                        <p class="mt-3">No active projects</p>
+                        <p class="text-muted">Projects appear when grants become active</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Quick Actions Section -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header jmu-header">
+                <h4 class="mb-0">Quick Actions</h4>
+            </div>
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-around">
+                    @if (Model.IsAdmin)
+                    {
+                        <a asp-page="/Grants/CreateGrant" class="btn jmu-btn-primary mx-2">
+                            <i class="bi bi-plus-circle"></i> New Grant
+                        </a>
+                    }
+                    <a href="#" onclick="window.print(); return false;" class="btn jmu-btn-outline mx-2">
+                        <i class="bi bi-printer"></i> Print Dashboard
+                    </a>
+                    <a asp-page="/HashedLogin/Logout" class="btn jmu-btn-danger mx-2">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
                 </div>
             </div>
         </div>
-    }
+    </div>
 </div>
 
-@section Scripts {
-    <script>
-        // Dashboard initialization
-        $(document).ready(function() {
-            // Highlight the current navigation item
-            $('a[href="/Index"]').addClass('active');
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "submitted" => "info",
+            "draft" => "warning",
+            "review" => "secondary",
+            "approved" => "success",
+            "rejected" => "danger",
+            _ => "primary"
+        };
+    }
 
-            // You could add chart initialization or other dashboard widgets here
+    public string GetStatusDescription(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "submitted" => "Pending approval",
+            "draft" => "Not yet submitted",
+            "review" => "Under review",
+            "approved" => "Ready to activate",
+            "rejected" => "Not approved",
+            _ => "Processing"
+        };
+    }
+
+    public int GetGrantProgressPercentage(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "draft" => 25,
+            "submitted" => 50,
+            "review" => 75,
+            "approved" => 90,
+            "active" => 100,
+            "rejected" => 50,
+            _ => 10
+        };
+    }
+
+    public int GetProjectProgressPercentage(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "not started" => 0,
+            "planning" => 20,
+            "in progress" => 50,
+            "advanced" => 80,
+            "completed" => 100,
+            _ => 25
+        };
+    }
+}
+
+@section Scripts {
+    <style>
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
+        }
+
+        /* Header styles */
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+        }
+
+        /* Button styles */
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-success {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .jmu-btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+
+        /* Badge styles */
+        .jmu-badge-primary {
+            background-color: var(--jmu-purple);
+        }
+
+        .jmu-badge-success {
+            background-color: #28a745;
+        }
+
+        .jmu-badge-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .jmu-badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .jmu-badge-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .jmu-badge-secondary {
+            background-color: var(--jmu-gray);
+            color: white;
+        }
+
+        /* Progress bar styles */
+        .progress-container {
+            margin: 8px 0;
+        }
+
+        .progress {
+            background-color: var(--jmu-light-gray);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .jmu-progress-bar {
+            background-color: var(--jmu-purple);
+            background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
+            background-size: 0.75rem 0.75rem;
+        }
+
+        .jmu-project-progress {
+            background-color: #28a745;
+            background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
+            background-size: 0.75rem 0.75rem;
+        }
+
+        .progress-text {
+            font-size: 0.75rem;
+        }
+
+        .progress-percentage {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Stats cards */
+        .stats-card {
+            border-radius: 10px;
+            border-left: 4px solid var(--jmu-purple);
+            transition: all 0.3s ease;
+        }
+
+            .stats-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.5rem;
+        }
+
+        .grants-icon {
+            background-color: rgba(69, 0, 132, 0.1);
+            color: var(--jmu-purple);
+        }
+
+        .phases-icon {
+            background-color: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+        }
+
+        .tasks-icon {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+
+        .projects-icon {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--jmu-gray);
+        }
+
+        /* Calendar styles */
+        .day-box {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px;
+            min-height: 80px;
+            flex-basis: 0;
+            flex-grow: 1;
+            margin: 0 3px;
+            max-width: calc(14.28% - 6px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background-color: white;
+        }
+
+        .day-header {
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .day-number {
+            font-size: 1.1rem;
+            color: var(--jmu-purple);
+        }
+
+        .day-name {
+            font-size: 0.7rem;
+            color: var(--jmu-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .event-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .event-item {
+            font-size: 0.75rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+            cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+
+            .event-item:hover {
+                background-color: var(--jmu-light-gray);
+            }
+
+        .current-day {
+            background-color: #f8f9fa;
+            border: 2px solid var(--jmu-gold);
+        }
+
+        .weekly-calendar-container {
+            background-color: white;
+            border-radius: 5px;
+        }
+
+        .week-header {
+            align-items: center;
+        }
+
+        /* List group styling */
+        .list-group-item {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+            .list-group-item:hover {
+                border-left: 3px solid var(--jmu-gold);
+                background-color: rgba(69, 0, 132, 0.03);
+            }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Calendar events from server
+            const events = @Html.Raw(Json.Serialize(Model.CalendarEvents));
+            console.log("Calendar events:", events); // Debug
+
+            // Current date and week calculation
+            let currentDate = new Date();
+            let currentWeekStart = new Date(currentDate);
+            currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay());
+
+            // Initialize weekly calendar
+            renderWeek(currentWeekStart);
+
+            // Attach event listeners to navigation buttons
+            document.getElementById('prev-week').addEventListener('click', function() {
+                currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+                renderWeek(currentWeekStart);
+            });
+
+            document.getElementById('next-week').addEventListener('click', function() {
+                currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+                renderWeek(currentWeekStart);
+            });
+
+            // Function to render the week
+            function renderWeek(startDate) {
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const dayBoxesContainer = document.getElementById('day-boxes');
+                dayBoxesContainer.innerHTML = '';
+
+                // Update week title
+                const endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + 6);
+                document.getElementById('week-title').textContent =
+                    `${monthNames[startDate.getMonth()]} ${startDate.getDate()} - ${monthNames[endDate.getMonth()]} ${endDate.getDate()}, ${endDate.getFullYear()}`;
+
+                // Create day boxes
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(startDate);
+                    day.setDate(day.getDate() + i);
+
+                    const isToday = day.toDateString() === new Date().toDateString();
+                    const dateStr = day.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+                    const dayBox = document.createElement('div');
+                    dayBox.className = `day-box ${isToday ? 'current-day' : ''}`;
+
+                    // Day header with day name and number
+                    const dayHeader = document.createElement('div');
+                    dayHeader.className = 'day-header';
+                    dayHeader.innerHTML = `<div class="day-name">${dayNames[day.getDay()]}</div><div class="day-number">${day.getDate()}</div>`;
+                    dayBox.appendChild(dayHeader);
+
+                    // Find events for this day
+                    const dayEvents = events.filter(event => {
+                        const eventDate = event.start ? event.start.split('T')[0] : null; // Get YYYY-MM-DD part
+                        return eventDate === dateStr;
+                    });
+
+                    // Add events to the day box
+                    if (dayEvents.length > 0) {
+                        dayEvents.forEach(event => {
+                            const eventItem = document.createElement('div');
+                            eventItem.className = 'event-item';
+                            eventItem.innerHTML = `<span class="event-dot" style="background-color: ${event.color || '#007bff'}"></span>${event.title || 'Untitled Event'}`;
+                            eventItem.addEventListener('click', function() {
+                                // Check if property is projectId or ProjectId
+                                const projectId = event.projectId || event.ProjectId;
+                                if (projectId) {
+                                    window.location.href = '/Projects/View?id=' + projectId;
+                                }
+                            });
+                            dayBox.appendChild(eventItem);
+                        });
+                    } else if (isToday) {
+                        const noEventItem = document.createElement('div');
+                        noEventItem.className = 'text-muted small text-center mt-3';
+                        noEventItem.textContent = 'No events today';
+                        dayBox.appendChild(noEventItem);
+                    }
+
+                    dayBoxesContainer.appendChild(dayBox);
+                }
+            }
         });
     </script>
 }
+

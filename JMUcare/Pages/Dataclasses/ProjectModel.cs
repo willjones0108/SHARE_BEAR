@@ -9,4 +9,5 @@
     public string TrackingStatus { get; set; }
     public bool IsArchived { get; set; }
     public string Project_Description { get; set; }
+    public DateTime DueDate { get; set; }
 }

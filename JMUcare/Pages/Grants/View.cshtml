@@ -36,22 +36,22 @@
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="card shadow">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="card-header jmu-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">Grant Details</h4>
                     @if (isAdminOrGrantEditor)
                     {
                         <div>
                             <a asp-page="/Grants/Edit"
                                asp-route-id="@Model.Grant.GrantID"
-                               class="btn btn-success btn-sm ms-2">
+                               class="btn jmu-btn-primary btn-sm ms-2">
                                 <i class="bi bi-pencil"></i> Edit
                             </a>
-                            <a asp-page="/Grants/ManagePermissions" asp-route-id="@Model.Id" class="btn btn-light btn-sm ms-2">
+                            <a asp-page="/Grants/ManagePermissions" asp-route-id="@Model.Id" class="btn jmu-btn-outline btn-sm ms-2">
                                 <i class="bi bi-people"></i> Permissions
                             </a>
                             <form method="post" asp-page-handler="ArchiveGrant" class="d-inline ms-2" onsubmit="return confirmArchive()">
                                 <input type="hidden" name="grantId" value="@Model.Id" />
-                                <button type="submit" class="btn btn-danger btn-sm">
+                                <button type="submit" class="btn jmu-btn-danger btn-sm">
                                     <i class="bi bi-archive"></i> Archive Grant
                                 </button>
                             </form>
@@ -61,7 +61,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <div class="card h-100">
+                            <div class="card h-100 grant-info-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Grant Title</h5>
                                     <p class="card-text fs-6">@Model.Grant.GrantTitle</p>
@@ -69,7 +69,7 @@
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <div class="card h-100">
+                            <div class="card h-100 grant-info-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Category</h5>
                                     <p class="card-text fs-6">@Model.Grant.Category</p>
@@ -77,7 +77,7 @@
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <div class="card h-100">
+                            <div class="card h-100 grant-info-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Funding Source</h5>
                                     <p class="card-text fs-6">@Model.Grant.FundingSource</p>
@@ -85,7 +85,7 @@
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <div class="card h-100">
+                            <div class="card h-100 grant-info-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Amount</h5>
                                     <p class="card-text fs-6">$@Model.Grant.Amount.ToString("N0")</p>
@@ -93,15 +93,19 @@
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <div class="card h-100">
+                            <div class="card h-100 grant-info-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Grant Status</h5>
-                                    <p class="card-text fs-6">@Model.Grant.Status</p>
+                                    <p class="card-text fs-6">
+                                        <span class="badge jmu-badge-@(Model.Grant.Status.ToLower() == "active" ? "success" : "primary")">
+                                            @Model.Grant.Status
+                                        </span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <div class="card h-100">
+                            <div class="card h-100 grant-info-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Tracking Status</h5>
                                     <p class="card-text fs-6">@Model.Grant.TrackingStatus</p>
@@ -109,7 +113,7 @@
                             </div>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <div class="card h-100">
+                            <div class="card h-100 grant-info-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Description</h5>
                                     <p class="card-text fs-6">@Model.Grant.Description</p>
@@ -119,7 +123,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <a asp-page="Index" class="btn btn-secondary">Back to List</a>
+                    <a asp-page="Index" class="btn jmu-btn-outline">Back to List</a>
                 </div>
             </div>
         </div>
@@ -129,12 +133,12 @@
     <div class="row mb-3">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>Associated Phases</h3>
+                <h3 class="jmu-title">Associated Phases</h3>
                 <div>
                     @if (Model.CanAddPhase)
                     {
                         <div class="dropdown me-2">
-                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="addDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn jmu-btn-outline dropdown-toggle" type="button" id="addDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-plus-circle"></i> Add
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="addDropdown">
@@ -142,10 +146,10 @@
                                 <li><a class="dropdown-item" asp-page="/Sections/CreateProject" asp-route-GrantId="@Model.Id">Add Project</a></li>
                             </ul>
                         </div>
-                        <button id="toggleDragBtn" class="btn btn-outline-primary" onclick="toggleDragMode()">
+                        <button id="toggleDragBtn" class="btn jmu-btn-outline" onclick="toggleDragMode()">
                             <i class="bi bi-arrows-move"></i> Reorder Phases
                         </button>
-                        <button id="saveDragOrderBtn" class="btn btn-success ms-2" style="display: none" onclick="savePhaseOrder()">
+                        <button id="saveDragOrderBtn" class="btn jmu-btn-success ms-2" style="display: none" onclick="savePhaseOrder()">
                             Save Order
                         </button>
                         <button id="cancelDragBtn" class="btn btn-outline-secondary ms-2" style="display: none" onclick="cancelDragMode()">
@@ -172,7 +176,7 @@
                 {
                     <div class="col-md-4 phase-item mb-3 p-2" data-phase-id="@phase.PhaseID">
                         <div class="card shadow h-100">
-                            <div class="card-header bg-info text-white">
+                            <div class="card-header jmu-header-secondary">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="drag-handle" style="display: none">
                                         <i class="bi bi-grip-vertical"></i>
@@ -184,14 +188,13 @@
                                             string accessLevel = DBClass.GetUserAccessLevelForPhase(Model.CurrentUserID, phase.PhaseID);
                                             if (accessLevel == "Edit")
                                             {
-                                                <a asp-page="/Phases/Edit" asp-route-id="@phase.PhaseID" class="btn btn-sm btn-light">
+                                                <a asp-page="/Phases/Edit" asp-route-id="@phase.PhaseID" class="btn btn-sm jmu-btn-light">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
-                                                <!-- Archive Phase form is now a standalone form, not nested -->
                                                 <form method="post" asp-page-handler="ArchivePhase" class="d-inline">
                                                     <input type="hidden" name="phaseId" value="@phase.PhaseID" />
-                                                    <button type="submit" class="btn btn-danger btn-sm">
-                                                        <i class="bi bi-archive"></i> Archive
+                                                    <button type="submit" class="btn jmu-btn-danger btn-sm">
+                                                        <i class="bi bi-archive"></i>
                                                     </button>
                                                 </form>
                                             }
@@ -206,14 +209,21 @@
 
                                 <div class="phase-content">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="mb-0">Projects</h6>
-                                        @if (Model.CanAddProject)
-                                        {
-                                            <a asp-page="/Sections/CreateProject" asp-route-PhaseId="@phase.PhaseID" class="btn btn-sm btn-primary">
-                                                <i class="bi bi-plus-circle"></i> Add Project
-                                            </a>
+                                        <h6 class="mb-0 jmu-subtitle">Projects</h6>
+                                        @{
+                                            // Check if user is a phase editor for this specific phase
+                                            string phaseAccessLevel = DBClass.GetUserAccessLevelForPhase(Model.CurrentUserID, phase.PhaseID);
+                                            bool canAddProjectToThisPhase = Model.CanAddProject || phaseAccessLevel == "Edit";
+
+                                            if (canAddProjectToThisPhase)
+                                            {
+                                                <a asp-page="/Sections/CreateProject" asp-route-PhaseId="@phase.PhaseID" class="btn btn-sm jmu-btn-primary">
+                                                    <i class="bi bi-plus-circle"></i> Add
+                                                </a>
+                                            }
                                         }
                                     </div>
+
 
                                     @if (Model.PhaseProjects[phase.PhaseID].Any(p => !p.IsArchived))
                                     {
@@ -224,41 +234,14 @@
                                                     <div class="card-header py-2 bg-light">
                                                         <div class="d-flex justify-content-between align-items-center">
                                                             <h6 class="mb-0">
-                                                                <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="text-decoration-none">
+                                                                <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="text-decoration-none project-title">
                                                                     @project.Title
                                                                 </a>
                                                             </h6>
-                                                            <div>
-                                                                @* Removed the project edit button *@
- 
-                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div class="card-body py-2">
                                                         <p class="small mb-2">@project.Project_Description</p>
-
-                                                        @if (Model.ProjectTasks[project.ProjectID].Any(t => !t.IsArchived))
-                                                        {
-                                                            <h6 class="mt-2 mb-1 small">Tasks</h6>
-                                                            <ul class="list-group list-group-flush small">
-                                                                @foreach (var task in Model.ProjectTasks[project.ProjectID].Where(t => !t.IsArchived))
-                                                                {
-                                                                    <li class="list-group-item py-1 px-2">
-                                                                        <div class="d-flex justify-content-between">
-                                                                            <div>@task.TaskContent</div>
-                                                                            <div class="badge @(task.Status == "Completed" ? "bg-success" : "bg-warning")">
-                                                                                @task.Status
-                                                                            </div>
-                                                                        </div>
-                                                                        <small class="text-muted">Due: @task.DueDate.ToShortDateString()</small>
-                                                                    </li>
-                                                                }
-                                                            </ul>
-                                                        }
-                                                        else
-                                                        {
-                                                            <p class="small text-muted mb-0">No tasks defined</p>
-                                                        }
                                                     </div>
                                                 </div>
                                             }
@@ -271,9 +254,9 @@
                                 </div>
                             </div>
                             <div class="card-footer bg-light">
-                                <span class="badge @(phase.Status == "Completed" ? "bg-success" :
-                                                  phase.Status == "In Progress" ? "bg-primary" :
-                                                  phase.Status == "Pending" ? "bg-warning" : "bg-secondary")">
+                                <span class="badge jmu-badge-@(phase.Status == "Completed" ? "success" :
+                                                  phase.Status == "In Progress" ? "primary" :
+                                                  phase.Status == "Pending" ? "warning" : "secondary")">
                                     @phase.Status
                                 </span>
                             </div>
@@ -286,11 +269,11 @@
 
     @if (!Model.Phases.Any(p => !p.IsArchived))
     {
-        <div class="alert alert-info">
+        <div class="alert jmu-alert">
             <p>No phases are associated with this grant.</p>
             @if (Model.CanAddPhase)
             {
-                <a asp-page="/Phases/CreatePhase" asp-route-GrantId="@Model.Id" class="btn btn-primary mt-2">
+                <a asp-page="/Phases/CreatePhase" asp-route-GrantId="@Model.Id" class="btn jmu-btn-primary mt-2">
                     <i class="bi bi-plus-circle"></i> Add your first phase
                 </a>
             }
@@ -405,10 +388,124 @@
     </script>
 
     <style>
+        /* JMU Custom Variables */
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
+        }
+
+        /* JMU Styling Elements */
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-header-secondary {
+            background-color: var(--jmu-dark-purple);
+            color: white;
+            border-bottom: 2px solid var(--jmu-gold);
+        }
+
+        .jmu-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+        }
+
+        .jmu-subtitle {
+            color: var(--jmu-dark-purple);
+            font-weight: 500;
+        }
+
+        /* Button styles */
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-success {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .jmu-btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+
+        .jmu-btn-light {
+            color: var(--jmu-purple);
+            background-color: white;
+            border-color: white;
+        }
+
+        /* Badge styles */
+        .jmu-badge-primary {
+            background-color: var(--jmu-purple);
+        }
+
+        .jmu-badge-success {
+            background-color: #28a745;
+        }
+
+        .jmu-badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .jmu-badge-secondary {
+            background-color: var(--jmu-gray);
+        }
+
+        .jmu-alert {
+            background-color: var(--jmu-light-gold);
+            border-left: 5px solid var(--jmu-gold);
+            color: #333;
+        }
+
         /* Grant Details */
         .card {
             transition: all 0.2s ease;
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         }
+
+        .grant-info-card {
+            border-left: 3px solid var(--jmu-gold);
+        }
+
+            .grant-info-card .card-title {
+                color: var(--jmu-purple);
+                font-weight: 600;
+                font-size: 1rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
+                margin-bottom: 10px;
+            }
 
         /* Phases Styling */
         #phaseContainer {
@@ -428,13 +525,14 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border: 2px dashed #0d6efd;
+            border: 2px dashed var(--jmu-purple);
             border-radius: 8px;
+            color: var(--jmu-purple);
         }
 
         /* Draggable Phases */
         .draggable {
-            border-left: 4px solid #0d6efd;
+            border-left: 4px solid var(--jmu-gold);
             transition: all 0.2s ease-in-out;
         }
 
@@ -447,7 +545,7 @@
             padding: 8px;
             cursor: grab;
             font-size: 1.5rem;
-            color: #6c757d;
+            color: var(--jmu-gold);
             user-select: none;
         }
 
@@ -459,7 +557,7 @@
         .drag-handle .dots {
             font-size: 1.2rem;
             font-family: monospace;
-            color: #6c757d;
+            color: var(--jmu-light-gold);
         }
 
         .sortable-chosen {
@@ -469,13 +567,24 @@
         /* Projects */
         .project-card {
             transition: transform 0.2s ease;
-            border-left: 3px solid #6c757d;
+            border-left: 3px solid var(--jmu-gold);
+            border-radius: 5px;
+            overflow: hidden;
         }
 
-            .project-card:hover
-
             .project-card:hover {
-                transform: translateY(-3px);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+
+        .project-title {
+            color: var(--jmu-purple);
+            font-weight: 500;
+        }
+
+            .project-title:hover {
+                color: var(--jmu-dark-purple);
+                text-decoration: underline !important;
             }
 
         /* Scrollbar styling */
@@ -489,12 +598,12 @@
         }
 
         #phaseContainer::-webkit-scrollbar-thumb {
-            background: #888;
+            background: var(--jmu-gray);
             border-radius: 4px;
         }
 
             #phaseContainer::-webkit-scrollbar-thumb:hover {
-                background: #555;
+                background: var(--jmu-purple);
             }
     </style>
 }

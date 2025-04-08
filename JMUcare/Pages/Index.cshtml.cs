@@ -5,6 +5,7 @@ using JMUcare.Pages.DBclass;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Linq;
+using JMUcare.Pages.Tasks;
 
 namespace JMUcare.Pages
 {
@@ -33,6 +34,8 @@ namespace JMUcare.Pages
         public List<ProjectModel> RecentProjects { get; set; } = new List<ProjectModel>();
         public List<PhaseModel> ActivePhases { get; set; } = new List<PhaseModel>();
         public List<ProjectTaskModel> UpcomingTasks { get; set; } = new List<ProjectTaskModel>();
+        public List<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
+
 
         // Dashboard statistics
         public int TotalGrants { get; set; }
@@ -104,7 +107,34 @@ namespace JMUcare.Pages
             // Get the number of pending tasks
             PendingTasks = allTasks.Count;
 
+            var authorizedProjects = DBClass.GetProjectsByUserId(CurrentUserID);
+            foreach (var project in authorizedProjects)
+            {
+                string color = GetStatusColor(project.TrackingStatus);
+
+                CalendarEvents.Add(new CalendarEvent
+                {
+                    Title = project.Title,
+                    Start = project.DueDate.ToString("yyyy-MM-dd"),
+                    AllDay = true,
+                    Status = project.TrackingStatus,
+                    Color = color,
+                    ProjectId = project.ProjectID
+                });
+            }
+
             return Page();
+        }
+
+        private string GetStatusColor(string status)
+        {
+            return status.ToLower() switch
+            {
+                "completed" => "#28a745", // Green
+                "in progress" => "#ffc107", // Yellow
+                "pending" => "#17a2b8", // Blue
+                _ => "#dc3545" // Red for overdue or other statuses
+            };
         }
 
         public string GetProjectPhase(int projectId)
@@ -127,5 +157,16 @@ namespace JMUcare.Pages
             var grant = Grants.FirstOrDefault(g => g.GrantID == grantId.Value);
             return grant?.GrantTitle ?? "N/A";
         }
+        public class CalendarEvent
+        {
+            public string Title { get; set; }
+            public string Start { get; set; }
+            public string End { get; set; }
+            public bool AllDay { get; set; }
+            public string Status { get; set; }
+            public string Color { get; set; }
+            public int ProjectId { get; set; }
+        }
     }
 }
+

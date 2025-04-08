@@ -11,4 +11,5 @@
     public string Description { get; set; }  
     public string TrackingStatus { get; set; }
     public bool IsArchived { get; set; }
+    public bool IsProject { get; set; }
 }

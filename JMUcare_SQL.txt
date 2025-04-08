@@ -1,4 +1,3 @@
-
 -- Base Tables
 CREATE TABLE UserRole (
     UserRoleID INT PRIMARY KEY,
@@ -17,7 +16,8 @@ CREATE TABLE Grants (
     GrantLeadID INT,
     Description VARCHAR(MAX),
     TrackingStatus NVARCHAR(MAX),
-    IsArchived BIT
+    IsArchived BIT,
+    IsProject BIT -- New field to indicate if the grant is a project
 );
 
 -- User Tables
@@ -60,19 +60,6 @@ ADD CONSTRAINT FK_Grants_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES DBUser(Use
 ALTER TABLE Grants
 ADD CONSTRAINT FK_Grants_GrantLeadID FOREIGN KEY (GrantLeadID) REFERENCES DBUser(UserID);
 
-CREATE TABLE Master_Project (
-    MasterProjectID INT PRIMARY KEY,
-    Title VARCHAR(255),
-    Description TEXT,
-    Status VARCHAR(50),
-    CreatedBy INT,
-    ProjectLeadID INT,
-    IsArchived BIT,
-    Master_Project_Description TEXT,
-    FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID),
-    FOREIGN KEY (ProjectLeadID) REFERENCES DBUser(UserID)
-);
-
 -- Project and Related Tables
 CREATE TABLE Project (
     ProjectID INT PRIMARY KEY IDENTITY(1,1),
@@ -84,6 +71,7 @@ CREATE TABLE Project (
     IsArchived BIT,
     Project_Description TEXT,
     ProjectPosition INT,
+    DueDate DATE,
     FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID)
    
 );
@@ -271,15 +259,7 @@ CREATE TABLE Grant_Message (
     FOREIGN KEY (SenderID) REFERENCES DBUser(UserID)
 );
 
-CREATE TABLE Grant_File (
-    GrantFileID INT PRIMARY KEY,
-    GrantID INT,
-    FilePath VARCHAR(255),
-    UploadedBy INT,
-    UploadedDateTime DATETIME,
-    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
-    FOREIGN KEY (UploadedBy) REFERENCES DBUser(UserID)
-);
+
 
 CREATE TABLE Grant_Tracking (
     TrackingID INT PRIMARY KEY,
@@ -340,25 +320,9 @@ CREATE TABLE Project_Message (
     FOREIGN KEY (SenderID) REFERENCES DBUser(UserID)
 );
 
-CREATE TABLE Master_Project_Message (
-    MasterProjectMessageID INT PRIMARY KEY,
-    MasterProjectID INT,
-    SenderID INT,
-    MessageText TEXT,
-    SentDateTime DATETIME,
-    FOREIGN KEY (MasterProjectID) REFERENCES Master_Project(MasterProjectID),
-    FOREIGN KEY (SenderID) REFERENCES DBUser(UserID)
-);
 
-CREATE TABLE Project_File (
-    FileID INT PRIMARY KEY,
-    ProjectID INT,
-    FilePath VARCHAR(255),
-    UploadedBy INT,
-    UploadedDateTime DATETIME,
-    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
-    FOREIGN KEY (UploadedBy) REFERENCES DBUser(UserID)
-);
+
+
 
 CREATE TABLE Nested_Project (
     ParentProjectID INT,
@@ -368,14 +332,42 @@ CREATE TABLE Nested_Project (
     FOREIGN KEY (NestedProjectID) REFERENCES Project(ProjectID)
 );
 
-CREATE TABLE Master_Project_Permission (
-    MasterProjectID INT,
-    UserID INT,
-    AccessLevel VARCHAR(50), -- 'Read', 'Edit', etc.
-    PRIMARY KEY (MasterProjectID, UserID),
-    FOREIGN KEY (MasterProjectID) REFERENCES Master_Project(MasterProjectID),
-    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
+
+
+CREATE TABLE Message(
+    MessageID int IDENTITY(1,1) PRIMARY KEY,
+    SenderID int NOT NULL,
+    RecipientID int NOT NULL,
+    MessageText nvarchar(500) NOT NULL,
+    SentDateTime DATETIME DEFAULT GETDATE(),
+    Status varchar(20) NOT NULL CHECK (Status IN ('Sent', 'Read', 'Archived')),
+    
+    FOREIGN KEY (SenderID) REFERENCES DBUser(UserID) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY (RecipientID) REFERENCES DBUser(UserID) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
+
+CREATE TABLE Documents (
+    DocumentID INT IDENTITY(1,1) PRIMARY KEY,
+    FileName NVARCHAR(255) NOT NULL,
+    ContentType NVARCHAR(100) NOT NULL,
+    FileSize BIGINT NOT NULL,
+    UploadedDate DATETIME NOT NULL,
+    UploadedBy INT NOT NULL,
+    BlobUrl NVARCHAR(1000) NOT NULL,
+    BlobName NVARCHAR(255) NOT NULL,
+    GrantID INT NULL,
+    PhaseID INT NULL,
+    ProjectID INT NULL,
+    TaskID INT NULL,
+    IsArchived BIT NOT NULL DEFAULT 0,
+    FOREIGN KEY (UploadedBy) REFERENCES DBUser(UserID),
+    FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
+    FOREIGN KEY (PhaseID) REFERENCES Phase(PhaseID),
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
+    FOREIGN KEY (TaskID) REFERENCES Project_Task(TaskID)
+)
+
+
 
 -- Insert initial data
 INSERT INTO UserRole (UserRoleID, RoleName, Description) VALUES
@@ -390,75 +382,5 @@ INSERT INTO DBUser (FirstName, LastName, Email, Username, UserRoleID, UpdatedAt,
 ('User1', 'Example', 'user1@example.com', 'user1', 2, GETDATE(), 0),
 ('User2', 'Example', 'user2@example.com', 'user2', 3, GETDATE(), 0),
 ('User3', 'Example', 'user3@example.com', 'user3', 4, GETDATE(), 0);
-
--- Insert initial data into Grants
-INSERT INTO Grants (GrantTitle, Category, FundingSource, Amount, Status, CreatedBy, GrantLeadID, Description, TrackingStatus, IsArchived) VALUES
-('Grant 1', 'Category 1', 'Source 1', 10000.00, 'Active', 1, 1, 'Description 1', 'Tracking 1', 0),
-('Grant 2', 'Category 2', 'Source 2', 20000.00, 'Active', 2, 2, 'Description 2', 'Tracking 2', 0);
-
--- Insert initial data into Project
-INSERT INTO Project (Title, CreatedBy, GrantID, ProjectType, TrackingStatus, IsArchived, Project_Description, ProjectPosition) VALUES
-('Project 1', 1, 1, 'Type 1', 'Tracking 1', 0, 'Description 1', 1),
-('Project 2', 2, 2, 'Type 2', 'Tracking 2', 0, 'Description 2', 2);
-
--- Insert initial data into Project_Task
-INSERT INTO Project_Task (ProjectID, TaskContent, DueDate, Status, TaskPosition, IsArchived) VALUES
-(1, 'Task 1', '2023-12-31', 'Pending', 1, 0),
-(2, 'Task 2', '2023-12-31', 'Pending', 2, 0);
-
--- Insert initial data into User_Permissions
-INSERT INTO User_Permissions (PermissionID, UserID, Permissions, AccessLevel) VALUES
-(1, 1, 'Grant1,Project1', 'Edit'),
-(2, 2, 'Grant2,Project2', 'View');
-
--- Insert initial data into Grant_Permission
-INSERT INTO Grant_Permission (GrantID, UserID, AccessLevel) VALUES
-(1, 1, 'Edit'),
-(2, 2, 'View'),
-(1, 2, 'View'),
-(2, 3, 'Edit');
-
--- Insert initial data into Project_Permission
-INSERT INTO Project_Permission (ProjectID, UserID, AccessLevel) VALUES
-(1, 1, 'Edit'),
-(2, 2, 'View'),
-(1, 2, 'View'),
-(2, 3, 'Edit');
-
--- Insert initial data into Phase
-INSERT INTO Phase (PhaseName, Description, Status, CreatedBy, PhaseLeadID, IsArchived, PhasePosition) VALUES
-('Phase 1', 'Description 1', 'Active', 1, 1, 0, 1),
-('Phase 2', 'Description 2', 'Active', 2, 2, 0, 2);
-
--- Insert initial data into Grant_Phase
-INSERT INTO Grant_Phase (GrantID, PhaseID) VALUES
-(1, 1),
-(2, 2);
-
--- Insert initial data into Phase_Project
-INSERT INTO Phase_Project (PhaseID, ProjectID) VALUES
-(1, 1),
-(2, 2);
-
--- Insert initial data into Phase_Permission
-INSERT INTO Phase_Permission (PhaseID, UserID, AccessLevel) VALUES
-(1, 1, 'Edit'),
-(2, 2, 'View'),
-(1, 2, 'View'),
-(2, 3, 'Edit');
-
--- Insert initial data into Grant_User
-INSERT INTO Grant_User (GrantUserID, GrantID, UserID, AccessLevel) VALUES
-(1, 1, 1, 'Edit'),
-(2, 2, 2, 'View'),
-(3, 1, 2, 'View'),
-(4, 2, 3, 'Edit');
-
--- Insert initial data into Project_User
-INSERT INTO Project_User (ProjectUserID, ProjectID, UserID, AccessLevel) VALUES
-(1, 1, 1, 'Edit'),
-(2, 2, 2, 'View'),
-(3, 1, 2, 'View'),
-(4, 2, 3, 'Edit');
 
 
