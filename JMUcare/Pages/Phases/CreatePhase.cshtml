@@ -4,50 +4,212 @@
     ViewData["Title"] = "Create Phase";
 }
 
-<h1>Create Phase</h1>
+<div class="container-fluid mt-4">
+    <!-- Form Container -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header jmu-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Create New Phase</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="row g-3">
+                        <input type="hidden" asp-for="GrantID" />
 
-<h4>Phase</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <input type="hidden" asp-for="GrantID" />
-            <div class="form-group">
-                <label asp-for="Phase.PhaseName" class="control-label"></label>
-                <input asp-for="Phase.PhaseName" class="form-control" />
-                <span asp-validation-for="Phase.PhaseName" class="text-danger"></span>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Phase Name</h5>
+                                    <input asp-for="Phase.PhaseName" class="form-control" />
+                                    <span asp-validation-for="Phase.PhaseName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Status</h5>
+                                    <select asp-for="Phase.Status" class="form-select" asp-items="Model.StatusOptions">
+                                        <option value="">-- Select Status --</option>
+                                    </select>
+                                    <span asp-validation-for="Phase.Status" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Phase Lead</h5>
+                                    <select asp-for="Phase.PhaseLeadID" class="form-select" asp-items="@(new SelectList(Model.Users, "UserID", "FirstName"))">
+                                        <option value="">-- Select User --</option>
+                                    </select>
+                                    <span asp-validation-for="Phase.PhaseLeadID" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Associated Grant</h5>
+                                    <select asp-for="Phase.GrantID" class="form-select" asp-items="@(new SelectList(Model.Grants, "GrantID", "GrantTitle"))" disabled="disabled">
+                                    </select>
+                                    <span asp-validation-for="Phase.GrantID" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Description</h5>
+                                    <textarea asp-for="Phase.Description" class="form-control" rows="3"></textarea>
+                                    <span asp-validation-for="Phase.Description" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="card-footer mt-3 p-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a asp-page="/Grants/View" asp-route-id="@Model.GrantID" class="btn jmu-btn-outline">
+                                        <i class="bi bi-arrow-left"></i> Back to Grant
+                                    </a>
+                                    <button type="submit" class="btn jmu-btn-primary">
+                                        <i class="bi bi-plus-circle"></i> Create Phase
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Phase.Description" class="control-label"></label>
-                <textarea asp-for="Phase.Description" class="form-control"></textarea>
-                <span asp-validation-for="Phase.Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Phase.Status" class="control-label"></label>
-                <select asp-for="Phase.Status" class="form-control" asp-items="Model.StatusOptions"></select>
-                <span asp-validation-for="Phase.Status" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Phase.PhaseLeadID" class="control-label"></label>
-                <select asp-for="Phase.PhaseLeadID" class="form-control" asp-items="@(new SelectList(Model.Users, "UserID", "FirstName"))"></select>
-                <span asp-validation-for="Phase.PhaseLeadID" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Phase.GrantID" class="control-label"></label>
-                <select asp-for="Phase.GrantID" class="form-control" asp-items="@(new SelectList(Model.Grants, "GrantID", "GrantTitle"))" disabled="disabled"></select>
-                <span asp-validation-for="Phase.GrantID" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
-</div>
-
-<div>
-    <a asp-page="/Phases/Index">Back to List</a>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <style>
+        /* JMU Custom Variables */
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
+        }
+
+        /* JMU Styling Elements */
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-header-secondary {
+            background-color: var(--jmu-dark-purple);
+            color: white;
+            border-bottom: 2px solid var(--jmu-gold);
+        }
+
+        .jmu-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+        }
+
+        .jmu-subtitle {
+            color: var(--jmu-dark-purple);
+            font-weight: 500;
+        }
+
+        /* Button styles */
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-success {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .jmu-btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+
+        .jmu-btn-light {
+            color: var(--jmu-purple);
+            background-color: white;
+            border-color: white;
+        }
+
+        /* Badge styles */
+        .jmu-badge-primary {
+            background-color: var(--jmu-purple);
+        }
+
+        .jmu-badge-success {
+            background-color: #28a745;
+        }
+
+        .jmu-badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .jmu-badge-secondary {
+            background-color: var(--jmu-gray);
+        }
+
+        .jmu-alert {
+            background-color: var(--jmu-light-gold);
+            border-left: 5px solid var(--jmu-gold);
+            color: #333;
+        }
+
+        /* Card styles */
+        .card {
+            transition: all 0.2s ease;
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .grant-info-card {
+            border-left: 3px solid var(--jmu-gold);
+        }
+
+            .grant-info-card .card-title {
+                color: var(--jmu-purple);
+                font-weight: 600;
+                font-size: 1rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
+                margin-bottom: 10px;
+            }
+    </style>
 }
