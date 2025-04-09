@@ -18,7 +18,6 @@ namespace JMUcare.Pages.HashedLogin
         public void OnGet()
         {
         }
-
         public IActionResult OnPost()
         {
             if (!ModelState.IsValid)
@@ -37,6 +36,7 @@ namespace JMUcare.Pages.HashedLogin
                 ViewData["LoginMessage"] = "Login Successful!";
                 DBClass.JMUcareDBConnection.Close();
 
+                // Redirect to the dashboard page (Index page)
                 return RedirectToPage("/Index");
             }
             else
@@ -46,5 +46,6 @@ namespace JMUcare.Pages.HashedLogin
                 return Page();
             }
         }
+
     }
 }

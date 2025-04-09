@@ -1,53 +1,85 @@
 ﻿using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Security.Cryptography;
+using System.IO;
 using JMUcare.Pages.Dataclasses;
 using Microsoft.AspNetCore.Identity;
-using static JMUcare.Pages.Projects.EditTaskModel;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+
 namespace JMUcare.Pages.DBclass
 {
     public class DBClass
     {
-        public static SqlConnection JMUcareDBConnection = new SqlConnection();
+        // Static constructor to initialize connection strings
+        static DBClass()
+        {
+            var configuration = GetConfiguration();
+            AuthConnString = configuration.GetConnectionString("AUTH");
+            JMUcareDBConnString = configuration.GetConnectionString("JMU_CARE");
 
-        //private static readonly string JMUcareDBConnString =
-        // "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
+            // Initialize the connection object
+            JMUcareDBConnection = new SqlConnection(JMUcareDBConnString);
+        }
 
-        //private static readonly string? AuthConnString =
-        //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
+        // Configuration helper
+        private static IConfiguration GetConfiguration()
+        {
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-        private static readonly string JMUcareDBConnString =
-            "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
+            return builder.Build();
+        }
 
-        private static readonly string? AuthConnString =
-            "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
+        // Connection objects
+        public static SqlConnection JMUcareDBConnection { get; }
+        public static string AuthConnString { get; }
+        private static string JMUcareDBConnString { get; }
 
-
-
-
-
-        //Will's Connection Below
-
-
-        //public static readonly string JMUcareDBConnString =
-        //"Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
-
-        //private static readonly string? AuthConnString =
-        //"Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+        // Rest of your DBClass implementation...
+    
 
 
 
 
-        //Dylan BELOW
+//private static readonly string JMUcareDBConnString =
+// "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
 
-        //private static readonly string JMUcareDBConnString =
-        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+//private static readonly string? AuthConnString =
+//"Server=Localhost;Database=AUTH;Trusted_Connection=True";
 
-        //private static readonly string? AuthConnString =
-        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+//private static readonly string JMUcareDBConnString =
+//    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
 
-        public const int SaltByteSize = 24; // standard, secure size of salts
+//private static readonly string? AuthConnString =
+//    "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
+
+
+
+
+
+//Will's Connection Below
+
+
+//public static readonly string JMUcareDBConnString =
+//"Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+
+//private static readonly string? AuthConnString =
+//"Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+
+
+
+
+//Dylan BELOW
+
+//private static readonly string JMUcareDBConnString =
+//     "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+
+//private static readonly string? AuthConnString =
+//     "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+
+public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
         public const int Pbkdf2Iterations = 1000; // higher number is more secure but takes longer
         public const int IterationIndex = 0; // used to find first section (number of iterations) of PasswordHash database field
@@ -1856,33 +1888,33 @@ WHERE pp.PhaseID = @PhaseID";
             cmd.ExecuteNonQuery();
         }
 
-        public static void LoadTaskAssignments(int taskId, List<TaskAssignmentViewModel> taskAssignments)
-        {
-            using var connection = new SqlConnection(JMUcareDBConnString);
-            var query = @"
-        SELECT u.UserID, u.FirstName, u.LastName, ptu.Role
-        FROM DBUser u
-        JOIN Project_Task_User ptu ON u.UserID = ptu.UserID
-        WHERE ptu.TaskID = @TaskID";
+        //public static void LoadTaskAssignments(int taskId, List<TaskAssignmentViewModel> taskAssignments)
+        //{
+        //    using var connection = new SqlConnection(JMUcareDBConnString);
+        //    var query = @"
+        //SELECT u.UserID, u.FirstName, u.LastName, ptu.Role
+        //FROM DBUser u
+        //JOIN Project_Task_User ptu ON u.UserID = ptu.UserID
+        //WHERE ptu.TaskID = @TaskID";
 
-            using var cmd = new SqlCommand(query, connection);
-            cmd.Parameters.AddWithValue("@TaskID", taskId);
+        //    using var cmd = new SqlCommand(query, connection);
+        //    cmd.Parameters.AddWithValue("@TaskID", taskId);
 
-            connection.Open();
-            using var reader = cmd.ExecuteReader();
+        //    connection.Open();
+        //    using var reader = cmd.ExecuteReader();
 
-            taskAssignments.Clear();
-            while (reader.Read())
-            {
-                taskAssignments.Add(new TaskAssignmentViewModel
-                {
-                    UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
-                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                    AccessLevel = reader.GetString(reader.GetOrdinal("Role"))
-                });
-            }
-        }
+        //    taskAssignments.Clear();
+        //    while (reader.Read())
+        //    {
+        //        taskAssignments.Add(new TaskAssignmentViewModel
+        //        {
+        //            UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+        //            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+        //            LastName = reader.GetString(reader.GetOrdinal("LastName")),
+        //            AccessLevel = reader.GetString(reader.GetOrdinal("Role"))
+        //        });
+        //    }
+        //}
 
         public static void LoadAvailableUsers(int taskId, List<DbUserModel> availableUsers)
         {
