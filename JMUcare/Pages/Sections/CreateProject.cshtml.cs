@@ -19,7 +19,8 @@ namespace JMUcare.Pages.Projects
         public int PreSelectedPhaseId { get; set; }
 
         public List<DbUserModel> Users { get; set; }
-        public List<PhaseModel> Phases { get; set; } // New property
+        public List<PhaseModel> Phases { get; set; }
+        public List<GrantModel> Grants { get; set; } // Added property for grants dropdown
 
         public List<SelectListItem> StatusOptions { get; private set; }
 
@@ -34,13 +35,22 @@ namespace JMUcare.Pages.Projects
 
         public CreateProjectModel()
         {
+            // Initialize project model with default values
+            Project = new ProjectModel
+            {
+                StartDate = DateTime.Today,
+                DueDate = DateTime.Today.AddMonths(1),
+                TrackingStatus = "Not Started",
+                IsArchived = false
+            };
+
             // Initialize status options with common project milestones
             StatusOptions = new List<SelectListItem>
             {
-                new SelectListItem { Value = "Planning", Text = "Planning" },
-                new SelectListItem { Value = "Execution", Text = "Execution" },
-                new SelectListItem { Value = "Monitoring", Text = "Monitoring" },
-                new SelectListItem { Value = "Closure", Text = "Closure" }
+                new SelectListItem { Value = "Not Started", Text = "Not Started" },
+                new SelectListItem { Value = "In Progress", Text = "In Progress" },
+                new SelectListItem { Value = "Completed", Text = "Completed" },
+                new SelectListItem { Value = "Blocked", Text = "Blocked" }
             };
         }
 
@@ -67,20 +77,25 @@ namespace JMUcare.Pages.Projects
                 return RedirectToPage("/Shared/AccessDenied");
             }
 
-            // Get list of users and phases for dropdowns
-            Users = DBClass.GetUsers(); // this gets non-archived users
-            Phases = DBClass.GetPhasesForUser(CurrentUserID); // this gets phases for the current user
+            // Get lists for dropdowns
+            Users = DBClass.GetUsers();
+            Phases = DBClass.GetPhasesForUser(CurrentUserID);
+            Grants = DBClass.GetGrantsForUser(CurrentUserID);
 
             // If PhaseId was provided, store it for use in the form
             if (PhaseId > 0)
             {
                 PreSelectedPhaseId = PhaseId;
+
                 // Pre-select the phase in the model
-                if (Project == null)
-                {
-                    Project = new ProjectModel();
-                }
                 Project.PhaseID = PhaseId;
+
+                // Try to get the associated GrantID for the phase
+                int? grantId = DBClass.GetGrantIdByPhaseId(PhaseId);
+                if (grantId.HasValue)
+                {
+                    Project.GrantID = grantId.Value;
+                }
             }
 
             return Page();
@@ -105,24 +120,38 @@ namespace JMUcare.Pages.Projects
 
             if (!ModelState.IsValid)
             {
-                Users = DBClass.GetUsers(); // repopulate dropdown
-                Phases = DBClass.GetPhasesForUser(CurrentUserID); // repopulate dropdown
-                PreSelectedPhaseId = Project.PhaseID; // Maintain the pre-selected phase
+                Users = DBClass.GetUsers();
+                Phases = DBClass.GetPhasesForUser(CurrentUserID);
+                Grants = DBClass.GetGrantsForUser(CurrentUserID);
+                PreSelectedPhaseId = Project.PhaseID;
                 return Page();
             }
 
-            // Set the current user as the creator if not specified
-            if (Project.CreatedBy == 0)
+            // Set the current user as the creator
+            Project.CreatedBy = CurrentUserID;
+
+            try
             {
-                Project.CreatedBy = CurrentUserID;
+                int projectId = DBClass.InsertProject(Project);
+
+                // Insert Phase_Project record if a phase is selected
+                if (Project.PhaseID > 0)
+                {
+                    DBClass.InsertPhaseProject(Project.PhaseID, projectId);
+                }
+
+                TempData["SuccessMessage"] = "Project created successfully.";
+                return RedirectToPage("/Projects/View", new { id = projectId });
             }
-
-            int projectId = DBClass.InsertProject(Project);
-
-            // Insert Phase_Project record
-            DBClass.InsertPhaseProject(Project.PhaseID, projectId);
-
-            return RedirectToPage("/Projects/View", new { id = projectId });
+            catch (Exception ex)
+            {
+                Users = DBClass.GetUsers();
+                Phases = DBClass.GetPhasesForUser(CurrentUserID);
+                Grants = DBClass.GetGrantsForUser(CurrentUserID);
+                PreSelectedPhaseId = Project.PhaseID;
+                TempData["ErrorMessage"] = $"Error creating project: {ex.Message}";
+                return Page();
+            }
         }
     }
 }

@@ -4,53 +4,270 @@
     ViewData["Title"] = "Edit Project";
 }
 
-<h2>Edit Project</h2>
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header jmu-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Edit Project</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.HasEditPermissionForProject(Model.CurrentUserID, Model.Project.ProjectID))
+                    {
+                        <form method="post" class="row g-3">
+                            <input type="hidden" asp-for="Project.ProjectID" />
+                            <input type="hidden" asp-for="Project.CreatedBy" />
 
-@if (Model.HasEditPermissionForProject(Model.CurrentUserID, Model.Project.ProjectID))
-{
-    <form method="post">
-        <input type="hidden" asp-for="Project.ProjectID" />
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 grant-info-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Project Title</h5>
+                                        <input asp-for="Project.Title" class="form-control" required />
+                                        <span asp-validation-for="Project.Title" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
 
-        <div class="mb-3">
-            <label asp-for="Project.Title" class="form-label">Title</label>
-            <input asp-for="Project.Title" class="form-control" />
-            <span asp-validation-for="Project.Title" class="text-danger"></span>
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 grant-info-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Project Type</h5>
+                                        <input asp-for="Project.ProjectType" class="form-control" />
+                                        <span asp-validation-for="Project.ProjectType" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 grant-info-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Tracking Status</h5>
+                                        <select asp-for="Project.TrackingStatus" class="form-select">
+                                            <option value="Not Started">Not Started</option>
+                                            <option value="In Progress">In Progress</option>
+                                            <option value="Completed">Completed</option>
+                                            <option value="Blocked">Blocked</option>
+                                        </select>
+                                        <span asp-validation-for="Project.TrackingStatus" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 grant-info-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Associated Phase</h5>
+                                        <select asp-for="Project.PhaseID" class="form-select" asp-items="@(new SelectList(Model.Phases, "PhaseID", "PhaseName"))">
+                                            <option value="">-- Select Phase --</option>
+                                        </select>
+                                        <span asp-validation-for="Project.PhaseID" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 grant-info-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Start Date</h5>
+                                        <input asp-for="Project.StartDate" class="form-control" type="date" />
+                                        <span asp-validation-for="Project.StartDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 grant-info-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Due Date</h5>
+                                        <input asp-for="Project.DueDate" class="form-control" type="date" />
+                                        <span asp-validation-for="Project.DueDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 grant-info-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Associated Grant</h5>
+                                        <select asp-for="Project.GrantID" class="form-select" asp-items="@(new SelectList(Model.Grants, "GrantID", "GrantTitle"))">
+                                            <option value="">-- None --</option>
+                                        </select>
+                                        <span asp-validation-for="Project.GrantID" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 grant-info-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Archive Status</h5>
+                                        <div class="form-check mt-2">
+                                            <input asp-for="Project.IsArchived" type="checkbox" class="form-check-input" />
+                                            <label asp-for="Project.IsArchived" class="form-check-label">Is Archived</label>
+                                            <span asp-validation-for="Project.IsArchived" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <div class="card h-100 grant-info-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Project Description</h5>
+                                        <textarea asp-for="Project.Project_Description" class="form-control" rows="3"></textarea>
+                                        <span asp-validation-for="Project.Project_Description" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a asp-page="/Projects/View" asp-route-id="@Model.Project.ProjectID" class="btn jmu-btn-outline">
+                                        <i class="bi bi-arrow-left"></i> Back to Project
+                                    </a>
+                                    <button type="submit" class="btn jmu-btn-primary">
+                                        <i class="bi bi-save"></i> Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert jmu-alert">
+                            <h5>Access Denied</h5>
+                            <p>You do not have permission to edit this project.</p>
+                            <a asp-page="/Projects/View" asp-route-id="@Model.Project.ProjectID" class="btn jmu-btn-outline mt-2">
+                                <i class="bi bi-arrow-left"></i> Back to Project
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
-
-        <div class="mb-3">
-            <label asp-for="Project.Project_Description" class="form-label">Description</label>
-            <textarea asp-for="Project.Project_Description" class="form-control" rows="3"></textarea>
-            <span asp-validation-for="Project.Project_Description" class="text-danger"></span>
-        </div>
-
-        <div class="mb-3">
-            <label asp-for="Project.TrackingStatus" class="form-label">Tracking Status</label>
-            <select asp-for="Project.TrackingStatus" class="form-select">
-                <option value="Not Started">Not Started</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Blocked">Blocked</option>
-            </select>
-            <span asp-validation-for="Project.TrackingStatus" class="text-danger"></span>
-        </div>
-
-        <div class="mb-3">
-            <label asp-for="Project.ProjectType" class="form-label">Project Type</label>
-            <input asp-for="Project.ProjectType" class="form-control" />
-            <span asp-validation-for="Project.ProjectType" class="text-danger"></span>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a asp-page="/Projects/View" asp-route-id="@Model.Project.ProjectID" class="btn btn-secondary">Cancel</a>
-    </form>
-}
-else
-{
-    <div class="alert alert-danger">
-        You do not have permission to edit this project.
     </div>
-}
+</div>
 
 @section Scripts {
-    @await Html.PartialAsync("_ValidationScriptsPartial")
+    <partial name="_ValidationScriptsPartial" />
+    <style>
+        /* JMU Custom Variables */
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
+        }
+
+        /* JMU Styling Elements */
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-header-secondary {
+            background-color: var(--jmu-dark-purple);
+            color: white;
+            border-bottom: 2px solid var(--jmu-gold);
+        }
+
+        .jmu-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+        }
+
+        .jmu-subtitle {
+            color: var(--jmu-dark-purple);
+            font-weight: 500;
+        }
+
+        /* Button styles */
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-success {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .jmu-btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+
+        .jmu-btn-light {
+            color: var(--jmu-purple);
+            background-color: white;
+            border-color: white;
+        }
+
+        /* Badge styles */
+        .jmu-badge-primary {
+            background-color: var(--jmu-purple);
+        }
+
+        .jmu-badge-success {
+            background-color: #28a745;
+        }
+
+        .jmu-badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .jmu-badge-secondary {
+            background-color: var(--jmu-gray);
+        }
+
+        .jmu-alert {
+            background-color: var(--jmu-light-gold);
+            border-left: 5px solid var(--jmu-gold);
+            color: #333;
+        }
+
+        /* Card styles */
+        .card {
+            transition: all 0.2s ease;
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .grant-info-card {
+            border-left: 3px solid var(--jmu-gold);
+        }
+
+            .grant-info-card .card-title {
+                color: var(--jmu-purple);
+                font-weight: 600;
+                font-size: 1rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
+                margin-bottom: 10px;
+            }
+    </style>
 }

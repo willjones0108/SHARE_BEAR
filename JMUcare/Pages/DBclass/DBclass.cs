@@ -631,36 +631,72 @@ public const int SaltByteSize = 24; // standard, secure size of salts
         {
             using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
             {
-                string checkQuery = @"
-        SELECT COUNT(*) FROM Phase_Permission 
-        WHERE PhaseID = @PhaseID AND UserID = @UserID";
+                connection.Open();
 
-                using (SqlCommand checkCmd = new SqlCommand(checkQuery, connection))
+                if (accessLevel == "None")
                 {
-                    checkCmd.Parameters.AddWithValue("@PhaseID", phaseId);
-                    checkCmd.Parameters.AddWithValue("@UserID", userId);
+                    // If access level is "None", delete the permission record
+                    string deleteQuery = @"
+                DELETE FROM Phase_Permission 
+                WHERE PhaseID = @PhaseID AND UserID = @UserID";
 
-                    connection.Open();
-                    int count = (int)checkCmd.ExecuteScalar();
-
-                    if (count == 0)
+                    using (SqlCommand deleteCmd = new SqlCommand(deleteQuery, connection))
                     {
+                        deleteCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                        deleteCmd.Parameters.AddWithValue("@UserID", userId);
+                        deleteCmd.ExecuteNonQuery();
+                    }
+                }
+                else
+                {
+                    // Check if permission already exists
+                    string checkQuery = @"
+                SELECT COUNT(*) FROM Phase_Permission 
+                WHERE PhaseID = @PhaseID AND UserID = @UserID";
+
+                    int count;
+                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, connection))
+                    {
+                        checkCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                        checkCmd.Parameters.AddWithValue("@UserID", userId);
+                        count = (int)checkCmd.ExecuteScalar();
+                    }
+
+                    if (count > 0)
+                    {
+                        // Update existing permission
+                        string updateQuery = @"
+                    UPDATE Phase_Permission 
+                    SET AccessLevel = @AccessLevel
+                    WHERE PhaseID = @PhaseID AND UserID = @UserID";
+
+                        using (SqlCommand updateCmd = new SqlCommand(updateQuery, connection))
+                        {
+                            updateCmd.Parameters.AddWithValue("@PhaseID", phaseId);
+                            updateCmd.Parameters.AddWithValue("@UserID", userId);
+                            updateCmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
+                            updateCmd.ExecuteNonQuery();
+                        }
+                    }
+                    else
+                    {
+                        // Insert new permission
                         string insertQuery = @"
-                INSERT INTO Phase_Permission (PhaseID, UserID, AccessLevel)
-                VALUES (@PhaseID, @UserID, @AccessLevel)";
+                    INSERT INTO Phase_Permission (PhaseID, UserID, AccessLevel)
+                    VALUES (@PhaseID, @UserID, @AccessLevel)";
 
                         using (SqlCommand insertCmd = new SqlCommand(insertQuery, connection))
                         {
                             insertCmd.Parameters.AddWithValue("@PhaseID", phaseId);
                             insertCmd.Parameters.AddWithValue("@UserID", userId);
                             insertCmd.Parameters.AddWithValue("@AccessLevel", accessLevel);
-
                             insertCmd.ExecuteNonQuery();
                         }
                     }
                 }
             }
         }
+
 
         public static List<PhaseModel> GetPhasesForUser(int userId)
         {

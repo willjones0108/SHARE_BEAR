@@ -18,7 +18,7 @@
                             <div class="card h-100 grant-info-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Project Title</h5>
-                                    <input asp-for="Project.Title" class="form-control" />
+                                    <input asp-for="Project.Title" class="form-control" required />
                                     <span asp-validation-for="Project.Title" class="text-danger"></span>
                                 </div>
                             </div>
@@ -42,18 +42,9 @@
                                         <option value="Not Started">Not Started</option>
                                         <option value="In Progress">In Progress</option>
                                         <option value="Completed">Completed</option>
+                                        <option value="Blocked">Blocked</option>
                                     </select>
                                     <span asp-validation-for="Project.TrackingStatus" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <div class="card h-100 grant-info-card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Due Date</h5>
-                                    <input asp-for="Project.DueDate" class="form-control" type="date" />
-                                    <span asp-validation-for="Project.DueDate" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
@@ -82,6 +73,38 @@
                                         </select>
                                     }
                                     <span asp-validation-for="Project.PhaseID" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Start Date</h5>
+                                    <input asp-for="Project.StartDate" class="form-control" type="date" />
+                                    <span asp-validation-for="Project.StartDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Due Date</h5>
+                                    <input asp-for="Project.DueDate" class="form-control" type="date" />
+                                    <span asp-validation-for="Project.DueDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Associated Grant</h5>
+                                    <select asp-for="Project.GrantID" class="form-select" asp-items="@(new SelectList(Model.Grants, "GrantID", "GrantTitle"))">
+                                        <option value="">-- None --</option>
+                                    </select>
+                                    <span asp-validation-for="Project.GrantID" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>

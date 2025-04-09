@@ -12,6 +12,9 @@ namespace JMUcare.Pages.Sections
         [BindProperty]
         public ProjectModel Project { get; set; }
 
+        public List<PhaseModel> Phases { get; set; } // Added for phase selection
+        public List<GrantModel> Grants { get; set; } // Added for grant selection
+
         public int CurrentUserID => HttpContext.Session.GetInt32("CurrentUserID") ?? 0;
 
         public IActionResult OnGet(int id)
@@ -34,6 +37,10 @@ namespace JMUcare.Pages.Sections
                 return RedirectToPage("/Shared/AccessDenied");
             }
 
+            // Load phases and grants for dropdowns
+            Phases = DBClass.GetPhasesForUser(CurrentUserID);
+            Grants = DBClass.GetGrantsForUser(CurrentUserID);
+
             return Page();
         }
 
@@ -46,6 +53,9 @@ namespace JMUcare.Pages.Sections
 
             if (!ModelState.IsValid)
             {
+                // Reload phases and grants for dropdowns
+                Phases = DBClass.GetPhasesForUser(CurrentUserID);
+                Grants = DBClass.GetGrantsForUser(CurrentUserID);
                 return Page();
             }
 
@@ -56,13 +66,35 @@ namespace JMUcare.Pages.Sections
 
             try
             {
+                // Get current project to preserve fields we're not updating
+                var currentProject = DBClass.GetProjectById(Project.ProjectID);
+                if (currentProject != null)
+                {
+                    // Preserve CreatedBy field
+                    Project.CreatedBy = currentProject.CreatedBy;
+                }
+
+                // Update the project
                 DBClass.UpdateProject(Project);
+
+                // If phase has changed, update the phase-project relationship
+                if (currentProject != null && currentProject.PhaseID != Project.PhaseID)
+                {
+                    // Logic to update phase-project relationship would go here
+                    // This might require custom DBClass methods
+                    DBClass.InsertPhaseProject(Project.PhaseID, Project.ProjectID);
+                }
+
                 TempData["SuccessMessage"] = "Project updated successfully.";
                 return RedirectToPage("/Projects/View", new { id = Project.ProjectID });
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
+
+                // Reload phases and grants for dropdowns
+                Phases = DBClass.GetPhasesForUser(CurrentUserID);
+                Grants = DBClass.GetGrantsForUser(CurrentUserID);
                 return Page();
             }
         }
