@@ -121,15 +121,15 @@
                                     <div class="progress" style="height: 6px;">
                                         <div class="progress-bar jmu-project-progress"
                                              role="progressbar"
-                                             style="width: @GetProjectProgressPercentage(project.TrackingStatus)%"
-                                             aria-valuenow="@GetProjectProgressPercentage(project.TrackingStatus)"
+                                             style="width: @Math.Round(Model.GetCompletionPercentage(project.GrantID))%"
+                                             aria-valuenow="@Math.Round(Model.GetCompletionPercentage(project.GrantID))"
                                              aria-valuemin="0"
                                              aria-valuemax="100">
                                         </div>
                                     </div>
                                     <div class="d-flex justify-content-between">
-                                        <small class="text-muted progress-text">@project.TrackingStatus</small>
-                                        <small class="progress-percentage">@GetProjectProgressPercentage(project.TrackingStatus)%</small>
+                                        <small class="text-muted progress-text">@Model.GetCompletedProjectCount(project.GrantID) of @Model.GetProjectCount(project.GrantID) @(Model.GetProjectCount(project.GrantID) == 1 ? "project" : "projects") complete</small>
+                                        <small class="progress-percentage">@Math.Round(Model.GetCompletionPercentage(project.GrantID))%</small>
                                     </div>
                                 </div>
                                 <p class="mb-1">@(project.Description?.Length > 100 ? project.Description.Substring(0, 97) + "..." : project.Description ?? "No description available")</p>
@@ -223,6 +223,8 @@
         };
     }
 
+    // This function is no longer needed as we use the model method
+    // Keeping it for backward compatibility with other parts of the page
     public int GetProjectProgressPercentage(string status)
     {
         return status?.ToLower() switch
@@ -585,4 +587,3 @@
         });
     </script>
 }
-

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Linq;
 using JMUcare.Pages.Tasks;
+using System;
 
 namespace JMUcare.Pages
 {
@@ -36,6 +37,9 @@ namespace JMUcare.Pages
         public List<ProjectTaskModel> UpcomingTasks { get; set; } = new List<ProjectTaskModel>();
         public List<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
 
+        // Added for project progress tracking
+        public Dictionary<int, List<PhaseModel>> GrantPhases { get; set; } = new Dictionary<int, List<PhaseModel>>();
+        public Dictionary<int, List<ProjectModel>> PhaseProjects { get; set; } = new Dictionary<int, List<ProjectModel>>();
 
         // Dashboard statistics
         public int TotalGrants { get; set; }
@@ -63,9 +67,29 @@ namespace JMUcare.Pages
                 var phases = DBClass.GetPhasesByGrantId(grant.GrantID);
                 if (phases != null)
                 {
-                    ActivePhases.AddRange(phases);
+                    // Filter only non-archived phases
+                    var nonArchivedPhases = phases.Where(p => !p.IsArchived).ToList();
+                    ActivePhases.AddRange(nonArchivedPhases);
+
+                    // Add to dictionary for progress calculation
+                    GrantPhases[grant.GrantID] = nonArchivedPhases;
+
+                    // For each phase, get associated projects
+                    foreach (var phase in nonArchivedPhases)
+                    {
+                        var projects = DBClass.GetProjectsByPhaseId(phase.PhaseID);
+                        if (projects != null)
+                        {
+                            PhaseProjects[phase.PhaseID] = projects.Where(p => !p.IsArchived).ToList();
+                        }
+                        else
+                        {
+                            PhaseProjects[phase.PhaseID] = new List<ProjectModel>();
+                        }
+                    }
                 }
             }
+
             InProgressPhases = ActivePhases.Count;
 
             // Select most relevant phases if there are too many
@@ -128,7 +152,7 @@ namespace JMUcare.Pages
 
         private string GetStatusColor(string status)
         {
-            return status.ToLower() switch
+            return status?.ToLower() switch
             {
                 "completed" => "#28a745", // Green
                 "in progress" => "#ffc107", // Yellow
@@ -157,6 +181,58 @@ namespace JMUcare.Pages
             var grant = Grants.FirstOrDefault(g => g.GrantID == grantId.Value);
             return grant?.GrantTitle ?? "N/A";
         }
+
+        // New methods for project progress tracking
+        public List<ProjectModel> GetAllProjectsForGrant(int grantId)
+        {
+            var allProjects = new List<ProjectModel>();
+
+            if (GrantPhases.ContainsKey(grantId))
+            {
+                foreach (var phase in GrantPhases[grantId])
+                {
+                    if (PhaseProjects.ContainsKey(phase.PhaseID))
+                    {
+                        allProjects.AddRange(PhaseProjects[phase.PhaseID]);
+                    }
+                }
+            }
+
+            return allProjects;
+        }
+
+        public int GetProjectCount(int grantId)
+        {
+            return GetAllProjectsForGrant(grantId).Count;
+        }
+
+        public int GetCompletedProjectCount(int grantId)
+        {
+            var allProjects = GetAllProjectsForGrant(grantId);
+            return allProjects.Count(p => p.TrackingStatus?.ToLower() == "completed");
+        }
+
+        public double GetCompletionPercentage(int grantId)
+        {
+            int total = GetProjectCount(grantId);
+            if (total == 0)
+                return 0;
+
+            int completed = GetCompletedProjectCount(grantId);
+            return (double)completed / total * 100;
+        }
+
+        public string GetPhasesProgressSummary(int grantId)
+        {
+            if (!GrantPhases.ContainsKey(grantId) || !GrantPhases[grantId].Any())
+                return "No phases";
+
+            var phases = GrantPhases[grantId];
+            int completedPhases = phases.Count(p => p.Status?.ToLower() == "completed");
+
+            return $"{completedPhases} of {phases.Count} phases complete";
+        }
+
         public class CalendarEvent
         {
             public string Title { get; set; }
@@ -169,4 +245,3 @@ namespace JMUcare.Pages
         }
     }
 }
-
