@@ -105,6 +105,16 @@
                             <div class="col-md-4 mb-3">
                                 <div class="card h-100 project-detail-card">
                                     <div class="card-body">
+                                        <h5 class="card-title">Start Date</h5>
+                                        <p class="card-text fs-6">
+                                            @Model.Project.StartDate.ToShortDateString()
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100 project-detail-card">
+                                    <div class="card-body">
                                         <h5 class="card-title">Due Date</h5>
                                         <p class="card-text fs-6">
                                             @Model.Project.DueDate.ToShortDateString()
@@ -127,6 +137,7 @@
                                     </div>
                                 </div>
                             </div>
+
                             <div class="col-md-4 mb-3">
                                 <div class="card h-100 project-detail-card">
                                     <div class="card-body">

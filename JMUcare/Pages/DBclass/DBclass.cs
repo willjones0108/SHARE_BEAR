@@ -1697,48 +1697,51 @@ WHERE pp.PhaseID = @PhaseID";
 
 
 
-        public static ProjectModel GetProjectById(int projectId)
+ public static ProjectModel GetProjectById(int projectId)
+{
+    try
+    {
+        using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
+        var query = @"
+    SELECT p.*, pp.PhaseID 
+    FROM Project p
+    LEFT JOIN Phase_Project pp ON p.ProjectID = pp.ProjectID
+    WHERE p.ProjectID = @ProjectID";
+
+        using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
+        cmd.Parameters.AddWithValue("@ProjectID", projectId);
+
+        connection.Open();
+        using var reader = cmd.ExecuteReader();
+
+        if (reader.Read())
         {
-            try
+            return new ProjectModel
             {
-                using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
-                var query = @"
-            SELECT p.*, pp.PhaseID 
-            FROM Project p
-            LEFT JOIN Phase_Project pp ON p.ProjectID = pp.ProjectID
-            WHERE p.ProjectID = @ProjectID";
-
-                using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@ProjectID", projectId);
-
-                connection.Open();
-                using var reader = cmd.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    return new ProjectModel
-                    {
-                        ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
-                        Title = reader.GetString(reader.GetOrdinal("Title")),
-                        CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
-                        GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("GrantID")),
-                        PhaseID = reader.IsDBNull(reader.GetOrdinal("PhaseID")) ? 0 : reader.GetInt32(reader.GetOrdinal("PhaseID")),
-                        ProjectType = reader.GetString(reader.GetOrdinal("ProjectType")),
-                        TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
-                        IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
-                        Project_Description = reader.GetString(reader.GetOrdinal("Project_Description"))
-                    };
-                }
-
-                return null;
-            }
-            catch (Exception ex)
-            {
-                // Log the exception
-                Console.WriteLine($"Database error in GetProjectById: {ex.Message}");
-                return null;
-            }
+                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+                Title = reader.GetString(reader.GetOrdinal("Title")),
+                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                GrantID = reader.IsDBNull(reader.GetOrdinal("GrantID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("GrantID")),
+                PhaseID = reader.IsDBNull(reader.GetOrdinal("PhaseID")) ? 0 : reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                ProjectType = reader.GetString(reader.GetOrdinal("ProjectType")),
+                TrackingStatus = reader.GetString(reader.GetOrdinal("TrackingStatus")),
+                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived")),
+                Project_Description = reader.GetString(reader.GetOrdinal("Project_Description")),
+                DueDate = reader.IsDBNull(reader.GetOrdinal("DueDate")) ? DateTime.Now : reader.GetDateTime(reader.GetOrdinal("DueDate")),
+                StartDate = reader.IsDBNull(reader.GetOrdinal("StartDate")) ? DateTime.Now : reader.GetDateTime(reader.GetOrdinal("StartDate"))
+            };
         }
+
+        return null;
+    }
+    catch (Exception ex)
+    {
+        // Log the exception
+        Console.WriteLine($"Database error in GetProjectById: {ex.Message}");
+        return null;
+    }
+}
+
 
 
         /// <summary>
@@ -2054,12 +2057,16 @@ WHERE pp.PhaseID = @PhaseID";
         {
             using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
             var query = @"
-        UPDATE Project SET
-            Title = @Title,
-            Project_Description = @Project_Description,
-            TrackingStatus = @TrackingStatus,
-            ProjectType = @ProjectType
-        WHERE ProjectID = @ProjectID";
+UPDATE Project SET
+    Title = @Title,
+    Project_Description = @Project_Description,
+    TrackingStatus = @TrackingStatus,
+    ProjectType = @ProjectType,
+    StartDate = @StartDate,
+    DueDate = @DueDate,
+    IsArchived = @IsArchived,
+    GrantID = @GrantID
+WHERE ProjectID = @ProjectID";
 
             using var cmd = new System.Data.SqlClient.SqlCommand(query, connection);
             cmd.Parameters.AddWithValue("@ProjectID", project.ProjectID);
@@ -2067,10 +2074,15 @@ WHERE pp.PhaseID = @PhaseID";
             cmd.Parameters.AddWithValue("@Project_Description", project.Project_Description ?? "");
             cmd.Parameters.AddWithValue("@TrackingStatus", project.TrackingStatus);
             cmd.Parameters.AddWithValue("@ProjectType", project.ProjectType);
+            cmd.Parameters.AddWithValue("@StartDate", project.StartDate);
+            cmd.Parameters.AddWithValue("@DueDate", project.DueDate);
+            cmd.Parameters.AddWithValue("@IsArchived", project.IsArchived);
+            cmd.Parameters.AddWithValue("@GrantID", project.GrantID ?? (object)DBNull.Value);
 
             connection.Open();
             cmd.ExecuteNonQuery();
         }
+
         public static bool DeleteTask(int taskId)
         {
             using var connection = new SqlConnection(JMUcareDBConnString);
