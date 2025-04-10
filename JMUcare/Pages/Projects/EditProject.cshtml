@@ -14,123 +14,203 @@
                 <div class="card-body">
                     @if (Model.HasEditPermissionForProject(Model.CurrentUserID, Model.Project.ProjectID))
                     {
-                        <form method="post" class="row g-3">
-                            <input type="hidden" asp-for="Project.ProjectID" />
-                            <input type="hidden" asp-for="Project.CreatedBy" />
+                        <div class="row">
+                            <!-- Project Details Section -->
+                            <div class="col-md-8 mb-4">
+                                <form method="post" class="row g-3">
+                                    <input type="hidden" asp-for="Project.ProjectID" />
+                                    <input type="hidden" asp-for="Project.CreatedBy" />
 
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 grant-info-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Project Title</h5>
-                                        <input asp-for="Project.Title" class="form-control" required />
-                                        <span asp-validation-for="Project.Title" class="text-danger"></span>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Project Title</h5>
+                                                <input asp-for="Project.Title" class="form-control" required />
+                                                <span asp-validation-for="Project.Title" class="text-danger"></span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Project Type</h5>
+                                                <input asp-for="Project.ProjectType" class="form-control" />
+                                                <span asp-validation-for="Project.ProjectType" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Tracking Status</h5>
+                                                <select asp-for="Project.TrackingStatus" class="form-select">
+                                                    <option value="Not Started">Not Started</option>
+                                                    <option value="In Progress">In Progress</option>
+                                                    <option value="Completed">Completed</option>
+                                                    <option value="Blocked">Blocked</option>
+                                                </select>
+                                                <span asp-validation-for="Project.TrackingStatus" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Associated Phase</h5>
+                                                <select asp-for="Project.PhaseID" class="form-select" asp-items="@(new SelectList(Model.Phases, "PhaseID", "PhaseName"))">
+                                                    <option value="">-- Select Phase --</option>
+                                                </select>
+                                                <span asp-validation-for="Project.PhaseID" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Start Date</h5>
+                                                <input asp-for="Project.StartDate" class="form-control" type="date" />
+                                                <span asp-validation-for="Project.StartDate" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Due Date</h5>
+                                                <input asp-for="Project.DueDate" class="form-control" type="date" />
+                                                <span asp-validation-for="Project.DueDate" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Associated Grant</h5>
+                                                <select asp-for="Project.GrantID" class="form-select" asp-items="@(new SelectList(Model.Grants, "GrantID", "GrantTitle"))">
+                                                    <option value="">-- None --</option>
+                                                </select>
+                                                <span asp-validation-for="Project.GrantID" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Archive Status</h5>
+                                                <div class="form-check mt-2">
+                                                    <input asp-for="Project.IsArchived" type="checkbox" class="form-check-input" />
+                                                    <label asp-for="Project.IsArchived" class="form-check-label">Is Archived</label>
+                                                    <span asp-validation-for="Project.IsArchived" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Project Description</h5>
+                                                <textarea asp-for="Project.Project_Description" class="form-control" rows="3"></textarea>
+                                                <span asp-validation-for="Project.Project_Description" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="d-flex justify-content-between">
+                                            <a asp-page="/Projects/View" asp-route-id="@Model.Project.ProjectID" class="btn jmu-btn-outline">
+                                                <i class="bi bi-arrow-left"></i> Back to Project
+                                            </a>
+                                            <button type="submit" class="btn jmu-btn-primary">
+                                                <i class="bi bi-save"></i> Save Changes
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
 
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 grant-info-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Project Type</h5>
-                                        <input asp-for="Project.ProjectType" class="form-control" />
-                                        <span asp-validation-for="Project.ProjectType" class="text-danger"></span>
+                            <!-- Project Permissions Section -->
+                            <div class="col-md-4">
+                                <div class="card shadow">
+                                    <div class="card-header jmu-header-secondary d-flex justify-content-between align-items-center">
+                                        <h4 class="mb-0">Project Permissions</h4>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 grant-info-card">
                                     <div class="card-body">
-                                        <h5 class="card-title">Tracking Status</h5>
-                                        <select asp-for="Project.TrackingStatus" class="form-select">
-                                            <option value="Not Started">Not Started</option>
-                                            <option value="In Progress">In Progress</option>
-                                            <option value="Completed">Completed</option>
-                                            <option value="Blocked">Blocked</option>
-                                        </select>
-                                        <span asp-validation-for="Project.TrackingStatus" class="text-danger"></span>
-                                    </div>
-                                </div>
-                            </div>
+                                        <div class="table-responsive mb-3">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>User</th>
+                                                        <th>Access</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @if (Model.ProjectPermissions != null)
+                                                    {
+                                                        foreach (var userPerm in Model.ProjectPermissions)
+                                                        {
+                                                            <tr>
+                                                                <td>@userPerm.FullName</td>
+                                                                <td>
+                                                                    <span class="badge jmu-badge-@(userPerm.AccessLevel == "Edit" ? "success" : "primary")">
+                                                                        @userPerm.AccessLevel
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <form method="post" asp-page-handler="RemovePermission" class="d-inline">
+                                                                        <input type="hidden" name="projectId" value="@Model.Project.ProjectID" />
+                                                                        <input type="hidden" name="userId" value="@userPerm.UserId" />
+                                                                        <button type="submit" class="btn jmu-btn-danger btn-sm">
+                                                                            <i class="bi bi-trash"></i>
+                                                                        </button>
+                                                                    </form>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
 
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 grant-info-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Associated Phase</h5>
-                                        <select asp-for="Project.PhaseID" class="form-select" asp-items="@(new SelectList(Model.Phases, "PhaseID", "PhaseName"))">
-                                            <option value="">-- Select Phase --</option>
-                                        </select>
-                                        <span asp-validation-for="Project.PhaseID" class="text-danger"></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 grant-info-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Start Date</h5>
-                                        <input asp-for="Project.StartDate" class="form-control" type="date" />
-                                        <span asp-validation-for="Project.StartDate" class="text-danger"></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 grant-info-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Due Date</h5>
-                                        <input asp-for="Project.DueDate" class="form-control" type="date" />
-                                        <span asp-validation-for="Project.DueDate" class="text-danger"></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 grant-info-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Associated Grant</h5>
-                                        <select asp-for="Project.GrantID" class="form-select" asp-items="@(new SelectList(Model.Grants, "GrantID", "GrantTitle"))">
-                                            <option value="">-- None --</option>
-                                        </select>
-                                        <span asp-validation-for="Project.GrantID" class="text-danger"></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 grant-info-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Archive Status</h5>
-                                        <div class="form-check mt-2">
-                                            <input asp-for="Project.IsArchived" type="checkbox" class="form-check-input" />
-                                            <label asp-for="Project.IsArchived" class="form-check-label">Is Archived</label>
-                                            <span asp-validation-for="Project.IsArchived" class="text-danger"></span>
+                                        <!-- Add New Permission Form -->
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Add New Permission</h5>
+                                                <form method="post" asp-page-handler="AddPermission">
+                                                    <input type="hidden" name="projectId" value="@Model.Project.ProjectID" />
+                                                    <div class="mb-3">
+                                                        <select asp-for="NewPermissionUserId" class="form-select">
+                                                            <option value="">Select user...</option>
+                                                            @foreach (var user in Model.AvailableUsers)
+                                                            {
+                                                                <option value="@user.UserID">@user.FirstName @user.LastName</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <select asp-for="NewPermissionAccessLevel" class="form-select">
+                                                            <option value="Read">Read</option>
+                                                            <option value="Edit">Edit</option>
+                                                        </select>
+                                                    </div>
+                                                    <button type="submit" class="btn jmu-btn-primary">
+                                                        <i class="bi bi-plus-circle"></i> Add Permission
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="col-12 mb-3">
-                                <div class="card h-100 grant-info-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Project Description</h5>
-                                        <textarea asp-for="Project.Project_Description" class="form-control" rows="3"></textarea>
-                                        <span asp-validation-for="Project.Project_Description" class="text-danger"></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="d-flex justify-content-between">
-                                    <a asp-page="/Projects/View" asp-route-id="@Model.Project.ProjectID" class="btn jmu-btn-outline">
-                                        <i class="bi bi-arrow-left"></i> Back to Project
-                                    </a>
-                                    <button type="submit" class="btn jmu-btn-primary">
-                                        <i class="bi bi-save"></i> Save Changes
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+                        </div>
                     }
                     else
                     {

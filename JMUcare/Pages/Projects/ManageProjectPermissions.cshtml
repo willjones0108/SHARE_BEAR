@@ -1,0 +1,254 @@
+﻿@page "{id:int}"
+@model JMUcare.Pages.Projects.ManagePermissionsModel
+@{
+    ViewData["Title"] = "Manage Project Permissions";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header jmu-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Manage Project Permissions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Project</h5>
+                                    <p class="card-text fs-6">@Model.Project.Title</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add New User Form -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Add New User</h5>
+                                    <form method="post">
+                                        <input type="hidden" asp-for="Project.ProjectID" />
+
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Select User</label>
+                                                    <select asp-for="NewPermission.UserID" class="form-select"
+                                                            asp-items="@(new SelectList(Model.AvailableUsers, "UserID", "FullName"))">
+                                                        <option value="">Select User...</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Access Level</label>
+                                                    <select asp-for="NewPermission.AccessLevel" class="form-select">
+                                                        <option value="Read">Read</option>
+                                                        <option value="Edit">Edit</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 d-flex align-items-end">
+                                                <div class="mb-3">
+                                                    <button type="submit" class="btn jmu-btn-primary">
+                                                        <i class="bi bi-plus-circle"></i> Add User
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Permissions -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Current Permissions</h5>
+
+                                    @if (!Model.CurrentPermissions.Any())
+                                    {
+                                        <div class="alert jmu-alert">
+                                            <p>No users have been granted access to this project.</p>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>User</th>
+                                                        <th>Access Level</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var permission in Model.CurrentPermissions)
+                                                    {
+                                                        <tr>
+                                                            <td>@permission.User.FirstName @permission.User.LastName</td>
+                                                            <td>
+                                                                <span class="badge jmu-badge-@(permission.AccessLevel == "Edit" ? "success" : "primary")">
+                                                                    @permission.AccessLevel
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <form method="post" asp-page-handler="Remove" style="display: inline;">
+                                                                    <input type="hidden" name="userId" value="@permission.User.UserID" />
+                                                                    <button type="submit" class="btn jmu-btn-danger btn-sm">
+                                                                        <i class="bi bi-trash"></i> Remove
+                                                                    </button>
+                                                                </form>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a asp-page="/Projects/View" asp-route-id="@Model.Project.ProjectID" class="btn jmu-btn-outline">
+                            <i class="bi bi-arrow-left"></i> Back to Project
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        /* JMU Custom Variables */
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
+        }
+
+        /* JMU Styling Elements */
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-header-secondary {
+            background-color: var(--jmu-dark-purple);
+            color: white;
+            border-bottom: 2px solid var(--jmu-gold);
+        }
+
+        .jmu-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+        }
+
+        .jmu-subtitle {
+            color: var(--jmu-dark-purple);
+            font-weight: 500;
+        }
+
+        /* Button styles */
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-success {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .jmu-btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+
+        .jmu-btn-light {
+            color: var(--jmu-purple);
+            background-color: white;
+            border-color: white;
+        }
+
+        /* Badge styles */
+        .jmu-badge-primary {
+            background-color: var(--jmu-purple);
+        }
+
+        .jmu-badge-success {
+            background-color: #28a745;
+        }
+
+        .jmu-badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .jmu-badge-secondary {
+            background-color: var(--jmu-gray);
+        }
+
+        .jmu-alert {
+            background-color: var(--jmu-light-gold);
+            border-left: 5px solid var(--jmu-gold);
+            color: #333;
+        }
+
+        /* Card styles */
+        .card {
+            transition: all 0.2s ease;
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .grant-info-card {
+            border-left: 3px solid var(--jmu-gold);
+        }
+
+            .grant-info-card .card-title {
+                color: var(--jmu-purple);
+                font-weight: 600;
+                font-size: 1rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
+                margin-bottom: 10px;
+            }
+    </style>
+}
