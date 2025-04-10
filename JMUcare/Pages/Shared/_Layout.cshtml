@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using JMUcare.Pages.DBclass
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -18,50 +19,68 @@
                     <img src="~/images/JMU Care-purple.png" alt="JMU Logo" height="50" class="d-inline-block align-text-top me-2" />
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         @if (Context.Session.GetString("username") != null &&
-                        Context.Session.GetInt32("CurrentUserID").HasValue &&
-                        Context.Session.GetInt32("CurrentUserID") > 0)
+                           Context.Session.GetInt32("CurrentUserID").HasValue &&
+                           Context.Session.GetInt32("CurrentUserID") > 0)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/Index">
-                                    <i class="bi bi-house-door"></i> Dashboard
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/Grants/Index">
-                                    <i class="bi bi-journal-text"></i> Grants
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/Grants/ProjectIndex">
-                                    <i class="bi bi-kanban"></i> Projects
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/Messages/Index">
-                                    <i class="bi bi-chat-dots"></i> Messages
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/Tasks/Calender">
-                                    <i class="bi bi-calendar"></i> Calendar
-                                </a>
-                            </li>
-                        }
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Documents/List">Documents</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">
-                                <i class="bi bi-shield-lock"></i> Privacy
-                            </a>
-                        </li>
+                           <li class="nav-item">
+                               <a class="nav-link text-dark" asp-area="" asp-page="/Index">
+                                   <i class="bi bi-house-door"></i> Dashboard
+                               </a>
+                           </li>
+                           <li class="nav-item">
+                               <a class="nav-link text-dark" asp-area="" asp-page="/Grants/Index">
+                                   <i class="bi bi-journal-text"></i> Grants
+                               </a>
+                           </li>
+                           <li class="nav-item">
+                               <a class="nav-link text-dark" asp-area="" asp-page="/Grants/ProjectIndex">
+                                   <i class="bi bi-kanban"></i> Projects
+                               </a>
+                           </li>
+                           <li class="nav-item">
+                               <a class="nav-link text-dark" asp-area="" asp-page="/Messages/Index">
+                                   <i class="bi bi-chat-dots"></i> Messages
+                               </a>
+                           </li>
+                           <li class="nav-item">
+                               <a class="nav-link text-dark" asp-area="" asp-page="/Tasks/Calender">
+                                   <i class="bi bi-calendar"></i> Calendar
+                               </a>
+                           </li>
 
+                           @* Fixing the method call to check admin status *@
+                           bool isAdmin = Context.Session.GetInt32("CurrentUserID") != null &&
+                                          DBClass.IsAdmin(Context.Session.GetInt32("CurrentUserID").Value);
+
+                           if (isAdmin)
+                           {
+                               <li class="nav-item">
+                                   <a class="nav-link text-dark" asp-area="" asp-page="/Documents/List">
+                                       <i class="bi bi-folder"></i> Documents
+                                   </a>
+                               </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-page="/Users/DBUsers">
+                                        <i class="bi bi-people"></i> User Management
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">
+                                        <i class="bi bi-shield-lock"></i> Privacy
+                                    </a>
+                                </li>
+                           }
+
+                        }
+
+
+                        
                         @if (Context.Session.GetString("username") != null)
                         {
                             <li class="nav-item ms-sm-auto">

@@ -1,0 +1,132 @@
+﻿@page
+@model JMUcare.Pages.Users.EditUserModel
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Edit User</h2>
+        <a href="/Users/DBUsers" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to User List
+        </a>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">User Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <input type="hidden" asp-for="User.UserID" />
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="User.FirstName" class="form-label">First Name</label>
+                                <input asp-for="User.FirstName" class="form-control" />
+                                <span asp-validation-for="User.FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="User.LastName" class="form-label">Last Name</label>
+                                <input asp-for="User.LastName" class="form-control" />
+                                <span asp-validation-for="User.LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="User.Email" class="form-label">Email</label>
+                            <input asp-for="User.Email" class="form-control" type="email" />
+                            <span asp-validation-for="User.Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="User.Username" class="form-label">Username</label>
+                            <input asp-for="User.Username" class="form-control" readonly />
+                            <div class="form-text text-muted">Username cannot be changed</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="User.UserRoleID" class="form-label">Role</label>
+                            <select asp-for="User.UserRoleID" class="form-select">
+                                @foreach (var role in Model.Roles)
+                                {
+                                    <option value="@role.UserRoleID">@role.RoleName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input asp-for="User.IsArchived" class="form-check-input" />
+                            <label asp-for="User.IsArchived" class="form-check-label">Archive User</label>
+                            <div class="form-text text-muted">Archived users cannot log in or access the system</div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="ChangePassword">
+                        <input type="hidden" name="userId" value="@Model.User.UserID" />
+
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" id="newPassword" name="newPassword" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required />
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-warning">Change Password</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Simple client-side password validation
+        document.querySelector('form[asp-page-handler="ChangePassword"]').addEventListener('submit', function(e) {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+            }
+        });
+    </script>
+}

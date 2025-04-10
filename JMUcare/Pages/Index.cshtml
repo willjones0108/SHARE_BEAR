@@ -161,26 +161,18 @@
     </div>
 }
 
-<!-- Assigned Projects Section - Shows only when user has NO other projects visible -->
 @{
-    // Only show assigned projects when user has NO visible projects in other sections
 
-    // First, check if user has active or pending grants with visible projects
     bool hasVisibleGrantProjects = false;
 
-    // If user has grants, check if any projects are shown in active or pending grants sections
     if (userHasGrants)
     {
-        // Check active grants (projects section)
         var activeProjects = Model.Grants?.Where(g => g.Status == "Active").ToList();
         if (activeProjects != null && activeProjects.Any())
         {
-            // User has projects visible in the active grants section
             hasVisibleGrantProjects = true;
         }
     }
-
-    // Only show assigned projects if there are no visible grant projects
     var showAssignedProjects = !hasVisibleGrantProjects;
 }
 
@@ -190,7 +182,7 @@
         <div class="col-md-12">
             <div class="card shadow">
                 <div class="card-header jmu-header">
-                    <h4 class="mb-0">My Assigned Projects</h4>
+                    <h4 class="mb-0">My Assigned Tasks</h4>
                 </div>
                 <div class="card-body">
                     <div class="list-group">

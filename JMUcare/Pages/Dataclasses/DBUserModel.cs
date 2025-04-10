@@ -12,5 +12,7 @@
         public string Password { get; set; }
         public DateTime UpdatedAt { get; set; }
         public bool IsArchived { get; set; }
+
+
     }
 }

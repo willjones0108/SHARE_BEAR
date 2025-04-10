@@ -236,6 +236,184 @@ namespace JMUcare.Pages.Projects
 
             return RedirectToPage(new { id = Id });
         }
+        public async Task<IActionResult> OnPostUploadDocumentAsync(IFormFile file, string entityType, int entityId)
+        {
+            if (CurrentUserID == 0)
+                return RedirectToPage("/HashedLogin/HashedLogin");
+
+            // Check permissions
+            string accessLevel = DBClass.GetUserAccessLevelForProject(CurrentUserID, entityId);
+            bool isAdmin = DBClass.IsUserAdmin(CurrentUserID);
+            if (accessLevel != "Edit" && !isAdmin)
+                return RedirectToPage("/Shared/AccessDenied");
+
+            if (file == null || file.Length == 0)
+            {
+                TempData["ErrorMessage"] = "No file was selected for upload.";
+                return RedirectToPage(new { id = entityId });
+            }
+
+            try
+            {
+                var blobService = new JMUcare.Services.BlobStorageService(
+                    HttpContext.RequestServices.GetRequiredService<IConfiguration>());
+
+                // Determine upload folder path based on entity type
+                string folderPath = entityType.ToLower() switch
+                {
+                    "project" => $"projects/{entityId}",
+                    "phase" => $"phases/{entityId}",
+                    "grant" => $"grants/{entityId}",
+                    _ => "other"
+                };
+
+                // Upload to blob storage
+                string blobName = await blobService.UploadDocumentAsync(file, folderPath);
+
+                // Generate a SAS URL with time-limited access
+                string sasUrl = await blobService.GenerateSasTokenAsync(blobName, TimeSpan.FromHours(24));
+
+                // Save document metadata to database
+                var document = new DocumentModel
+                {
+                    FileName = file.FileName,
+                    ContentType = file.ContentType,
+                    FileSize = file.Length,
+                    UploadedDate = DateTime.UtcNow,
+                    UploadedBy = CurrentUserID,
+                    BlobUrl = sasUrl,
+                    BlobName = blobName,
+                    ProjectID = entityId
+                };
+
+                // Save to database
+                int documentId = DBClass.InsertDocument(document);
+
+                if (documentId > 0)
+                {
+                    TempData["SuccessMessage"] = "Document uploaded successfully.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Failed to save document metadata.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error uploading document: {ex.Message}";
+            }
+
+            return RedirectToPage(new { id = entityId });
+        }
+
+        public async Task<IActionResult> OnGetDeleteDocumentAsync(int documentId, string entityType, int entityId)
+        {
+            if (CurrentUserID == 0)
+                return RedirectToPage("/HashedLogin/HashedLogin");
+
+            // Get the document
+            var document = DBClass.GetDocumentById(documentId);
+            if (document == null)
+            {
+                TempData["ErrorMessage"] = "Document not found.";
+                return RedirectToPage(new { id = entityId });
+            }
+
+            // Check if user has permission to delete
+            bool canDelete = false;
+
+            // Users can delete their own uploads
+            if (document.UploadedBy == CurrentUserID)
+                canDelete = true;
+
+            // Admins can delete any document
+            if (DBClass.IsUserAdmin(CurrentUserID))
+                canDelete = true;
+
+            // Editors can delete documents in their entity
+            if (!canDelete)
+            {
+                string projectAccess = DBClass.GetUserAccessLevelForProject(CurrentUserID, entityId);
+                canDelete = projectAccess == "Edit";
+            }
+
+            if (!canDelete)
+            {
+                return RedirectToPage("/Shared/AccessDenied");
+            }
+
+            try
+            {
+                var blobService = new JMUcare.Services.BlobStorageService(
+                    HttpContext.RequestServices.GetRequiredService<IConfiguration>());
+
+                // Delete from blob storage
+                await blobService.DeleteDocumentAsync(document.BlobName);
+
+                // Delete from database (or mark as archived)
+                bool success = DBClass.ArchiveDocument(documentId);
+
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Document deleted successfully.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Error deleting document from database.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error deleting document: {ex.Message}";
+            }
+
+            return RedirectToPage(new { id = entityId });
+        }
+        public IActionResult OnPostArchiveProject(int projectId)
+        {
+            if (CurrentUserID == 0)
+            {
+                return RedirectToPage("/HashedLogin/HashedLogin");
+            }
+
+            // Check if user has edit permission
+            if (!HasEditPermission(CurrentUserID, projectId))
+            {
+                return RedirectToPage("/Shared/AccessDenied");
+            }
+
+            try
+            {
+                // Call DBClass method to archive project and delete associated data
+                bool success = DBClass.ArchiveProjectAndTasks(projectId);
+
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Project archived successfully, including all associated documents and permissions.";
+
+                    // Redirect to project listing page
+                    if (GrantId.HasValue)
+                    {
+                        return RedirectToPage("/Grants/View", new { id = GrantId.Value });
+                    }
+                    else
+                    {
+                        return RedirectToPage("/Grants/ProjectIndex");
+                    }
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "An error occurred while archiving the project.";
+                    return RedirectToPage(new { id = projectId });
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error archiving project: {ex.Message}";
+                return RedirectToPage(new { id = projectId });
+            }
+        }
+
 
     }
 }

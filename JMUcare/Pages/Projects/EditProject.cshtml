@@ -1,4 +1,6 @@
-﻿@page "{id:int}"
+﻿
+
+@page "{id:int}"
 @model JMUcare.Pages.Projects.EditProjectModel
 @{
     ViewData["Title"] = "Edit Project";
@@ -24,7 +26,7 @@
                                     <div class="col-md-6 mb-3">
                                         <div class="card h-100 grant-info-card">
                                             <div class="card-body">
-                                                <h5 class="card-title">Project Title</h5>
+                                                <h5 class="card-title">Task Title</h5>
                                                 <input asp-for="Project.Title" class="form-control" required />
                                                 <span asp-validation-for="Project.Title" class="text-danger"></span>
                                             </div>
@@ -34,7 +36,7 @@
                                     <div class="col-md-6 mb-3">
                                         <div class="card h-100 grant-info-card">
                                             <div class="card-body">
-                                                <h5 class="card-title">Project Type</h5>
+                                                <h5 class="card-title">Task Type</h5>
                                                 <input asp-for="Project.ProjectType" class="form-control" />
                                                 <span asp-validation-for="Project.ProjectType" class="text-danger"></span>
                                             </div>
@@ -126,7 +128,7 @@
                                     <div class="col-12">
                                         <div class="d-flex justify-content-between">
                                             <a asp-page="/Projects/View" asp-route-id="@Model.Project.ProjectID" class="btn jmu-btn-outline">
-                                                <i class="bi bi-arrow-left"></i> Back to Project
+                                                <i class="bi bi-arrow-left"></i> Back to Task
                                             </a>
                                             <button type="submit" class="btn jmu-btn-primary">
                                                 <i class="bi bi-save"></i> Save Changes
@@ -140,7 +142,7 @@
                             <div class="col-md-4">
                                 <div class="card shadow">
                                     <div class="card-header jmu-header-secondary d-flex justify-content-between align-items-center">
-                                        <h4 class="mb-0">Project Permissions</h4>
+                                        <h4 class="mb-0">Task Permissions</h4>
                                     </div>
                                     <div class="card-body">
                                         <div class="table-responsive mb-3">

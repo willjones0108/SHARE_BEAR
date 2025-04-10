@@ -1,7 +1,7 @@
 ﻿@page "{id:int}"
 @model JMUcare.Pages.Projects.ManagePermissionsModel
 @{
-    ViewData["Title"] = "Manage Project Permissions";
+    ViewData["Title"] = "Manage Task Permissions";
 }
 
 <div class="container-fluid mt-4">
@@ -9,14 +9,14 @@
         <div class="col-md-12">
             <div class="card shadow">
                 <div class="card-header jmu-header d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Manage Project Permissions</h4>
+                    <h4 class="mb-0">Manage Task Permissions</h4>
                 </div>
                 <div class="card-body">
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <div class="card h-100 grant-info-card">
                                 <div class="card-body">
-                                    <h5 class="card-title">Project</h5>
+                                    <h5 class="card-title">Task</h5>
                                     <p class="card-text fs-6">@Model.Project.Title</p>
                                 </div>
                             </div>
@@ -75,7 +75,7 @@
                                     @if (!Model.CurrentPermissions.Any())
                                     {
                                         <div class="alert jmu-alert">
-                                            <p>No users have been granted access to this project.</p>
+                                            <p>No users have been granted access to this task.</p>
                                         </div>
                                     }
                                     else
@@ -121,7 +121,7 @@
                 <div class="card-footer">
                     <div class="d-flex justify-content-between align-items-center">
                         <a asp-page="/Projects/View" asp-route-id="@Model.Project.ProjectID" class="btn jmu-btn-outline">
-                            <i class="bi bi-arrow-left"></i> Back to Project
+                            <i class="bi bi-arrow-left"></i> Back to Tasks
                         </a>
                     </div>
                 </div>

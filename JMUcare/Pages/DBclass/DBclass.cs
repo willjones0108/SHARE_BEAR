@@ -6,6 +6,7 @@ using JMUcare.Pages.Dataclasses;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using JMUcare.Pages.Users;
 
 namespace JMUcare.Pages.DBclass
 {
@@ -2082,37 +2083,7 @@ WHERE pp.PhaseID = @PhaseID";
             int rowsAffected = cmd.ExecuteNonQuery();
             return rowsAffected > 0;
         }
-        public static bool ArchiveProjectAndTasks(int projectId)
-        {
-            using var connection = new SqlConnection(JMUcareDBConnString);
-            connection.Open();
-            using var transaction = connection.BeginTransaction();
 
-            try
-            {
-                // Archive tasks associated with the project
-                var archiveTasksQuery = "UPDATE Project_Task SET IsArchived = 1 WHERE ProjectID = @ProjectID";
-                using var archiveTasksCmd = new SqlCommand(archiveTasksQuery, connection, transaction);
-                archiveTasksCmd.Parameters.AddWithValue("@ProjectID", projectId);
-                archiveTasksCmd.ExecuteNonQuery();
-
-                // Archive the project
-                var archiveProjectQuery = "UPDATE Project SET IsArchived = 1 WHERE ProjectID = @ProjectID";
-                using var archiveProjectCmd = new SqlCommand(archiveProjectQuery, connection, transaction);
-                archiveProjectCmd.Parameters.AddWithValue("@ProjectID", projectId);
-                archiveProjectCmd.ExecuteNonQuery();
-
-                transaction.Commit();
-                return true;
-            }
-            catch (SqlException ex)
-            {
-                transaction.Rollback();
-                // Log the exception (ex) for debugging purposes
-                Console.WriteLine(ex.Message);
-                return false;
-            }
-        }
         public static bool ArchiveTask(int taskId)
         {
             using var connection = new SqlConnection(JMUcareDBConnString);
@@ -2207,47 +2178,96 @@ WHERE pp.PhaseID = @PhaseID";
 
             try
             {
-                // Get all phases associated with this grant
-                var phasesQuery = @"
-            SELECT PhaseID 
-            FROM Grant_Phase 
+                // 1. Delete (permanently) all documents related to the grant
+                var deleteGrantDocumentsQuery = @"
+            DELETE FROM Documents 
             WHERE GrantID = @GrantID";
 
-                List<int> phaseIds = new List<int>();
-
-                using (var phasesCmd = new SqlCommand(phasesQuery, connection, transaction))
+                using (var deleteGrantDocsCmd = new SqlCommand(deleteGrantDocumentsQuery, connection, transaction))
                 {
-                    phasesCmd.Parameters.AddWithValue("@GrantID", grantId);
-
-                    using var reader = phasesCmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        phaseIds.Add(reader.GetInt32(0));
-                    }
+                    deleteGrantDocsCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    deleteGrantDocsCmd.ExecuteNonQuery();
                 }
 
-                // Archive all tasks associated with projects in all phases
-                var archiveTasksQuery = @"
-            UPDATE Project_Task 
-            SET IsArchived = 1 
+                // 2. Delete all documents related to projects associated with this grant
+                var deleteProjectDocumentsQuery = @"
+            DELETE FROM Documents 
             WHERE ProjectID IN (
                 SELECT p.ProjectID 
                 FROM Project p
-                JOIN Phase_Project pp ON p.ProjectID = pp.ProjectID
-                WHERE pp.PhaseID IN (
-                    SELECT PhaseID 
-                    FROM Grant_Phase 
-                    WHERE GrantID = @GrantID
-                )
+                WHERE p.GrantID = @GrantID
+                UNION
+                SELECT pp.ProjectID 
+                FROM Phase_Project pp
+                JOIN Grant_Phase gp ON pp.PhaseID = gp.PhaseID
+                WHERE gp.GrantID = @GrantID
             )";
 
-                using (var archiveTasksCmd = new SqlCommand(archiveTasksQuery, connection, transaction))
+                using (var deleteProjectDocsCmd = new SqlCommand(deleteProjectDocumentsQuery, connection, transaction))
                 {
-                    archiveTasksCmd.Parameters.AddWithValue("@GrantID", grantId);
-                    archiveTasksCmd.ExecuteNonQuery();
+                    deleteProjectDocsCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    deleteProjectDocsCmd.ExecuteNonQuery();
                 }
 
-                // Archive projects associated with all phases
+                // 3. Delete all documents related to phases associated with this grant
+                var deletePhaseDocumentsQuery = @"
+            DELETE FROM Documents 
+            WHERE PhaseID IN (
+                SELECT PhaseID 
+                FROM Grant_Phase 
+                WHERE GrantID = @GrantID
+            )";
+
+                using (var deletePhaseDocsCmd = new SqlCommand(deletePhaseDocumentsQuery, connection, transaction))
+                {
+                    deletePhaseDocsCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    deletePhaseDocsCmd.ExecuteNonQuery();
+                }
+
+                // 4. Delete all permissions for projects associated with this grant
+                var deleteProjectPermissionsQuery = @"
+            DELETE FROM Project_Permission 
+            WHERE ProjectID IN (
+                SELECT p.ProjectID 
+                FROM Project p
+                WHERE p.GrantID = @GrantID
+                UNION
+                SELECT pp.ProjectID 
+                FROM Phase_Project pp
+                JOIN Grant_Phase gp ON pp.PhaseID = gp.PhaseID
+                WHERE gp.GrantID = @GrantID
+            )";
+
+                using (var deleteProjectPermsCmd = new SqlCommand(deleteProjectPermissionsQuery, connection, transaction))
+                {
+                    deleteProjectPermsCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    deleteProjectPermsCmd.ExecuteNonQuery();
+                }
+
+                // 5. Delete all permissions for phases associated with this grant
+                var deletePhasePermissionsQuery = @"
+            DELETE FROM Phase_Permission 
+            WHERE PhaseID IN (
+                SELECT PhaseID 
+                FROM Grant_Phase 
+                WHERE GrantID = @GrantID
+            )";
+
+                using (var deletePhasePermsCmd = new SqlCommand(deletePhasePermissionsQuery, connection, transaction))
+                {
+                    deletePhasePermsCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    deletePhasePermsCmd.ExecuteNonQuery();
+                }
+
+                // 6. Delete all permissions for the grant itself
+                var deleteGrantPermissionsQuery = "DELETE FROM Grant_Permission WHERE GrantID = @GrantID";
+                using (var deleteGrantPermsCmd = new SqlCommand(deleteGrantPermissionsQuery, connection, transaction))
+                {
+                    deleteGrantPermsCmd.Parameters.AddWithValue("@GrantID", grantId);
+                    deleteGrantPermsCmd.ExecuteNonQuery();
+                }
+
+                // 7. Archive projects associated with all phases
                 var archiveProjectsQuery = @"
             UPDATE Project 
             SET IsArchived = 1 
@@ -2264,7 +2284,7 @@ WHERE pp.PhaseID = @PhaseID";
                     archiveProjectsCmd.ExecuteNonQuery();
                 }
 
-                // Archive all phases associated with the grant
+                // 8. Archive all phases associated with the grant
                 var archivePhaseQuery = @"
             UPDATE Phase 
             SET IsArchived = 1 
@@ -2280,7 +2300,7 @@ WHERE pp.PhaseID = @PhaseID";
                     archivePhaseCmd.ExecuteNonQuery();
                 }
 
-                // Finally, archive the grant itself
+                // 9. Finally, archive the grant itself
                 var archiveGrantQuery = "UPDATE Grants SET IsArchived = 1 WHERE GrantID = @GrantID";
                 using (var archiveGrantCmd = new SqlCommand(archiveGrantQuery, connection, transaction))
                 {
@@ -2305,6 +2325,7 @@ WHERE pp.PhaseID = @PhaseID";
                 return false;
             }
         }
+
         public static List<MessageModel> GetReceivedMessages(int userId)
         {
             List<MessageModel> messages = new List<MessageModel>();
@@ -3028,6 +3049,333 @@ WHERE IsArchived = 0";
             return displayName;
         }
 
+        public static DbUserModel GetUserById(int userId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            SELECT UserID, FirstName, LastName, Email, Username, UserRoleID, UpdatedAt, IsArchived
+            FROM DBUser
+            WHERE UserID = @UserID";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return new DbUserModel
+                            {
+                                UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                Email = !reader.IsDBNull(reader.GetOrdinal("Email")) ?
+                                        reader.GetString(reader.GetOrdinal("Email")) : null,
+                                Username = !reader.IsDBNull(reader.GetOrdinal("Username")) ?
+                                          reader.GetString(reader.GetOrdinal("Username")) : null,
+                                UserRoleID = reader.GetInt32(reader.GetOrdinal("UserRoleID")),
+                                UpdatedAt = !reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ?
+                                           reader.GetDateTime(reader.GetOrdinal("UpdatedAt")) : DateTime.MinValue,
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        public static bool ArchiveProjectAndTasks(int projectId)
+        {
+            using var connection = new SqlConnection(JMUcareDBConnString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                // 1. Archive documents associated with the project
+                var archiveDocumentsQuery = "UPDATE Documents SET IsArchived = 1 WHERE ProjectID = @ProjectID";
+                using var archiveDocumentsCmd = new SqlCommand(archiveDocumentsQuery, connection, transaction);
+                archiveDocumentsCmd.Parameters.AddWithValue("@ProjectID", projectId);
+                archiveDocumentsCmd.ExecuteNonQuery();
+
+                // 2. Delete project permissions
+                var deletePermissionsQuery = "DELETE FROM Project_Permission WHERE ProjectID = @ProjectID";
+                using var deletePermissionsCmd = new SqlCommand(deletePermissionsQuery, connection, transaction);
+                deletePermissionsCmd.Parameters.AddWithValue("@ProjectID", projectId);
+                deletePermissionsCmd.ExecuteNonQuery();
+
+                // 4. Archive the project itself
+                var archiveProjectQuery = "UPDATE Project SET IsArchived = 1 WHERE ProjectID = @ProjectID";
+                using var archiveProjectCmd = new SqlCommand(archiveProjectQuery, connection, transaction);
+                archiveProjectCmd.Parameters.AddWithValue("@ProjectID", projectId);
+                archiveProjectCmd.ExecuteNonQuery();
+
+                transaction.Commit();
+                return true;
+            }
+            catch (SqlException ex)
+            {
+                transaction.Rollback();
+                Console.WriteLine($"Error archiving project: {ex.Message}");
+                return false;
+            }
+        }
+
+        public static bool IsAdmin(int userId)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string query = @"
+        SELECT 1 
+        FROM DBUser u
+        JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        WHERE u.UserID = @UserID AND ur.RoleName = 'Admin'";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+                    var result = cmd.ExecuteScalar();
+                    return result != null; // Returns true if the user is an admin
+                }
+            }
+        }
+
+        // Add these methods to your DBClass.cs file
+
+        public static List<DbUserModel> GetAllUsersWithRoles()
+        {
+            var users = new List<DbUserModel>();
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string query = @"
+            SELECT u.UserID, u.FirstName, u.LastName, u.Email, u.Username, 
+                   u.UserRoleID, r.RoleName, u.UpdatedAt, u.IsArchived
+            FROM DBUser u
+            JOIN UserRole r ON u.UserRoleID = r.UserRoleID
+            ORDER BY u.LastName, u.FirstName";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    connection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            users.Add(new DbUserModel
+                            {
+                                UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
+                                Username = reader.GetString(reader.GetOrdinal("Username")),
+                                UserRoleID = reader.GetInt32(reader.GetOrdinal("UserRoleID")),
+                                UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return users;
+        }
+
+        public static List<DBUsersModel.AuthCredentialModel> GetAuthCredentials()
+        {
+            var credentials = new List<DBUsersModel.AuthCredentialModel>();
+
+            using (SqlConnection connection = new SqlConnection(AuthConnString))
+            {
+                string query = "SELECT UserID, Username, Password FROM HashedCredentials";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    connection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            credentials.Add(new DBUsersModel.AuthCredentialModel
+                            {
+                                UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                                Username = reader.GetString(reader.GetOrdinal("Username")),
+                                PasswordHash = reader.GetString(reader.GetOrdinal("Password"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return credentials;
+        }
+
+
+// Existing method
+public static List<UserRoleModel> GetUserRoles()
+    {
+        var roles = new List<UserRoleModel>();
+
+        using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+        {
+            string query = "SELECT UserRoleID, RoleName FROM UserRole ORDER BY UserRoleID";
+
+            using (SqlCommand cmd = new SqlCommand(query, connection))
+            {
+                connection.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        roles.Add(new UserRoleModel
+                        {
+                            UserRoleID = reader.GetInt32(reader.GetOrdinal("UserRoleID")),
+                            RoleName = reader.GetString(reader.GetOrdinal("RoleName"))
+                        });
+                    }
+                }
+            }
+        }
+
+        return roles;
+    }
+
+
+    public static void UpdateUser(DbUserModel user)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string query = @"
+            UPDATE DBUser
+            SET FirstName = @FirstName,
+                LastName = @LastName,
+                Email = @Email,
+                UserRoleID = @UserRoleID,
+                UpdatedAt = @UpdatedAt,
+                IsArchived = @IsArchived
+            WHERE UserID = @UserID";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", user.UserID);
+                    cmd.Parameters.AddWithValue("@FirstName", user.FirstName);
+                    cmd.Parameters.AddWithValue("@LastName", user.LastName);
+                    cmd.Parameters.AddWithValue("@Email", user.Email ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@UserRoleID", user.UserRoleID);
+                    cmd.Parameters.AddWithValue("@UpdatedAt", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@IsArchived", user.IsArchived);
+
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public static void ChangeUserPassword(int userId, string newPassword)
+        {
+            // First, get the username for this user
+            string username = "";
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string query = "SELECT Username FROM DBUser WHERE UserID = @UserID";
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    connection.Open();
+                    var result = cmd.ExecuteScalar();
+                    if (result != null)
+                    {
+                        username = result.ToString();
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(username))
+            {
+                throw new Exception("User not found");
+            }
+
+            // Update password in AUTH database
+            using (SqlConnection connection = new SqlConnection(AuthConnString))
+            {
+                string query = @"
+            UPDATE HashedCredentials
+            SET Password = @Password
+            WHERE Username = @Username";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@Username", username);
+                    cmd.Parameters.AddWithValue("@Password", HashPassword(newPassword));
+
+                    connection.Open();
+                    int rowsAffected = cmd.ExecuteNonQuery();
+
+                    if (rowsAffected == 0)
+                    {
+                        throw new Exception("Failed to update password. User credential not found.");
+                    }
+                }
+            }
+        }
+
+        public static bool DeleteUser(int userId)
+        {
+            // This is a dangerous operation that could leave orphaned references
+            // Better approach is to archive the user instead of deleting
+            // But if deletion is necessary, you need to handle all references to this user
+
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // Get username before deleting user
+                        string username = "";
+                        using (SqlCommand cmd = new SqlCommand("SELECT Username FROM DBUser WHERE UserID = @UserID", connection, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@UserID", userId);
+                            var result = cmd.ExecuteScalar();
+                            if (result != null)
+                            {
+                                username = result.ToString();
+                            }
+                        }
+
+                        if (string.IsNullOrEmpty(username))
+                        {
+                            return false;
+                        }
+
+                        // Instead of deleting, mark as archived
+                        using (SqlCommand cmd = new SqlCommand(
+                            "UPDATE DBUser SET IsArchived = 1 WHERE UserID = @UserID", connection, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@UserID", userId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+
+                        // Also consider updating auth credentials to prevent login
+                        // This would need to be done in a separate connection to AUTH database
+                        return true;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
 
 
 

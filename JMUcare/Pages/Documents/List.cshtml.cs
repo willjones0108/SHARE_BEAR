@@ -29,6 +29,7 @@ namespace JMUcare.Pages.Documents
 
         [BindProperty]
         public int EntityId { get; set; }
+
         public ListModel(BlobStorageService blobStorageService, ILogger<ListModel> logger)
         {
             _blobStorageService = blobStorageService;
@@ -61,7 +62,6 @@ namespace JMUcare.Pages.Documents
             }
         }
 
-
         public IActionResult OnGet(string entityType = null, int entityId = 0)
         {
             if (CurrentUserID == 0)
@@ -69,41 +69,17 @@ namespace JMUcare.Pages.Documents
                 return RedirectToPage("/HashedLogin/HashedLogin");
             }
 
+            // Check if user is admin, redirect if not
+            if (!IsAdmin)
+            {
+                return RedirectToPage("/Shared/AccessDenied");
+            }
+
             // If entityType and entityId are provided, load documents for that specific entity
             if (!string.IsNullOrEmpty(entityType) && entityId > 0)
             {
                 try
                 {
-                    // Check if the user has access to this entity
-                    bool hasAccess = false;
-
-                    switch (entityType.ToLower())
-                    {
-                        case "grant":
-                            string grantAccess = DBClass.GetUserAccessLevelForGrant(CurrentUserID, entityId);
-                            hasAccess = grantAccess != "None" || IsAdmin;
-                            break;
-
-                        case "phase":
-                            string phaseAccess = DBClass.GetUserAccessLevelForPhase(CurrentUserID, entityId);
-                            hasAccess = phaseAccess != "None" || IsAdmin;
-                            break;
-
-                        case "project":
-                            string projectAccess = DBClass.GetUserAccessLevelForProject(CurrentUserID, entityId);
-                            hasAccess = projectAccess != "None" || IsAdmin;
-                            break;
-
-                        default:
-                            hasAccess = IsAdmin; // Only admins can access unknown entity types
-                            break;
-                    }
-
-                    if (!hasAccess)
-                    {
-                        return RedirectToPage("/Shared/AccessDenied");
-                    }
-
                     // Load documents for the specific entity
                     Documents = DBClass.GetDocumentsByEntityId(entityType, entityId);
                     _logger.LogInformation($"Loaded {Documents.Count} documents for {entityType} {entityId}");
@@ -117,7 +93,7 @@ namespace JMUcare.Pages.Documents
             }
             else
             {
-                // No specific entity provided, load all accessible documents
+                // No specific entity provided, load all documents (admin only)
                 LoadDocuments();
             }
 
@@ -142,20 +118,10 @@ namespace JMUcare.Pages.Documents
             }
         }
 
-
         private void LoadDocuments()
         {
-            // Get all documents
-            if (IsAdmin)
-            {
-                // Admins can see all documents
-                Documents = DBClass.GetAllDocuments();
-            }
-            else
-            {
-                // Regular users can only see documents they have access to
-                Documents = DBClass.GetAccessibleDocumentsForUser(CurrentUserID);
-            }
+            // Since only admins can access this page, just load all documents
+            Documents = DBClass.GetAllDocuments();
 
             // Load user names for display
             var userIds = Documents.Select(d => d.UploadedBy).Distinct().ToList();
@@ -176,35 +142,8 @@ namespace JMUcare.Pages.Documents
 
         public bool CanUserEditDocument(DocumentModel document)
         {
-            if (IsAdmin || document.UploadedBy == CurrentUserID)
-            {
-                return true;
-            }
-
-            // Check entity-specific permissions
-            if (document.GrantID.HasValue)
-            {
-                string access = DBClass.GetUserAccessLevelForGrant(CurrentUserID, document.GrantID.Value);
-                return access == "Edit";
-            }
-            else if (document.PhaseID.HasValue)
-            {
-                string access = DBClass.GetUserAccessLevelForPhase(CurrentUserID, document.PhaseID.Value);
-                return access == "Edit";
-            }
-            else if (document.ProjectID.HasValue)
-            {
-                string access = DBClass.GetUserAccessLevelForProject(CurrentUserID, document.ProjectID.Value);
-                return access == "Edit";
-            }
-            else if (document.TaskID.HasValue)
-            {
-                int projectId = DBClass.GetProjectIdForTask(document.TaskID.Value);
-                string access = DBClass.GetUserAccessLevelForProject(CurrentUserID, projectId);
-                return access == "Edit";
-            }
-
-            return false;
+            // Only admins can edit documents
+            return IsAdmin;
         }
 
         public async Task<IActionResult> OnPostUploadDocumentAsync(IFormFile file)
@@ -212,6 +151,12 @@ namespace JMUcare.Pages.Documents
             if (CurrentUserID == 0)
             {
                 return RedirectToPage("/HashedLogin/HashedLogin");
+            }
+
+            // Check if user is admin, redirect if not
+            if (!IsAdmin)
+            {
+                return RedirectToPage("/Shared/AccessDenied");
             }
 
             // Log the incoming values for debugging
@@ -238,13 +183,6 @@ namespace JMUcare.Pages.Documents
             {
                 TempData["ErrorMessage"] = "File type is not supported";
                 return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
-            }
-
-            // Check access rights
-            var (_, hasEditAccess) = CheckUserAccess(EntityType, EntityId);
-            if (!hasEditAccess)
-            {
-                return RedirectToPage("/Shared/AccessDenied");
             }
 
             try
@@ -299,10 +237,6 @@ namespace JMUcare.Pages.Documents
                 int documentId = DBClass.InsertDocument(document);
                 _logger.LogInformation($"Document saved with ID: {documentId}");
 
-                // Refresh documents list from database to verify it was saved correctly
-                var savedDocs = DBClass.GetDocumentsByEntityId(EntityType, EntityId);
-                _logger.LogInformation($"After upload, found {savedDocs.Count} documents for {EntityType} {EntityId}");
-
                 TempData["SuccessMessage"] = "File uploaded successfully";
                 return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
             }
@@ -314,12 +248,17 @@ namespace JMUcare.Pages.Documents
             }
         }
 
-
         public async Task<IActionResult> OnGetDeleteDocumentAsync(int documentId)
         {
             if (CurrentUserID == 0)
             {
                 return RedirectToPage("/HashedLogin/HashedLogin");
+            }
+
+            // Check if user is admin, redirect if not
+            if (!IsAdmin)
+            {
+                return RedirectToPage("/Shared/AccessDenied");
             }
 
             var document = DBClass.GetDocumentById(documentId);
@@ -328,12 +267,6 @@ namespace JMUcare.Pages.Documents
             {
                 TempData["ErrorMessage"] = "Document not found";
                 return RedirectToPage();
-            }
-
-            // Check if user has rights to delete this document
-            if (!CanUserEditDocument(document))
-            {
-                return RedirectToPage("/Shared/AccessDenied");
             }
 
             try

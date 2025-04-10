@@ -282,7 +282,7 @@
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="addDropdown">
                                 <li><a class="dropdown-item" asp-page="/Phases/CreatePhase" asp-route-GrantId="@Model.Id">Add Phase</a></li>
-                                <li><a class="dropdown-item" asp-page="/Sections/CreateProject" asp-route-GrantId="@Model.Id">Add Project</a></li>
+                                <li><a class="dropdown-item" asp-page="/Sections/CreateProject" asp-route-GrantId="@Model.Id">Add Task</a></li>
                             </ul>
                         </div>
                         <button id="toggleDragBtn" class="btn jmu-btn-outline" onclick="toggleDragMode()">
@@ -348,7 +348,7 @@
 
                                 <div class="phase-content">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="mb-0 jmu-subtitle">Projects</h6>
+                                        <h6 class="mb-0 jmu-subtitle">Tasks</h6>
                                         @{
                                             // Check if user is a phase editor for this specific phase
                                             string phaseAccessLevel = DBClass.GetUserAccessLevelForPhase(Model.CurrentUserID, phase.PhaseID);
@@ -388,7 +388,7 @@
                                     }
                                     else
                                     {
-                                        <p class="small text-muted">No projects are associated with this phase.</p>
+                                        <p class="small text-muted">No tasks are associated with this phase.</p>
                                     }
                                 </div>
                             </div>
@@ -518,7 +518,7 @@
         }
 
         function confirmArchive() {
-            return confirm("Are you sure you want to archive this grant? This will also archive all associated phases, projects, and tasks.");
+            return confirm("Are you sure you want to archive this grant? This will also archive all associated phases, and tasks.");
         }
 
         function resetDragMode() {

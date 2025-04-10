@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddSession();
+builder.Services.AddHttpContextAccessor(); // Add this line
 
 // Register the BlobStorageService
 builder.Services.AddScoped<BlobStorageService>();
