@@ -21,6 +21,7 @@ namespace JMUcare.Pages.Projects
         public bool CanEditProject { get; set; }
         public bool CanAddTask { get; set; }
         public List<DbUserModel> Users { get; set; }
+        public bool IsFolder => Project?.ProjectType?.ToLower() == "folder";
 
         public int CurrentUserID => HttpContext.Session.GetInt32("CurrentUserID") ?? 0;
 
@@ -77,8 +78,6 @@ namespace JMUcare.Pages.Projects
                 return Page();
             }
         }
-
-
 
 
 

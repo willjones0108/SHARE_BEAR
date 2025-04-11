@@ -1095,7 +1095,8 @@ public const int SaltByteSize = 24; // standard, secure size of salts
             TrackingStatus,
             IsArchived,
             Project_Description,
-            DueDate
+            DueDate,
+            StartDate
         )
         OUTPUT INSERTED.ProjectID
         VALUES (
@@ -1106,27 +1107,39 @@ public const int SaltByteSize = 24; // standard, secure size of salts
             @TrackingStatus,
             @IsArchived,
             @Project_Description,
-            @DueDate
+            @DueDate,
+            @StartDate
         )";
 
                 using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
                 {
-                    cmd.Parameters.AddWithValue("@Title", project.Title);
+                    cmd.Parameters.AddWithValue("@Title", project.Title ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@CreatedBy", project.CreatedBy);
                     cmd.Parameters.AddWithValue("@GrantID", project.GrantID ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@ProjectType", project.ProjectType);
-                    cmd.Parameters.AddWithValue("@TrackingStatus", project.TrackingStatus ?? "");
+                    cmd.Parameters.AddWithValue("@ProjectType", project.ProjectType ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@TrackingStatus", project.TrackingStatus ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@IsArchived", project.IsArchived);
-                    cmd.Parameters.AddWithValue("@Project_Description", project.Project_Description ?? "");
+                    cmd.Parameters.AddWithValue("@Project_Description", project.Project_Description ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@DueDate", project.DueDate);
-             
+                    cmd.Parameters.AddWithValue("@StartDate", project.StartDate);
+
                     connection.Open();
-                    newProjectId = (int)cmd.ExecuteScalar();
+
+                    try
+                    {
+                        newProjectId = (int)cmd.ExecuteScalar();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error in InsertProject: {ex.Message}");
+                        throw;
+                    }
                 }
             }
 
             return newProjectId;
         }
+
 
         public static void InsertPhaseProject(int phaseId, int projectId)
         {
@@ -3388,7 +3401,27 @@ public static List<UserRoleModel> GetUserRoles()
                 }
             }
         }
+        public static bool IsProjectOfType(int projectId, string projectType)
+        {
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+            SELECT CASE WHEN ProjectType = @ProjectType THEN 1 ELSE 0 END
+            FROM Project
+            WHERE ProjectID = @ProjectID";
 
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@ProjectID", projectId);
+                    cmd.Parameters.AddWithValue("@ProjectType", projectType);
+
+                    connection.Open();
+                    var result = cmd.ExecuteScalar();
+
+                    return result != null && (int)result == 1;
+                }
+            }
+        }
 
 
     }

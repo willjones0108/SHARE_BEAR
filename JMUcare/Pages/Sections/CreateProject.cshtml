@@ -27,12 +27,13 @@
                         <div class="col-md-6 mb-3">
                             <div class="card h-100 grant-info-card">
                                 <div class="card-body">
-                                    <h5 class="card-title">Task Type</h5>
-                                    <input asp-for="Project.ProjectType" class="form-control" />
-                                    <span asp-validation-for="Project.ProjectType" class="text-danger"></span>
+                                    <h5 class="card-title">Project Type</h5>
+                                    <input type="text" class="form-control bg-light" value="Task" readonly disabled />
+                                    <input type="hidden" asp-for="Project.ProjectType" value="Task" />
                                 </div>
                             </div>
                         </div>
+
 
                         <div class="col-md-6 mb-3">
                             <div class="card h-100 grant-info-card">
@@ -148,7 +149,7 @@
                                         </a>
                                     }
                                     <button type="submit" class="btn jmu-btn-primary">
-                                        <i class="bi bi-plus-circle"></i> Create Project
+                                        <i class="bi bi-plus-circle"></i> Create Task
                                     </button>
                                 </div>
                             </div>

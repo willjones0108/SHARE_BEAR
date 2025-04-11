@@ -1,8 +1,7 @@
 @page "{id:int}"
-@using JMUcare.Pages.DBclass
 @model JMUcare.Pages.Projects.ViewModel
 @{
-    ViewData["Title"] = "Project Details";
+    ViewData["Title"] = Model.IsFolder ? "Folder Details" : "Task Details";
 }
 
 <div class="container mt-4">
@@ -27,231 +26,190 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a asp-page="/Grants/Index" class="jmu-link">Grants</a></li>
-                    @if (Model != null && Model.GrantId.HasValue && !string.IsNullOrEmpty(Model.GrantName))
+                    @if (Model.GrantId.HasValue && !string.IsNullOrEmpty(Model.GrantName))
                     {
                         <li class="breadcrumb-item"><a asp-page="/Grants/View" asp-route-id="@Model.GrantId" class="jmu-link">@Model.GrantName</a></li>
                     }
-                    @if (Model != null && Model.PhaseId > 0 && !string.IsNullOrEmpty(Model.PhaseName))
+                    @if (Model.PhaseId > 0 && !string.IsNullOrEmpty(Model.PhaseName))
                     {
                         <li class="breadcrumb-item"><a asp-page="/Phases/View" asp-route-id="@Model.PhaseId" class="jmu-link">@Model.PhaseName</a></li>
                     }
-                    @if (Model != null && Model.Project != null)
-                    {
-                        <li class="breadcrumb-item active" aria-current="page">@Model.Project.Title</li>
-                    }
+                    <li class="breadcrumb-item active" aria-current="page">@Model.Project.Title</li>
                 </ol>
             </nav>
         </div>
     </div>
 
-    @if (Model != null && Model.Project != null)
-    {
-        <!-- Project Details Section -->
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card shadow">
-                    <div class="card-header jmu-header d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">Task Details</h4>
-                        @if (Model.CanEditProject)
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow @(Model.IsFolder ? "folder-card" : "")">
+                <div class="card-header jmu-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        @if (Model.IsFolder)
                         {
-                            <div>
-                                <a asp-page="/Projects/EditProject" asp-route-id="@Model.Id" class="btn jmu-btn-light btn-sm">
-                                    <i class="bi bi-pencil-square"></i> Edit Task
-                                </a>
-                                <form method="post" asp-page-handler="ArchiveProject" class="d-inline">
-                                    <input type="hidden" name="projectId" value="@Model.Project.ProjectID" />
-                                    <button type="submit" class="btn jmu-btn-danger btn-sm">
-                                        <i class="bi bi-archive"></i> Archive Task
-                                    </button>
-                                </form>
-                            </div>
+                            <i class="bi bi-folder-fill me-2"></i>
+                            <span>Folder Details</span>
                         }
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 project-detail-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Task Title</h5>
-                                        <p class="card-text fs-6">@Model.Project.Title</p>
-                                    </div>
-                                </div>
+                        else
+                        {
+                            <i class="bi bi-check2-square me-2"></i>
+                            <span>Task Details</span>
+                        }
+                    </h4>
+                    @if (Model.CanEditProject)
+                    {
+                        <div>
+                            <a asp-page="/Projects/EditProject" asp-route-id="@Model.Id" class="btn jmu-btn-light btn-sm">
+                                <i class="bi bi-pencil-square"></i> @(Model.IsFolder ? "Edit Folder" : "Edit Task")
+                            </a>
+                            <form method="post" asp-page-handler="ArchiveProject" class="d-inline">
+                                <input type="hidden" name="projectId" value="@Model.Project.ProjectID" />
+                                <button type="submit" class="btn jmu-btn-danger btn-sm">
+                                    <i class="bi bi-archive"></i> @(Model.IsFolder ? "Archive Folder" : "Archive Task")
+                                </button>
+                            </form>
+                        </div>
+
+                    }
+                </div>
+
+                <div class="card-body">
+                    @if (Model.IsFolder)
+                    {
+                        <h5 class="mb-3 jmu-subtitle"><i class="bi bi-folder2-open me-2"></i>@Model.Project.Title</h5>
+                        <div class="card folder-description-card mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title">Description</h6>
+                                <p class="card-text">@Model.Project.Project_Description</p>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 project-detail-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Task Type</h5>
-                                        <p class="card-text fs-6">@Model.Project.ProjectType</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100 project-detail-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Phase</h5>
-                                        <p class="card-text fs-6">
-                                            @if (Model.PhaseId > 0)
-                                            {
-                                                <a asp-page="/Phases/View" asp-route-id="@Model.PhaseId" class="jmu-link">@Model.PhaseName</a>
-                                            }
-                                            else
-                                            {
-                                                <span>None</span>
-                                            }
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100 project-detail-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Start Date</h5>
-                                        <p class="card-text fs-6">
-                                            @Model.Project.StartDate.ToShortDateString()
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100 project-detail-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Due Date</h5>
-                                        <p class="card-text fs-6">
-                                            @Model.Project.DueDate.ToShortDateString()
-                                            @{
-                                                TimeSpan daysLeft = Model.Project.DueDate - DateTime.Today;
-                                                if (daysLeft.TotalDays > 0)
-                                                {
-                                                    <span class="ms-2 badge jmu-badge-info">@daysLeft.Days days left</span>
-                                                }
-                                                else if (daysLeft.TotalDays == 0)
-                                                {
-                                                    <span class="ms-2 badge jmu-badge-warning">Due today</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="ms-2 badge jmu-badge-danger">Overdue by @Math.Abs(daysLeft.Days) days</span>
-                                                }
-                                            }
-                                        </p>
-                                    </div>
-                                </div>
+                        </div>
+
+                        <div class="phase-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0 jmu-subtitle">Folder Contents</h6>
+                                @if (Model.CanAddTask)
+                                {
+                                    <a asp-page="/Projects/AddTaskPage" asp-route-projectId="@Model.Id" class="btn btn-sm jmu-btn-primary">
+                                        <i class="bi bi-plus-circle"></i> Add Item
+                                    </a>
+                                }
                             </div>
 
-                            <div class="col-md-4 mb-3">
-                                <div class="card h-100 project-detail-card">
+                            @if (Model.Tasks?.Any() == true)
+                            {
+                                <div class="folder-item-list">
+                                    @foreach (var task in Model.Tasks)
+                                    {
+                                        <div class="card mb-2 folder-item-card">
+                                            <div class="card-body py-2">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <h6 class="mb-1">@task.TaskContent</h6>
+                                                        <small class="text-muted">Due: @task.DueDate.ToShortDateString()</small>
+                                                    </div>
+                                                    @if (Model.CanEditProject)
+                                                    {
+                                                        <div>
+                                                            <a asp-page="/Projects/EditTask" asp-route-id="@task.TaskID" class="btn btn-sm jmu-btn-outline">
+                                                                <i class="bi bi-pencil-square"></i>
+                                                            </a>
+                                                            <form method="post" asp-page-handler="ArchiveTask" class="d-inline">
+                                                                <input type="hidden" name="taskId" value="@task.TaskID" />
+                                                                <button type="submit" class="btn btn-sm jmu-btn-danger">
+                                                                    <i class="bi bi-archive"></i>
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">This folder is empty.</p>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="card project-detail-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Task Title</h5>
+                                        <p class="card-text">@Model.Project.Title</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card project-detail-card">
                                     <div class="card-body">
                                         <h5 class="card-title">Tracking Status</h5>
-                                        <p class="card-text fs-6">
-                                            <span class="badge jmu-badge-@(Model.Project.TrackingStatus.ToLower() == "completed" ? "success" :
-                                                Model.Project.TrackingStatus.ToLower() == "in progress" ? "primary" :
-                                                Model.Project.TrackingStatus.ToLower() == "pending" ? "warning" : "secondary")">
-                                                @Model.Project.TrackingStatus
-                                            </span>
-                                        </p>
+                                        <span class="badge jmu-badge-primary">@Model.Project.TrackingStatus</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card project-detail-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Start Date</h5>
+                                        <p class="card-text">@Model.Project.StartDate.ToShortDateString()</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card project-detail-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Due Date</h5>
+                                        <p class="card-text">@Model.Project.DueDate.ToShortDateString()</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-12 mb-3">
-                                <div class="card h-100 project-detail-card">
+                                <div class="card project-detail-card">
                                     <div class="card-body">
                                         <h5 class="card-title">Description</h5>
-                                        <p class="card-text fs-6">@Model.Project.Project_Description</p>
+                                        <p class="card-text">@Model.Project.Project_Description</p>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Documents Section -->
-                            <div class="row mb-4">
-                                <div class="col-md-12">
-                                    @await Html.PartialAsync("_DocumentUploadPartial", new
-                                        {
-                                            EntityType = "project",
-                                            EntityId = Model.Project.ProjectID
-                                        })
-                                </div>
-                            </div>
-
                         </div>
-                    </div>
-                    <div class="card-footer">
-                        <a asp-page="/Grants/View" asp-route-id="@Model.GrantId" class="btn jmu-btn-outline">Back</a>
-                    </div>
+                    }
+                </div>
+
+                <div class="card-footer">
+                    <a asp-page="/Grants/View" asp-route-id="@Model.GrantId" class="btn jmu-btn-outline">Back</a>
                 </div>
             </div>
         </div>
-    }
-    else
-    {
-        <div class="alert jmu-alert">
-            <p class="mb-0">Task information could not be loaded. Please try again later.</p>
-        </div>
-    }
+    </div>
 </div>
 
 @section Scripts {
     <style>
-        /* JMU Custom Variables */
         :root {
             --jmu-purple: #450084;
             --jmu-gold: #CBB677;
-            --jmu-gray: #8D8D8D;
-            --jmu-light-gray: #f2f2f2;
-            --jmu-dark-purple: #370068;
-            --jmu-light-gold: #dfd4a9;
+            --folder-color: #f8f4e5;
         }
 
-        /* JMU Styling Elements */
         .jmu-header {
             background-color: var(--jmu-purple);
             color: white;
             border-bottom: 3px solid var(--jmu-gold);
         }
 
-        .jmu-header-secondary {
-            background-color: var(--jmu-dark-purple);
-            color: white;
-            border-bottom: 2px solid var(--jmu-gold);
-        }
-
-        .jmu-title {
-            color: var(--jmu-purple);
-            font-weight: 600;
-        }
-
         .jmu-subtitle {
-            color: var(--jmu-dark-purple);
+            color: var(--jmu-purple);
             font-weight: 500;
-        }
-
-        /* Button styles */
-        .jmu-btn-primary {
-            background-color: var(--jmu-purple);
-            color: white;
-            border-color: var(--jmu-purple);
-        }
-
-            .jmu-btn-primary:hover {
-                background-color: var(--jmu-dark-purple);
-                color: white;
-                border-color: var(--jmu-dark-purple);
-            }
-
-        .jmu-btn-success {
-            background-color: #28a745;
-            color: white;
-            border-color: #28a745;
-        }
-
-        .jmu-btn-danger {
-            background-color: #dc3545;
-            color: white;
-            border-color: #dc3545;
         }
 
         .jmu-btn-outline {
             color: var(--jmu-purple);
             border-color: var(--jmu-purple);
-            background-color: white;
         }
 
             .jmu-btn-outline:hover {
@@ -259,81 +217,32 @@
                 color: white;
             }
 
-        .jmu-btn-light {
-            color: var(--jmu-purple);
-            background-color: white;
-            border-color: white;
-        }
-
-        /* Badge styles */
-        .jmu-badge-primary {
+        .jmu-btn-primary {
             background-color: var(--jmu-purple);
+            color: white;
         }
 
-        .jmu-badge-success {
-            background-color: #28a745;
-        }
-
-        .jmu-badge-warning {
-            background-color: #ffc107;
-            color: #212529;
-        }
-
-        .jmu-badge-secondary {
-            background-color: var(--jmu-gray);
-        }
-
-        .jmu-badge-info {
-            background-color: #17a2b8;
-        }
-
-        .jmu-badge-danger {
+        .jmu-btn-danger {
             background-color: #dc3545;
+            color: white;
         }
 
-        .jmu-alert {
-            background-color: var(--jmu-light-gold);
-            border-left: 5px solid var(--jmu-gold);
-            color: #333;
+        .folder-card {
+            background-color: var(--folder-color);
         }
 
-        /* Link styling */
-        .jmu-link {
-            color: var(--jmu-purple);
-            text-decoration: none;
+        .folder-description-card {
+            border-left: 3px solid var(--jmu-gold);
         }
 
-            .jmu-link:hover {
-                color: var(--jmu-dark-purple);
-                text-decoration: underline;
-            }
-
-        /* Project Detail Cards */
         .project-detail-card {
             border-left: 3px solid var(--jmu-gold);
-            transition: all 0.2s ease;
         }
 
-            .project-detail-card:hover {
-                box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
-            }
-
-            .project-detail-card .card-title {
-                color: var(--jmu-purple);
-                font-weight: 600;
-                font-size: 1rem;
-                border-bottom: 1px solid #eee;
-                padding-bottom: 8px;
-                margin-bottom: 10px;
-            }
-
-        /* Breadcrumbs styling */
-        .breadcrumb-item + .breadcrumb-item::before {
-            color: var(--jmu-gold);
-        }
-
-        .breadcrumb-item.active {
-            color: var(--jmu-gray);
+        .card-title {
+            font-weight: 600;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
         }
     </style>
 }

@@ -1,0 +1,209 @@
+﻿@page
+@model JMUcare.Pages.Projects.CreateFolderModel
+@{
+    ViewData["Title"] = "Create Folder";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Form Container -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header jmu-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Create New Folder</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="row g-3">
+                        <input type="hidden" asp-for="Folder.ProjectType" value="folder" />
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Folder Name</h5>
+                                    <input asp-for="Folder.Title" class="form-control" required />
+                                    <span asp-validation-for="Folder.Title" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Project Type</h5>
+                                    <input type="text" class="form-control bg-light" value="Folder" readonly disabled />
+                                    <input type="hidden" asp-for="Folder.ProjectType" value="Folder" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" asp-for="Folder.TrackingStatus" value="N/A" />
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Associated Phase</h5>
+                                    @if (Model.PreSelectedPhaseId > 0)
+                                    {
+                                        <input type="hidden" asp-for="Folder.PhaseID" value="@Model.PreSelectedPhaseId" />
+                                        <select disabled class="form-select bg-light">
+                                            @foreach (var phase in Model.PhaseList)
+                                            {
+                                                if (int.Parse(phase.Value) == Model.PreSelectedPhaseId)
+                                                {
+                                                    <option value="@phase.Value" selected>@phase.Text</option>
+                                                }
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <select asp-for="Folder.PhaseID" class="form-select" asp-items="Model.PhaseList">
+                                            <option value="">-- Select Phase --</option>
+                                        </select>
+                                    }
+                                    <span asp-validation-for="Folder.PhaseID" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <input type="hidden" asp-for="Folder.StartDate" value="@Model.Folder.StartDate.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" asp-for="Folder.DueDate" value="@Model.Folder.DueDate.ToString("yyyy-MM-dd")" />
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Associated Grant</h5>
+                                    @if (Model.GrantId > 0)
+                                    {
+                                        <input type="hidden" asp-for="Folder.GrantID" value="@Model.GrantId" />
+                                        <select disabled class="form-select bg-light">
+                                            @foreach (var grant in Model.Grants)
+                                            {
+                                                if (grant.GrantID == Model.GrantId)
+                                                {
+                                                    <option value="@grant.GrantID" selected>@grant.GrantTitle</option>
+                                                }
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <select asp-for="Folder.GrantID" class="form-select" asp-items="@(new SelectList(Model.Grants, "GrantID", "GrantTitle"))">
+                                            <option value="">-- None --</option>
+                                        </select>
+                                    }
+                                    <span asp-validation-for="Folder.GrantID" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" asp-for="Folder.IsArchived" value="false" />
+
+                        <div class="col-12 mb-3">
+                            <div class="card h-100 grant-info-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Folder Description</h5>
+                                    <textarea asp-for="Folder.Project_Description" class="form-control" rows="3"></textarea>
+                                    <span asp-validation-for="Folder.Project_Description" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="card-footer mt-3 p-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="javascript:history.back()" class="btn jmu-btn-outline">
+                                        <i class="bi bi-arrow-left"></i> Back
+                                    </a>
+                                    <button type="submit" class="btn jmu-btn-primary">
+                                        <i class="bi bi-plus-circle"></i> Create Folder
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <style>
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
+        }
+
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-header-secondary {
+            background-color: var(--jmu-dark-purple);
+            color: white;
+            border-bottom: 2px solid var(--jmu-gold);
+        }
+
+        .jmu-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+        }
+
+        .jmu-subtitle {
+            color: var(--jmu-dark-purple);
+            font-weight: 500;
+        }
+
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+
+        .jmu-alert {
+            background-color: var(--jmu-light-gold);
+            border-left: 5px solid var(--jmu-gold);
+            color: #333;
+        }
+
+        .grant-info-card {
+            border-left: 3px solid var(--jmu-gold);
+        }
+
+            .grant-info-card .card-title {
+                color: var(--jmu-purple);
+                font-weight: 600;
+                font-size: 1rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
+                margin-bottom: 10px;
+            }
+    </style>
+}

@@ -63,8 +63,16 @@
                         <div class="col-md-4 mb-3">
                             <div class="card h-100 grant-info-card">
                                 <div class="card-body">
-                                    <h5 class="card-title">Grant Title</h5>
-                                    <p class="card-text fs-6">@Model.Grant.GrantTitle</p>
+                                    @if (Model.Grant.Category?.ToLower() == "project") // Adjust condition based on your logic
+                                    {
+                                        <h5 class="card-title">Project Title</h5>
+                                        <p class="card-text fs-6">@Model.Grant.GrantTitle</p>
+                                    }
+                                    else
+                                    {
+                                        <h5 class="card-title">Grant Title</h5>
+                                        <p class="card-text fs-6">@Model.Grant.GrantTitle</p>
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -95,12 +103,24 @@
                         <div class="col-md-4 mb-3">
                             <div class="card h-100 grant-info-card">
                                 <div class="card-body">
-                                    <h5 class="card-title">Grant Status</h5>
-                                    <p class="card-text fs-6">
-                                        <span class="badge jmu-badge-@(Model.Grant.Status.ToLower() == "active" ? "success" : "primary")">
-                                            @Model.Grant.Status
-                                        </span>
-                                    </p>
+                                    @if (Model.Grant.Category?.ToLower() == "project") // Adjust condition based on your logic
+                                    {
+                                        <h5 class="card-title">Project Status</h5>
+                                        <p class="card-text fs-6">
+                                            <span class="badge jmu-badge-@(Model.Grant.Status.ToLower() == "active" ? "success" : "primary")">
+                                                @Model.Grant.Status
+                                            </span>
+                                        </p>
+                                    }
+                                    else
+                                    {
+                                        <h5 class="card-title">Grant Status</h5>
+                                        <p class="card-text fs-6">
+                                            <span class="badge jmu-badge-@(Model.Grant.Status.ToLower() == "active" ? "success" : "primary")">
+                                                @Model.Grant.Status
+                                            </span>
+                                        </p>
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -283,7 +303,12 @@
                             <ul class="dropdown-menu" aria-labelledby="addDropdown">
                                 <li><a class="dropdown-item" asp-page="/Phases/CreatePhase" asp-route-GrantId="@Model.Id">Add Phase</a></li>
                                 <li><a class="dropdown-item" asp-page="/Sections/CreateProject" asp-route-GrantId="@Model.Id">Add Task</a></li>
+                                <li>
+                                    <a class="dropdown-item" asp-page="/Sections/CreateFolder" asp-route-PhaseId="@Model.Id">
+                                    Add Folder
+                                </a><li>
                             </ul>
+
                         </div>
                         <button id="toggleDragBtn" class="btn jmu-btn-outline" onclick="toggleDragMode()">
                             <i class="bi bi-arrows-move"></i> Reorder Phases
@@ -306,13 +331,15 @@
         <!-- Hidden fields for phase IDs will be added by JavaScript -->
     </form>
 
-    <!-- Phases content - now outside of the reorderForm -->
     <div class="row">
         <div id="phaseContainer" class="d-flex flex-nowrap overflow-auto">
             @if (Model.Phases.Any())
             {
                 @foreach (var phase in Model.Phases.Where(p => !p.IsArchived))
                 {
+                    var folders = Model.PhaseProjects[phase.PhaseID].Where(p => DBClass.IsProjectOfType(p.ProjectID, "folder") && !p.IsArchived).ToList();
+                    var tasks = Model.PhaseProjects[phase.PhaseID].Where(p => DBClass.IsProjectOfType(p.ProjectID, "task") && !p.IsArchived).ToList();
+
                     <div class="col-md-4 phase-item mb-3 p-2" data-phase-id="@phase.PhaseID">
                         <div class="card shadow h-100">
                             <div class="card-header jmu-header-secondary">
@@ -345,57 +372,94 @@
                                 <div class="mb-3">
                                     <small class="text-muted">@phase.Description</small>
                                 </div>
-
                                 <div class="phase-content">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="mb-0 jmu-subtitle">Tasks</h6>
+                                        <h6 class="mb-0 jmu-subtitle">Tasks & Folders</h6>
                                         @{
-                                            // Check if user is a phase editor for this specific phase
                                             string phaseAccessLevel = DBClass.GetUserAccessLevelForPhase(Model.CurrentUserID, phase.PhaseID);
                                             bool canAddProjectToThisPhase = Model.CanAddProject || phaseAccessLevel == "Edit";
-
                                             if (canAddProjectToThisPhase)
                                             {
-                                                <a asp-page="/Sections/CreateProject" asp-route-PhaseId="@phase.PhaseID" class="btn btn-sm jmu-btn-primary">
-                                                    <i class="bi bi-plus-circle"></i> Add
-                                                </a>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm jmu-btn-primary dropdown-toggle" type="button"
+                                                            id="addPhaseItemDropdown_@phase.PhaseID" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="bi bi-plus-circle"></i> Add
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="addPhaseItemDropdown_@phase.PhaseID">
+                                                        <li>
+                                                            <a class="dropdown-item" asp-page="/Sections/CreateProject" asp-route-PhaseId="@phase.PhaseID">
+                                                                <i class="bi bi-check-square me-2"></i>Task
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" asp-page="/Sections/CreateFolder" asp-route-PhaseId="@phase.PhaseID">
+                                                                <i class="bi bi-folder me-2"></i>Folder
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
                                             }
                                         }
                                     </div>
 
-
-                                    @if (Model.PhaseProjects[phase.PhaseID].Any(p => !p.IsArchived))
+                                    @if (!tasks.Any() && !folders.Any())
                                     {
-                                        <div class="project-list">
-                                            @foreach (var project in Model.PhaseProjects[phase.PhaseID].Where(p => !p.IsArchived))
+                                        <p class="small text-muted">No tasks or folders are associated with this phase.</p>
+                                    }
+
+                                    @if (folders.Any())
+                                    {
+                                        <details class="mb-2">
+                                            <summary class="fw-semibold text-dark">Folders (@folders.Count)</summary>
+                                            @foreach (var folder in folders)
                                             {
                                                 <div class="card mb-2 project-card">
                                                     <div class="card-header py-2 bg-light">
                                                         <div class="d-flex justify-content-between align-items-center">
                                                             <h6 class="mb-0">
-                                                                <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="text-decoration-none project-title">
-                                                                    @project.Title
+                                                                <a asp-page="/Projects/View" asp-route-id="@folder.ProjectID" class="text-decoration-none project-title">
+                                                                    @folder.Title
                                                                 </a>
                                                             </h6>
                                                         </div>
                                                     </div>
                                                     <div class="card-body py-2">
-                                                        <p class="small mb-2">@project.Project_Description</p>
+                                                        <p class="small mb-2">@folder.Project_Description</p>
                                                     </div>
                                                 </div>
                                             }
-                                        </div>
+                                        </details>
                                     }
-                                    else
+
+                                    @if (tasks.Any())
                                     {
-                                        <p class="small text-muted">No tasks are associated with this phase.</p>
+                                        <details>
+                                            <summary class="fw-semibold text-dark">Tasks (@tasks.Count)</summary>
+                                            @foreach (var task in tasks)
+                                            {
+                                                <div class="card mb-2 project-card">
+                                                    <div class="card-header py-2 bg-light">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <h6 class="mb-0">
+                                                                <a asp-page="/Projects/View" asp-route-id="@task.ProjectID" class="text-decoration-none project-title">
+                                                                    @task.Title
+                                                                </a>
+                                                            </h6>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body py-2">
+                                                        <p class="small mb-2">@task.Project_Description</p>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </details>
                                     }
                                 </div>
                             </div>
                             <div class="card-footer bg-light">
                                 <span class="badge jmu-badge-@(phase.Status == "Completed" ? "success" :
-                                                  phase.Status == "In Progress" ? "primary" :
-                                                  phase.Status == "Pending" ? "warning" : "secondary")">
+                                              phase.Status == "In Progress" ? "primary" :
+                                              phase.Status == "Pending" ? "warning" : "secondary")">
                                     @phase.Status
                                 </span>
                             </div>
@@ -405,6 +469,7 @@
             }
         </div>
     </div>
+
 
     @if (!Model.Phases.Any(p => !p.IsArchived))
     {

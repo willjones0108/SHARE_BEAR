@@ -67,12 +67,12 @@ CREATE TABLE Project (
     CreatedBy INT,
     GrantID INT NULL,
     ProjectType VARCHAR(50), 
-    TrackingStatus NVARCHAR(MAX),
+    TrackingStatus NVARCHAR(MAX) NULL,
     IsArchived BIT,
-    Project_Description TEXT,
-    ProjectPosition INT,
-    DueDate DATE,
-    StartDate DATE,
+    Project_Description TEXT NULL,
+    ProjectPosition INT NULL,
+    DueDate DATE NULL,
+    StartDate DATE NULL,
     FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID)
    
 );
@@ -145,7 +145,7 @@ CREATE TABLE Project_Permission (
 CREATE TABLE Phase (
     PhaseID INT PRIMARY KEY IDENTITY(1,1),
     PhaseName VARCHAR(255),
-    Description TEXT,
+    Description TEXT NULL,
     Status VARCHAR(50),
     CreatedBy INT,
     PhaseLeadID INT,
