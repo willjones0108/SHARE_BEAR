@@ -151,54 +151,8 @@
                             </div>
                         </div>
 
-                        <div class="phase-content">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0 jmu-subtitle">Folder Contents</h6>
-                                @if (Model.CanAddTask)
-                                {
-                                    <a asp-page="/Projects/AddTaskPage" asp-route-projectId="@Model.Id" class="btn btn-sm jmu-btn-primary">
-                                        <i class="bi bi-plus-circle"></i> Add Item
-                                    </a>
-                                }
-                            </div>
 
-                            @if (Model.Tasks?.Any() == true)
-                            {
-                                <div class="folder-item-list">
-                                    @foreach (var task in Model.Tasks)
-                                    {
-                                        <div class="card mb-2 folder-item-card">
-                                            <div class="card-body py-2">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <h6 class="mb-1">@task.TaskContent</h6>
-                                                        <small class="text-muted">Due: @task.DueDate.ToShortDateString()</small>
-                                                    </div>
-                                                    @if (Model.CanEditProject)
-                                                    {
-                                                        <div>
-                                                            <a asp-page="/Projects/EditTask" asp-route-id="@task.TaskID" class="btn btn-sm jmu-btn-outline">
-                                                                <i class="bi bi-pencil-square"></i>
-                                                            </a>
-                                                            <form method="post" asp-page-handler="ArchiveTask" class="d-inline">
-                                                                <input type="hidden" name="taskId" value="@task.TaskID" />
-                                                                <button type="submit" class="btn btn-sm jmu-btn-danger">
-                                                                    <i class="bi bi-archive"></i>
-                                                                </button>
-                                                            </form>
-                                                        </div>
-                                                    }
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            }
-                            else
-                            {
-                                <p class="text-muted">This folder is empty.</p>
-                            }
-                        </div>
+                           
                     }
                     else
                     {

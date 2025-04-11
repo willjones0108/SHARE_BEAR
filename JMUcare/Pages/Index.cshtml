@@ -179,32 +179,82 @@
 @if (showAssignedProjects && assignedProjects.Any())
 {
     <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow">
+        <div class="col-md-6">
+            <div class="card shadow h-100">
                 <div class="card-header jmu-header">
                     <h4 class="mb-0">My Assigned Tasks</h4>
                 </div>
                 <div class="card-body">
-                    <div class="list-group">
-                        @foreach (var project in assignedProjects)
-                        {
-                            <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="list-group-item list-group-item-action">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">@project.Title</h5>
-                                    <span class="badge jmu-badge-@(project.TrackingStatus?.ToLower() == "completed" ? "success" : "primary")">@project.TrackingStatus</span>
-                                </div>
-                                <p class="mb-1">@(project.Project_Description?.Length > 100 ? project.Project_Description.Substring(0, 97) + "..." : project.Project_Description ?? "No description available")</p>
-                                <small class="text-muted">Due: @project.DueDate.ToShortDateString()</small>
-                            </a>
-                        }
-                    </div>
+                    @{
+                        var taskProjects = assignedProjects.Where(p => !DBClass.IsProjectOfType(p.ProjectID, "folder")).ToList();
+                    }
+                    
+                    @if (taskProjects.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var project in taskProjects)
+                            {
+                                <a asp-page="/Projects/View" asp-route-id="@project.ProjectID" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1"><i class="bi bi-check2-square me-2"></i>@project.Title</h5>
+                                        <span class="badge jmu-badge-@(project.TrackingStatus?.ToLower() == "completed" ? "success" : "primary")">@project.TrackingStatus</span>
+                                    </div>
+                                    <p class="mb-1">@(project.Project_Description?.Length > 100 ? project.Project_Description.Substring(0, 97) + "..." : project.Project_Description ?? "No description available")</p>
+                                    <small class="text-muted">Due: @project.DueDate.ToShortDateString()</small>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-check2-square" style="font-size: 2rem; color: #8D8D8D;"></i>
+                            <p class="mt-2">No assigned tasks</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow h-100">
+                <div class="card-header jmu-header">
+                    <h4 class="mb-0">My Folders</h4>
+                </div>
+                <div class="card-body">
+                    @{
+                        var folderProjects = assignedProjects.Where(p => DBClass.IsProjectOfType(p.ProjectID, "folder")).ToList();
+                    }
+                    
+                    @if (folderProjects.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var folder in folderProjects)
+                            {
+                                <a asp-page="/Projects/View" asp-route-id="@folder.ProjectID" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1"><i class="bi bi-folder-fill me-2"></i>@folder.Title</h5>
+                                        <span class="badge jmu-badge-@(folder.TrackingStatus?.ToLower() == "completed" ? "success" : "primary")">@folder.TrackingStatus</span>
+                                    </div>
+                                    <p class="mb-1">@(folder.Project_Description?.Length > 100 ? folder.Project_Description.Substring(0, 97) + "..." : folder.Project_Description ?? "No description available")</p>
+                                    <small class="text-muted">Due: @folder.DueDate.ToShortDateString()</small>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-folder" style="font-size: 2rem; color: #8D8D8D;"></i>
+                            <p class="mt-2">No folders assigned</p>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
 }
-else if (!userHasGrants && !assignedProjects.Any())
-{
+else if (!userHasGrants && !assignedProjects.Any()){
     <!-- Display when user has no grants and no assigned projects -->
     <div class="row mb-4">
         <div class="col-md-12">
