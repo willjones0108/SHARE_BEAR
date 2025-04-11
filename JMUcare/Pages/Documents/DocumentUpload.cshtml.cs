@@ -1,241 +1,269 @@
-//using System;
-//using System.Collections.Generic;
-//using System.Threading.Tasks;
-//using JMUcare.Pages.Dataclasses;
-//using JMUcare.Pages.DBclass;
-//using JMUcare.Services;
-//using JMUcare.Pages.Components;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.AspNetCore.Mvc.RazorPages;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using JMUcare.Pages.Dataclasses;
+using JMUcare.Pages.DBclass;
+using JMUcare.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 
-//namespace JMUcare.Pages.Documents
-//{
-//    public class DocumentUploadModel : PageModel
-//    {
-//        private readonly BlobStorageService _blobStorageService;
+namespace JMUcare.Pages.Documents
+{
+    public class DocumentUploadModel : PageModel
+    {
+        private readonly BlobStorageService _blobStorageService;
+        private readonly ILogger<DocumentUploadModel> _logger;
 
-//        [BindProperty]
-//        public string EntityType { get; set; }
+        [BindProperty]
+        public string EntityType { get; set; }
 
-//        [BindProperty]
-//        public int EntityId { get; set; }
+        [BindProperty]
+        public int EntityId { get; set; }
 
-//        public bool CanEdit { get; set; }
+        public bool CanEdit { get; set; }
 
-//        public List<DocumentModel> Documents { get; set; } = new List<DocumentModel>();
+        public List<DocumentModel> Documents { get; set; } = new List<DocumentModel>();
 
-//        public int CurrentUserID => HttpContext.Session.GetInt32("CurrentUserID") ?? 0;
+        public int CurrentUserID => HttpContext.Session.GetInt32("CurrentUserID") ?? 0;
 
-//        public DocumentUploadModel(BlobStorageService blobStorageService)
-//        {
-//            _blobStorageService = blobStorageService;
-//        }
+        public DocumentUploadModel(BlobStorageService blobStorageService, ILogger<DocumentUploadModel> logger)
+        {
+            _blobStorageService = blobStorageService;
+            _logger = logger;
+        }
 
-//        public IActionResult OnGet(string entityType, int entityId)
-//        {
-//            if (CurrentUserID == 0)
-//            {
-//                return RedirectToPage("/HashedLogin/HashedLogin");
-//            }
+        public IActionResult OnGet(string entityType, int entityId)
+        {
+            if (CurrentUserID == 0)
+            {
+                return RedirectToPage("/HashedLogin/HashedLogin");
+            }
 
-//            EntityType = entityType;
-//            EntityId = entityId;
+            if (string.IsNullOrEmpty(entityType))
+            {
+                TempData["ErrorMessage"] = "Entity type is required";
+                return RedirectToPage("/Index");
+            }
 
-//            // Check if the user has access to this entity
-//            bool hasAccess = false;
+            // Redirect tasks to their parent projects
+            if (entityType.ToLower() == "task")
+            {
+                int projectId = DBClass.GetProjectIdForTask(entityId);
+                if (projectId > 0)
+                {
+                    TempData["InfoMessage"] = "Documents should be uploaded to the project level.";
+                    return RedirectToPage(new { entityType = "project", entityId = projectId });
+                }
+            }
 
-//            switch (entityType.ToLower())
-//            {
-//                case "grant":
-//                    string grantAccess = DBClass.GetUserAccessLevelForGrant(CurrentUserID, entityId);
-//                    hasAccess = grantAccess != "None";
-//                    CanEdit = grantAccess == "Edit" || DBClass.IsUserAdmin(CurrentUserID);
-//                    break;
-//                case "phase":
-//                    string phaseAccess = DBClass.GetUserAccessLevelForPhase(CurrentUserID, entityId);
-//                    hasAccess = phaseAccess != "None";
-//                    CanEdit = phaseAccess == "Edit" || DBClass.IsUserAdmin(CurrentUserID);
-//                    break;
-//                case "project":
-//                    string projectAccess = DBClass.GetUserAccessLevelForProject(CurrentUserID, entityId);
-//                    hasAccess = projectAccess != "None";
-//                    CanEdit = projectAccess == "Edit" || DBClass.IsUserAdmin(CurrentUserID);
-//                    break;
-//                case "task":
-//                    int projectId = DBClass.GetProjectIdForTask(entityId);
-//                    string taskAccess = DBClass.GetUserAccessLevelForProject(CurrentUserID, projectId);
-//                    hasAccess = taskAccess != "None";
-//                    CanEdit = taskAccess == "Edit" || DBClass.IsUserAdmin(CurrentUserID);
-//                    break;
-//            }
+            EntityType = entityType;
+            EntityId = entityId;
 
-//            if (!hasAccess)
-//            {
-//                return RedirectToPage("/Shared/AccessDenied");
-//            }
+            // Check if the user has access to this entity
+            var (hasAccess, canEdit) = CheckUserAccess(entityType, entityId);
+            CanEdit = canEdit;
 
-//            // Load documents
-//            Documents = DBClass.GetDocumentsByEntityId(EntityType, EntityId);
+            if (!hasAccess)
+            {
+                return RedirectToPage("/Shared/AccessDenied");
+            }
 
-//            return Page();
-//        }
+            // Load documents
+            Documents = DBClass.GetDocumentsByEntityId(EntityType, EntityId);
 
-//        public async Task<IActionResult> OnPostUploadDocumentAsync(IFormFile file)
-//        {
-//            if (CurrentUserID == 0)
-//            {
-//                return RedirectToPage("/HashedLogin/HashedLogin");
-//            }
+            return Page();
+        }
 
-//            // Check if user has edit access
-//            bool hasEditAccess = false;
 
-//            switch (EntityType.ToLower())
-//            {
-//                case "grant":
-//                    hasEditAccess = DBClass.GetUserAccessLevelForGrant(CurrentUserID, EntityId) == "Edit";
-//                    break;
-//                case "phase":
-//                    hasEditAccess = DBClass.GetUserAccessLevelForPhase(CurrentUserID, EntityId) == "Edit";
-//                    break;
-//                case "project":
-//                    hasEditAccess = DBClass.GetUserAccessLevelForProject(CurrentUserID, EntityId) == "Edit";
-//                    break;
-//                case "task":
-//                    int projectId = DBClass.GetProjectIdForTask(EntityId);
-//                    hasEditAccess = DBClass.GetUserAccessLevelForProject(CurrentUserID, projectId) == "Edit";
-//                    break;
-//            }
+        public async Task<IActionResult> OnPostUploadDocumentAsync(IFormFile file)
+        {
+            if (CurrentUserID == 0)
+            {
+                return RedirectToPage("/HashedLogin/HashedLogin");
+            }
 
-//            if (!hasEditAccess && !DBClass.IsUserAdmin(CurrentUserID))
-//            {
-//                return RedirectToPage("/Shared/AccessDenied");
-//            }
+            // Enhanced validation
+            if (file == null || file.Length == 0)
+            {
+                TempData["ErrorMessage"] = "No file selected";
+                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
+            }
 
-//            if (file == null || file.Length == 0)
-//            {
-//                TempData["ErrorMessage"] = "No file selected";
-//                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
-//            }
+            // Validate file size (e.g., max 50MB)
+            if (file.Length > 52428800) // 50MB in bytes
+            {
+                TempData["ErrorMessage"] = "File size exceeds the 50MB limit";
+                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
+            }
 
-//            try
-//            {
-//                // Upload to blob storage
-//                string blobName = await _blobStorageService.UploadDocumentAsync(file, EntityType.ToLower() + "/" + EntityId);
+            // Validate file extension (optional)
+            var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".jpg", ".png" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                TempData["ErrorMessage"] = "File type is not supported";
+                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
+            }
 
-//                // Create document record
-//                var document = new DocumentModel
-//                {
-//                    FileName = file.FileName,
-//                    ContentType = file.ContentType,
-//                    FileSize = file.Length,
-//                    UploadedDate = DateTime.UtcNow,
-//                    UploadedBy = CurrentUserID,
-//                    BlobName = blobName,
-//                    BlobUrl = "", // Will be generated on demand
-//                    IsArchived = false
-//                };
+            // Check access rights
+            var (_, hasEditAccess) = CheckUserAccess(EntityType, EntityId);
+            if (!hasEditAccess)
+            {
+                return RedirectToPage("/Shared/AccessDenied");
+            }
 
-//                // Set the appropriate entity ID
-//                switch (EntityType.ToLower())
-//                {
-//                    case "grant":
-//                        document.GrantID = EntityId;
-//                        break;
-//                    case "phase":
-//                        document.PhaseID = EntityId;
-//                        break;
-//                    case "project":
-//                        document.ProjectID = EntityId;
-//                        break;
-//                    case "task":
-//                        document.TaskID = EntityId;
-//                        break;
-//                }
+            try
+            {
+                // Upload to blob storage
+                string blobName = await _blobStorageService.UploadDocumentAsync(file, EntityType.ToLower() + "/" + EntityId);
 
-//                // Save to database
-//                int documentId = DBClass.InsertDocument(document);
+                // Create document record
+                var document = new DocumentModel
+                {
+                    FileName = file.FileName,
+                    ContentType = file.ContentType,
+                    FileSize = file.Length,
+                    UploadedDate = DateTime.UtcNow,
+                    UploadedBy = CurrentUserID,
+                    BlobName = blobName,
+                    BlobUrl = await _blobStorageService.GenerateSasTokenAsync(blobName, TimeSpan.FromHours(1)),
+                    IsArchived = false
+                };
 
-//                TempData["SuccessMessage"] = "File uploaded successfully";
-//                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
-//            }
-//            catch (Exception ex)
-//            {
-//                TempData["ErrorMessage"] = $"Error uploading file: {ex.Message}";
-//                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
-//            }
-//        }
+                // Set the appropriate entity ID
+                switch (EntityType.ToLower())
+                {
+                    case "grant":
+                        document.GrantID = EntityId;
+                        break;
+                    case "phase":
+                        document.PhaseID = EntityId;
+                        break;
+                    case "project":
+                        document.ProjectID = EntityId;
+                        break;
+                    case "task":
+                        document.TaskID = EntityId;
+                        break;
+                }
 
-//        public async Task<IActionResult> OnGetDeleteDocumentAsync(int documentId)
-//        {
-//            if (CurrentUserID == 0)
-//            {
-//                return RedirectToPage("/HashedLogin/HashedLogin");
-//            }
+                // Save to database
+                int documentId = DBClass.InsertDocument(document);
 
-//            var document = DBClass.GetDocumentById(documentId);
-//            if (document == null)
-//            {
-//                TempData["ErrorMessage"] = "Document not found";
-//                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
-//            }
+                TempData["SuccessMessage"] = "File uploaded successfully";
+                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading file for {EntityType} {EntityId}", EntityType, EntityId);
+                TempData["ErrorMessage"] = $"Error uploading file: {ex.Message}";
+                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
+            }
+        }
 
-//            // Check if user has edit access
-//            bool hasEditAccess = false;
+        public async Task<IActionResult> OnGetDeleteDocumentAsync(int documentId)
+        {
+            if (CurrentUserID == 0)
+            {
+                return RedirectToPage("/HashedLogin/HashedLogin");
+            }
 
-//            if (document.GrantID.HasValue)
-//            {
-//                hasEditAccess = DBClass.GetUserAccessLevelForGrant(CurrentUserID, document.GrantID.Value) == "Edit";
-//                EntityType = "grant";
-//                EntityId = document.GrantID.Value;
-//            }
-//            else if (document.PhaseID.HasValue)
-//            {
-//                hasEditAccess = DBClass.GetUserAccessLevelForPhase(CurrentUserID, document.PhaseID.Value) == "Edit";
-//                EntityType = "phase";
-//                EntityId = document.PhaseID.Value;
-//            }
-//            else if (document.ProjectID.HasValue)
-//            {
-//                hasEditAccess = DBClass.GetUserAccessLevelForProject(CurrentUserID, document.ProjectID.Value) == "Edit";
-//                EntityType = "project";
-//                EntityId = document.ProjectID.Value;
-//            }
-//            else if (document.TaskID.HasValue)
-//            {
-//                int projectId = DBClass.GetProjectIdForTask(document.TaskID.Value);
-//                hasEditAccess = DBClass.GetUserAccessLevelForProject(CurrentUserID, projectId) == "Edit";
-//                EntityType = "task";
-//                EntityId = document.TaskID.Value;
-//            }
+            var document = DBClass.GetDocumentById(documentId);
 
-//            if (!hasEditAccess && !DBClass.IsUserAdmin(CurrentUserID))
-//            {
-//                return RedirectToPage("/Shared/AccessDenied");
-//            }
+            if (document == null)
+            {
+                TempData["ErrorMessage"] = "Document not found";
+                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
+            }
 
-//            try
-//            {
-//                // Archive in database first
-//                bool archived = DBClass.ArchiveDocument(documentId);
-//                if (!archived)
-//                {
-//                    TempData["ErrorMessage"] = "Failed to delete document";
-//                    return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
-//                }
+            // Determine entity type and id from the document
+            int relevantEntityId = 0;
+            string entityType = string.Empty;
 
-//                // Then delete from blob storage
-//                await _blobStorageService.DeleteDocumentAsync(document.BlobName);
+            if (document.GrantID.HasValue)
+            {
+                relevantEntityId = document.GrantID.Value;
+                entityType = "grant";
+            }
+            else if (document.PhaseID.HasValue)
+            {
+                relevantEntityId = document.PhaseID.Value;
+                entityType = "phase";
+            }
+            else if (document.ProjectID.HasValue)
+            {
+                relevantEntityId = document.ProjectID.Value;
+                entityType = "project";
+            }
 
-//                TempData["SuccessMessage"] = "Document deleted successfully";
-//                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
-//            }
-//            catch (Exception ex)
-//            {
-//                TempData["ErrorMessage"] = $"Error deleting document: {ex.Message}";
-//                return RedirectToPage(new { entityType = EntityType, entityId = EntityId });
-//            }
-//        }
-//    }
-//}
+
+            // Check access
+            var (_, hasEditAccess) = CheckUserAccess(entityType, relevantEntityId);
+            if (!hasEditAccess)
+            {
+                return RedirectToPage("/Shared/AccessDenied");
+            }
+
+            try
+            {
+                // Delete from blob storage
+                await _blobStorageService.DeleteDocumentAsync(document.BlobName);
+
+                // Soft delete in database
+                bool success = DBClass.ArchiveDocument(documentId);
+
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Document deleted successfully";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Error deleting document from database";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting document {DocumentId}", documentId);
+                TempData["ErrorMessage"] = $"Error deleting document: {ex.Message}";
+            }
+
+            return RedirectToPage(new { entityType = entityType, entityId = relevantEntityId });
+        }
+
+        private (bool hasAccess, bool canEdit) CheckUserAccess(string entityType, int entityId)
+        {
+            if (string.IsNullOrEmpty(entityType))
+                return (false, false);
+
+            bool isAdmin = DBClass.IsUserAdmin(CurrentUserID);
+
+            switch (entityType.ToLower())
+            {
+                case "grant":
+                    string grantAccess = DBClass.GetUserAccessLevelForGrant(CurrentUserID, entityId);
+                    return (grantAccess != "None", grantAccess == "Edit" || isAdmin);
+
+                case "phase":
+                    string phaseAccess = DBClass.GetUserAccessLevelForPhase(CurrentUserID, entityId);
+                    return (phaseAccess != "None", phaseAccess == "Edit" || isAdmin);
+
+                case "project":
+                    string projectAccess = DBClass.GetUserAccessLevelForProject(CurrentUserID, entityId);
+                    return (projectAccess != "None", projectAccess == "Edit" || isAdmin);
+
+                // Modify this case to redirect to project instead
+                case "task":
+                    int projectId = DBClass.GetProjectIdForTask(entityId);
+                    // Redirect to project document upload
+                    return (false, false); // This will cause a redirect in the OnGet method
+
+                default:
+                    return (false, false);
+            }
+        }
+    }
+}

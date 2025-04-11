@@ -90,3 +90,5 @@ TestResults/
 *.trx
 *.coverage
 *.coveragexml
+/JMUcare/Pages/Documents/List.cshtml
+/JMUcare/Pages/Documents/List.cshtml.cs

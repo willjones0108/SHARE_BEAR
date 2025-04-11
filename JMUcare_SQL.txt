@@ -67,34 +67,16 @@ CREATE TABLE Project (
     CreatedBy INT,
     GrantID INT NULL,
     ProjectType VARCHAR(50), 
-    TrackingStatus NVARCHAR(MAX),
+    TrackingStatus NVARCHAR(MAX) NULL,
     IsArchived BIT,
-    Project_Description TEXT,
-    ProjectPosition INT,
-    DueDate DATE,
+    Project_Description TEXT NULL,
+    ProjectPosition INT NULL,
+    DueDate DATE NULL,
+    StartDate DATE NULL,
     FOREIGN KEY (CreatedBy) REFERENCES DBUser(UserID)
    
 );
 
-CREATE TABLE Project_Task (
-    TaskID INT PRIMARY KEY IDENTITY(1,1),
-    ProjectID INT,
-    TaskContent TEXT,
-    DueDate DATE,
-    Status VARCHAR(50),
-    TaskPosition INT,
-    IsArchived BIT DEFAULT 0,
-    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
-);
-
-CREATE TABLE Project_Task_User (
-    ProjectTaskUserID INT PRIMARY KEY IDENTITY(1,1),
-    TaskID INT,
-    UserID INT,
-    Role VARCHAR(100), -- Optional: 'Assignee', 'Reviewer', etc.
-    FOREIGN KEY (TaskID) REFERENCES Project_Task(TaskID),
-    FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
-);
 
 -- Reminder Table (needed before Calendar_Event)
 CREATE TABLE Reminder (
@@ -114,14 +96,12 @@ CREATE TABLE Calendar_Event (
     UserID INT,
     GrantID INT,
     ProjectID INT,
-    TaskID INT,
     ReminderID INT,
     History TEXT,
     Status VARCHAR(50),
     FOREIGN KEY (UserID) REFERENCES DBUser(UserID), -- Added foreign key
     FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
-    FOREIGN KEY (TaskID) REFERENCES Project_Task(TaskID), -- Added foreign key
     FOREIGN KEY (ReminderID) REFERENCES Reminder(ReminderID) -- Added foreign key
 );
 
@@ -129,7 +109,7 @@ CREATE TABLE Calendar_Event (
 CREATE TABLE User_Permissions (
     PermissionID INT PRIMARY KEY,
     UserID INT,
-    Permissions NVARCHAR(MAX),  -- Stores grant/project/task IDs and feature flags
+    Permissions NVARCHAR(MAX),  
     AccessLevel VARCHAR(100),
     FOREIGN KEY (UserID) REFERENCES DBUser(UserID)
 );
@@ -165,7 +145,7 @@ CREATE TABLE Project_Permission (
 CREATE TABLE Phase (
     PhaseID INT PRIMARY KEY IDENTITY(1,1),
     PhaseName VARCHAR(255),
-    Description TEXT,
+    Description TEXT NULL,
     Status VARCHAR(50),
     CreatedBy INT,
     PhaseLeadID INT,
@@ -358,14 +338,31 @@ CREATE TABLE Documents (
     GrantID INT NULL,
     PhaseID INT NULL,
     ProjectID INT NULL,
-    TaskID INT NULL,
     IsArchived BIT NOT NULL DEFAULT 0,
     FOREIGN KEY (UploadedBy) REFERENCES DBUser(UserID),
     FOREIGN KEY (GrantID) REFERENCES Grants(GrantID),
     FOREIGN KEY (PhaseID) REFERENCES Phase(PhaseID),
     FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID),
-    FOREIGN KEY (TaskID) REFERENCES Project_Task(TaskID)
 )
+CREATE TABLE Project_Task (
+
+    TaskID INT PRIMARY KEY IDENTITY(1,1),
+
+    ProjectID INT,
+
+    TaskContent TEXT,
+
+    DueDate DATE,
+
+    Status VARCHAR(50),
+
+    TaskPosition INT,
+
+    IsArchived BIT DEFAULT 0,
+
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
+
+); 
 
 
 

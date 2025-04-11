@@ -1,0 +1,241 @@
+﻿@* JMUcare/Pages/Shared/_DocumentUploadPartial.cshtml *@
+@model dynamic
+@using JMUcare.Pages.Dataclasses
+@using JMUcare.Pages.DBclass
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var currentUserId = HttpContextAccessor.HttpContext?.Session.GetInt32("CurrentUserID") ?? 0;
+    var entityType = Model.EntityType;
+    var entityId = Model.EntityId;
+
+    // Determine if user can edit (admins and editors)
+    bool canEdit = false;
+    bool canView = false;
+
+    var isAdmin = DBClass.IsUserAdmin(currentUserId);
+
+    if (isAdmin)
+    {
+        canEdit = true;
+        canView = true;
+    }
+    else
+    {
+        switch (entityType.ToLower())
+        {
+            case "project":
+                string projectAccess = DBClass.GetUserAccessLevelForProject(currentUserId, entityId);
+                canEdit = projectAccess == "Edit";
+                canView = projectAccess != "None";
+                break;
+
+            case "phase":
+                string phaseAccess = DBClass.GetUserAccessLevelForPhase(currentUserId, entityId);
+                canEdit = phaseAccess == "Edit";
+                canView = phaseAccess != "None";
+                break;
+
+            case "grant":
+                string grantAccess = DBClass.GetUserAccessLevelForGrant(currentUserId, entityId);
+                canEdit = grantAccess == "Edit";
+                canView = grantAccess != "None";
+                break;
+        }
+    }
+
+    // Get documents if user can view
+    List<DocumentModel> documents = canView ?
+        DBClass.GetDocumentsByEntityId(entityType, entityId) :
+        new List<DocumentModel>();
+}
+
+@if (canView)
+{
+    <div class="card shadow mb-4">
+        <div class="card-header jmu-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Documents</h5>
+            @if (canEdit)
+            {
+                <button type="button" class="btn jmu-btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal_@entityId">
+                    <i class="bi bi-upload"></i> Upload Document
+                </button>
+            }
+        </div>
+        <div class="card-body">
+            @if (documents != null && documents.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Uploaded By</th>
+                                <th>Date</th>
+                                <th>Size</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var document in documents)
+                            {
+                                <tr>
+                                    <td>
+                                        <i class="bi @GetFileIcon(document.FileName)"></i>
+                                        @document.FileName
+                                    </td>
+                                    <td>@GetUploaderName(document.UploadedBy)</td>
+                                    <td>@document.UploadedDate.ToShortDateString()</td>
+                                    <td>@FormatFileSize(document.FileSize)</td>
+                                    <td>
+                                        <a href="@document.BlobUrl" target="_blank" class="btn btn-sm jmu-btn-outline" title="Download">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                        @if (canEdit || document.UploadedBy == currentUserId)
+                                        {
+                                            <a href="#" class="btn btn-sm jmu-btn-danger"
+                                               onclick="confirmDocDelete('@entityId', @document.DocumentID)" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert jmu-alert">
+                    <p class="mb-0">No documents have been uploaded.</p>
+                    @if (canEdit)
+                    {
+                        <button type="button" class="btn jmu-btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal_@entityId">
+                            <i class="bi bi-upload"></i> Upload your first document
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Upload Document Modal -->
+    @if (canEdit)
+    {
+        <div class="modal fade" id="uploadDocumentModal_@entityId" tabindex="-1" aria-labelledby="uploadDocumentModalLabel_@entityId" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="post" enctype="multipart/form-data" asp-page-handler="UploadDocument">
+                        <div class="modal-header jmu-header">
+                            <h5 class="modal-title" id="uploadDocumentModalLabel_@entityId">Upload Document</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="entityType" value="@entityType" />
+                            <input type="hidden" name="entityId" value="@entityId" />
+
+                            <div class="mb-3">
+                                <label for="documentFile_@entityId" class="form-label">Select File</label>
+                                <input type="file" class="form-control" id="documentFile_@entityId" name="file" required>
+                                <div class="form-text">
+                                    Supported formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT. Maximum size: 10MB.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn jmu-btn-primary">Upload</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteDocumentModal_@entityId" tabindex="-1" aria-labelledby="deleteDocumentModalLabel_@entityId" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header jmu-header">
+                        <h5 class="modal-title" id="deleteDocumentModalLabel_@entityId">Confirm Delete</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete this document? This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <a id="confirmDeleteButton_@entityId" href="#" class="btn jmu-btn-danger">Delete</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@functions {
+    public string GetFileIcon(string fileName)
+    {
+        string extension = System.IO.Path.GetExtension(fileName).ToLowerInvariant();
+        return extension switch
+        {
+            ".pdf" => "bi-file-earmark-pdf",
+            ".doc" or ".docx" => "bi-file-earmark-word",
+            ".xls" or ".xlsx" => "bi-file-earmark-excel",
+            ".ppt" or ".pptx" => "bi-file-earmark-ppt",
+            ".jpg" or ".jpeg" or ".png" or ".gif" => "bi-file-earmark-image",
+            ".txt" => "bi-file-earmark-text",
+            _ => "bi-file-earmark"
+        };
+    }
+
+    public string GetUploaderName(int uploaderId)
+    {
+        var user = DBClass.GetUserById(uploaderId);
+        return user != null ? $"{user.FirstName} {user.LastName}" : "Unknown";
+    }
+
+    public string FormatFileSize(long bytes)
+    {
+        string[] suffixes = { "B", "KB", "MB", "GB" };
+        int counter = 0;
+        decimal number = bytes;
+        while (Math.Round(number / 1024) >= 1)
+        {
+            number = number / 1024;
+            counter++;
+        }
+        return $"{number:n1} {suffixes[counter]}";
+    }
+}
+
+<script>
+    function confirmDocDelete(entityId, docId) {
+        // Set the document ID in the confirm button's href
+        document.getElementById('confirmDeleteButton_' + entityId).href =
+            `?handler=DeleteDocument&documentId=${docId}&entityType=@entityType&entityId=${entityId}`;
+
+        // Show the modal
+        var deleteModal = new bootstrap.Modal(document.getElementById('deleteDocumentModal_' + entityId));
+        deleteModal.show();
+    }
+
+    // File input validation
+    document.getElementById('documentFile_@entityId')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const fileSize = file.size / 1024 / 1024; // size in MB
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'jpg', 'png'];
+
+        if (fileSize > 10) {
+            alert('File size exceeds the 10MB limit');
+            this.value = '';
+        } else if (!allowedExtensions.includes(fileExtension)) {
+            alert('File type is not supported');
+            this.value = '';
+        }
+    });
+</script>

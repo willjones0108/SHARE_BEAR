@@ -3,122 +3,281 @@
 @{
     ViewData["Title"] = "Edit Phase";
 }
-<h2>Edit Phase</h2>
 
-<form method="post">
-    <input type="hidden" asp-for="Phase.PhaseID" />
-    <input type="hidden" asp-for="Phase.CreatedBy" />
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <form method="post">
+                <input type="hidden" asp-for="Phase.PhaseID" />
+                <input type="hidden" asp-for="Phase.CreatedBy" />
 
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label asp-for="Phase.PhaseName" class="form-label">Phase Name</label>
-                        <input asp-for="Phase.PhaseName" class="form-control" />
-                        <span asp-validation-for="Phase.PhaseName" class="text-danger"></span>
-                    </div>
+                <div class="row">
+                    <!-- Phase Details Section -->
+                    <div class="col-md-8 mb-4">
+                        <div class="card shadow">
+                            <div class="card-header jmu-header d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0">Edit Phase Details</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Phase Name</h5>
+                                                <input asp-for="Phase.PhaseName" class="form-control" />
+                                                <span asp-validation-for="Phase.PhaseName" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                    <div class="mb-3">
-                        <label asp-for="Phase.Description" class="form-label">Description</label>
-                        <textarea asp-for="Phase.Description" class="form-control" rows="5"></textarea>
-                        <span asp-validation-for="Phase.Description" class="text-danger"></span>
-                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Status</h5>
+                                                <select asp-for="Phase.Status" class="form-select" asp-items="Model.StatusOptions">
+                                                    <option value="">-- Select Status --</option>
+                                                </select>
+                                                <span asp-validation-for="Phase.Status" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                    <div class="mb-3">
-                        <label asp-for="Phase.Status" class="form-label">Status</label>
-                        <select asp-for="Phase.Status" class="form-select" asp-items="Model.StatusOptions">
-                        </select>
-                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Phase Lead</h5>
+                                                <select asp-for="Phase.PhaseLeadID" class="form-select" asp-items="@(new SelectList(Model.Users, "UserID", "FirstName"))">
+                                                    <option value="">-- Select User --</option>
+                                                </select>
+                                                <span asp-validation-for="Phase.PhaseLeadID" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                    <div class="mb-3">
-                        <label asp-for="Phase.PhaseLeadID" class="form-label">Phase Lead</label>
-                        <select asp-for="Phase.PhaseLeadID" class="form-select" asp-items="@(new SelectList(Model.Users, "UserID", "FirstName"))">
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <button type="submit" class="btn btn-primary">Save</button>
-                        <a asp-page="/Grants/View" asp-route-id="@Model.Phase.GrantID" class="btn btn-secondary">Cancel</a>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- Phase Permissions Section -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">Phase Permissions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-striped">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Access Level</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (Model.PhasePermissions != null)
-                                {
-                                    foreach (var userPerm in Model.PhasePermissions)
-                                    {
-                                        <tr>
-                                            <td>@userPerm.FullName</td>
-                                            <td>
-                                                <span class="badge bg-@(userPerm.AccessLevel == "Edit" ? "success" : "info")">
-                                                    @userPerm.AccessLevel
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <form method="post" asp-page-handler="RemovePermission" class="d-inline">
-                                                    <input type="hidden" name="phaseId" value="@Model.Phase.PhaseID" />
-                                                    <input type="hidden" name="userId" value="@userPerm.UserId" />
-                                                    <button type="submit" class="btn btn-danger btn-sm">
-                                                        <i class="bi bi-trash"></i> Remove
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <form method="post" asp-page-handler="AddPermission" class="mt-3">
-                        <input type="hidden" name="phaseId" value="@Model.Phase.PhaseID" />
-                        <div class="mb-3">
-                            <label for="NewPermissionUserId" class="form-label">User</label>
-                            <select asp-for="NewPermissionUserId" class="form-select">
-                                <option value="">Select user...</option>
-                                @foreach (var user in Model.Users)
-                                {
-                                    <option value="@user.UserID">@user.FirstName @user.LastName</option>
-                                }
-                            </select>
+                                    <div class="col-12 mb-3">
+                                        <div class="card h-100 grant-info-card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Description</h5>
+                                                <textarea asp-for="Phase.Description" class="form-control" rows="3"></textarea>
+                                                <span asp-validation-for="Phase.Description" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a asp-page="/Grants/View/" asp-route-id="@Model.Phase.GrantID" class="btn jmu-btn-outline">
+                                        <i class="bi bi-arrow-left"></i> Back
+                                    </a>
+                                    <button type="submit" class="btn jmu-btn-primary">
+                                        <i class="bi bi-save"></i> Save Changes
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="NewPermissionAccessLevel" class="form-label">Access Level</label>
-                            <select asp-for="NewPermissionAccessLevel" class="form-select">
-                                <option value="Read">Read</option>
-                                <option value="Edit">Edit</option>
-                            </select>
+                    </div>
+
+                    <!-- Phase Permissions Section -->
+                    <div class="col-md-4">
+                        <div class="card shadow">
+                            <div class="card-header jmu-header-secondary d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0">Phase Permissions</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Access</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (Model.PhasePermissions != null)
+                                            {
+                                                foreach (var userPerm in Model.PhasePermissions)
+                                                {
+                                                    <tr>
+                                                        <td>@userPerm.FullName</td>
+                                                        <td>
+                                                            <span class="badge jmu-badge-@(userPerm.AccessLevel == "Edit" ? "success" : "primary")">
+                                                                @userPerm.AccessLevel
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <form method="post" asp-page-handler="RemovePermission" class="d-inline">
+                                                                <input type="hidden" name="phaseId" value="@Model.Phase.PhaseID" />
+                                                                <input type="hidden" name="userId" value="@userPerm.UserId" />
+                                                                <button type="submit" class="btn jmu-btn-danger btn-sm">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Add New Permission Form -->
+                                <div class="card h-100 grant-info-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Add New Permission</h5>
+                                        <form method="post" asp-page-handler="AddPermission">
+                                            <input type="hidden" name="phaseId" value="@Model.Phase.PhaseID" />
+                                            <div class="mb-3">
+                                                <select asp-for="NewPermissionUserId" class="form-select">
+                                                    <option value="">Select user...</option>
+                                                    @foreach (var user in Model.Users)
+                                                    {
+                                                        <option value="@user.UserID">@user.FirstName @user.LastName</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <select asp-for="NewPermissionAccessLevel" class="form-select">
+                                                    <option value="Read">Read</option>
+                                                    <option value="Edit">Edit</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn jmu-btn-primary">
+                                                <i class="bi bi-plus-circle"></i> Add Permission
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Add Permission</button>
-                    </form>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
-</form>
-
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-}
+    <style>
+        /* JMU Custom Variables */
+        :root {
+            --jmu-purple: #450084;
+            --jmu-gold: #CBB677;
+            --jmu-gray: #8D8D8D;
+            --jmu-light-gray: #f2f2f2;
+            --jmu-dark-purple: #370068;
+            --jmu-light-gold: #dfd4a9;
+        }
+
+        /* JMU Styling Elements */
+        .jmu-header {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-bottom: 3px solid var(--jmu-gold);
+        }
+
+        .jmu-header-secondary {
+            background-color: var(--jmu-dark-purple);
+            color: white;
+            border-bottom: 2px solid var(--jmu-gold);
+        }
+
+        .jmu-title {
+            color: var(--jmu-purple);
+            font-weight: 600;
+        }
+
+        .jmu-subtitle {
+            color: var(--jmu-dark-purple);
+            font-weight: 500;
+        }
+
+        /* Button styles */
+        .jmu-btn-primary {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-primary:hover {
+                background-color: var(--jmu-dark-purple);
+                color: white;
+                border-color: var(--jmu-dark-purple);
+            }
+
+        .jmu-btn-success {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .jmu-btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .jmu-btn-outline {
+            color: var(--jmu-purple);
+            border-color: var(--jmu-purple);
+            background-color: white;
+        }
+
+            .jmu-btn-outline:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+            }
+
+        .jmu-btn-light {
+            color: var(--jmu-purple);
+            background-color: white;
+            border-color: white;
+        }
+
+        /* Badge styles */
+        .jmu-badge-primary {
+            background-color: var(--jmu-purple);
+        }
+
+        .jmu-badge-success {
+            background-color: #28a745;
+        }
+
+        .jmu-badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .jmu-badge-secondary {
+            background-color: var(--jmu-gray);
+        }
+
+        .jmu-alert {
+            background-color: var(--jmu-light-gold);
+            border-left: 5px solid var(--jmu-gold);
+            color: #333;
+        }
+
+        /* Card styles */
+        .card {
+            transition: all 0.2s ease;
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .grant-info-card {
+            border-left: 3px solid var(--jmu-gold);
+        }
+
+            .grant-info-card .card-title {
+                color: var(--jmu-purple);
+                font-weight: 600;
+                font-size: 1rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
+                margin-bottom: 10px;
+            }
+    </style>
 }

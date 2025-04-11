@@ -87,7 +87,7 @@ namespace JMUcare.Pages.Projects
                 return RedirectToPage("/Shared/AccessDenied");
             }
 
-            DBClass.LoadTaskAssignments(Id, TaskAssignments);
+            //DBClass.LoadTaskAssignments(Id, TaskAssignments);
             DBClass.LoadAvailableUsers(Id, AvailableUsers);
 
             return Page();

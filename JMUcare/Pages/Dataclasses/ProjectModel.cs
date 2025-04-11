@@ -10,4 +10,5 @@
     public bool IsArchived { get; set; }
     public string Project_Description { get; set; }
     public DateTime DueDate { get; set; }
+    public DateTime StartDate { get; set; }
 }

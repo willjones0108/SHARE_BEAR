@@ -5,6 +5,8 @@ using JMUcare.Pages.Dataclasses;
 using JMUcare.Pages.DBclass;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
+using UserRoleModel = JMUcare.Pages.Dataclasses.UserRoleModel;
+
 
 namespace JMUcare.Pages.Grants
 {

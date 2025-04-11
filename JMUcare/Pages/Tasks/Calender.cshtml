@@ -25,6 +25,16 @@
                 events: @Html.Raw(Json.Serialize(Model.CalendarEvents)),
                 eventClick: function(info) {
                     alert('Task: ' + info.event.title + '\nStatus: ' + info.event.extendedProps.status);
+                },
+                // JMU styling for calendar events
+                eventDidMount: function(info) {
+                    if (info.event.extendedProps.status === 'Completed') {
+                        info.el.style.backgroundColor = '#28a745';
+                    } else if (info.event.extendedProps.status === 'In Progress') {
+                        info.el.style.backgroundColor = '#CBB677'; // JMU Gold
+                    } else if (info.event.extendedProps.status === 'Not Started') {
+                        info.el.style.backgroundColor = '#450084'; // JMU Purple test
+                    }
                 }
             });
             calendar.render();
