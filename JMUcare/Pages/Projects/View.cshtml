@@ -59,7 +59,7 @@
                     @if (Model.CanEditProject)
                     {
                         <div>
-                            <a asp-page="/Projects/EditProject" asp-route-id="@Model.Id" class="btn jmu-btn-light btn-sm">
+                            <a asp-page="/Projects/EditProject" asp-route-id="@Model.Id" class="btn jmu-btn-purple btn-sm">
                                 <i class="bi bi-pencil-square"></i> @(Model.IsFolder ? "Edit Folder" : "Edit Task")
                             </a>
                             <form method="post" asp-page-handler="ArchiveProject" class="d-inline">
@@ -370,5 +370,18 @@
         .bi-file-earmark {
             color: #666666;
         }
+
+        .jmu-btn-purple {
+            background-color: var(--jmu-purple);
+            color: white;
+            border-color: var(--jmu-purple);
+        }
+
+            .jmu-btn-purple:hover {
+                background-color: var(--jmu-purple);
+                color: white;
+                border-color: var(--jmu-purple);
+            }
+
     </style>
 }
