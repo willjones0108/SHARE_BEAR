@@ -3,14 +3,10 @@
 @{
     ViewData["Title"] = "Task Calendar";
 }
-    <div class="card shadow mb-4">
-        <div class="card-header jmu-header">
-            <h3 class="mb-0">Task Schedule</h3>
-        </div>
-        <div class="card-body">
-            <div id="calendar"></div>
-        </div>
-    </div>
+
+<div class="container mt-4">
+    <h2>Task Calendar</h2>
+    <div id="calendar"></div>
 </div>
 
 @section Scripts {
@@ -26,7 +22,6 @@
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
-                themeSystem: 'bootstrap',
                 events: @Html.Raw(Json.Serialize(Model.CalendarEvents)),
                 eventClick: function(info) {
                     alert('Task: ' + info.event.title + '\nStatus: ' + info.event.extendedProps.status);
@@ -45,63 +40,4 @@
             calendar.render();
         });
     </script>
-    <style>
-        :root {
-            --jmu-purple: #450084;
-            --jmu-gold: #CBB677;
-            --jmu-gray: #8D8D8D;
-            --jmu-light-gray: #f2f2f2;
-            --jmu-dark-purple: #370068;
-            --jmu-light-gold: #dfd4a9;
-        }
-
-        /* Header styles */
-        .jmu-header {
-            background-color: var(--jmu-purple);
-            color: white;
-            border-bottom: 3px solid var(--jmu-gold);
-        }
-
-        .jmu-title {
-            color: var(--jmu-purple);
-            font-weight: 600;
-        }
-
-        /* Calendar customization */
-        .fc-button-primary {
-            background-color: var(--jmu-purple) !important;
-            border-color: var(--jmu-purple) !important;
-        }
-
-            .fc-button-primary:hover {
-                background-color: var(--jmu-dark-purple) !important;
-                border-color: var(--jmu-dark-purple) !important;
-            }
-
-        .fc-button-active {
-            background-color: var(--jmu-dark-purple) !important;
-            border-color: var(--jmu-gold) !important;
-        }
-
-        .fc-today-button {
-            background-color: var(--jmu-gold) !important;
-            border-color: var(--jmu-gold) !important;
-            color: var(--jmu-purple) !important;
-            font-weight: bold !important;
-        }
-
-        .fc-col-header-cell {
-            background-color: var(--jmu-purple);
-            color: white;
-        }
-
-        .fc-daygrid-day.fc-day-today {
-            background-color: rgba(203, 182, 119, 0.2) !important;
-        }
-
-        .fc-event {
-            border: none !important;
-            padding: 2px 4px !important;
-        }
-    </style>
 }

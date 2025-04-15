@@ -37,7 +37,7 @@
         <div class="col-md-12">
             <div class="card shadow">
                 <div class="card-header jmu-header d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Grant Details</h4>
+                    <h4 class="mb-0">Details</h4>
                     @if (isAdminOrGrantEditor)
                     {
                         <div>
@@ -52,7 +52,7 @@
                             <form method="post" asp-page-handler="ArchiveGrant" class="d-inline ms-2" onsubmit="return confirmArchive()">
                                 <input type="hidden" name="grantId" value="@Model.Id" />
                                 <button type="submit" class="btn jmu-btn-danger btn-sm">
-                                    <i class="bi bi-archive"></i> Archive Grant
+                                    <i class="bi bi-archive"></i> Archive
                                 </button>
                             </form>
                         </div>
@@ -65,12 +65,12 @@
                                 <div class="card-body">
                                     @if (Model.Grant.Category?.ToLower() == "project") // Adjust condition based on your logic
                                     {
-                                        <h5 class="card-title">Project Title</h5>
+                                        <h5 class="card-title">Title</h5>
                                         <p class="card-text fs-6">@Model.Grant.GrantTitle</p>
                                     }
                                     else
                                     {
-                                        <h5 class="card-title">Grant Title</h5>
+                                        <h5 class="card-title">Title</h5>
                                         <p class="card-text fs-6">@Model.Grant.GrantTitle</p>
                                     }
                                 </div>
@@ -105,7 +105,7 @@
                                 <div class="card-body">
                                     @if (Model.Grant.Category?.ToLower() == "project") // Adjust condition based on your logic
                                     {
-                                        <h5 class="card-title">Project Status</h5>
+                                        <h5 class="card-title">Status</h5>
                                         <p class="card-text fs-6">
                                             <span class="badge jmu-badge-@(Model.Grant.Status.ToLower() == "active" ? "success" : "primary")">
                                                 @Model.Grant.Status
@@ -114,7 +114,7 @@
                                     }
                                     else
                                     {
-                                        <h5 class="card-title">Grant Status</h5>
+                                        <h5 class="card-title">Status</h5>
                                         <p class="card-text fs-6">
                                             <span class="badge jmu-badge-@(Model.Grant.Status.ToLower() == "active" ? "success" : "primary")">
                                                 @Model.Grant.Status
@@ -156,7 +156,7 @@
             <div class="col-md-12">
                 <div class="card shadow">
                     <div class="card-header jmu-header d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">Grant Documents</h4>
+                        <h4 class="mb-0">Documents</h4>
                         @if (Model.IsAdmin || Model.IsGrantLead)
                         {
                             <button type="button" class="btn jmu-btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
@@ -215,7 +215,7 @@
             <div class="col-md-12">
                 <div class="card shadow">
                     <div class="card-header jmu-header d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">Grant Documents</h4>
+                        <h4 class="mb-0">Documents</h4>
                         <button type="button" class="btn jmu-btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
                             <i class="bi bi-upload"></i> Upload Document
                         </button>
@@ -305,8 +305,9 @@
                                 <li><a class="dropdown-item" asp-page="/Sections/CreateProject" asp-route-GrantId="@Model.Id">Add Task</a></li>
                                 <li>
                                     <a class="dropdown-item" asp-page="/Sections/CreateFolder" asp-route-PhaseId="@Model.Id">
-                                    Add Folder
-                                </a><li>
+                                        Add Folder
+                                    </a>
+                                <li>
                             </ul>
 
                         </div>

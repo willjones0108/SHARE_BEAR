@@ -2641,6 +2641,88 @@ WHERE IsArchived = 0";
 
 
         // Add these methods to DBClass.cs
+        public static async Task<int> InsertFile(IFormFile file, DocumentModel document)
+        {
+            // This method handles file upload and stores document information in the database
+
+            // Create a unique blob name to avoid name collisions
+            string fileName = Path.GetFileName(file.FileName);
+            string blobName = $"{Guid.NewGuid()}-{fileName}";
+
+            // Define where files will be stored locally
+            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+
+            // Create directory if it doesn't exist
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            // Full path where the file will be saved
+            string filePath = Path.Combine(uploadsFolder, blobName);
+
+            // Save the file's URL and name for database storage
+            document.BlobName = blobName;
+            document.BlobUrl = $"/uploads/{blobName}";
+
+            // Save the file to disk
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(fileStream);
+            }
+
+            // Insert the document record in database
+            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            {
+                string sqlQuery = @"
+        INSERT INTO Documents (
+            FileName,
+            ContentType,
+            FileSize,
+            UploadedDate,
+            UploadedBy,
+            BlobUrl,
+            BlobName,
+            GrantID,
+            PhaseID,
+            ProjectID,
+            IsArchived
+        )
+        OUTPUT INSERTED.DocumentID
+        VALUES (
+            @FileName,
+            @ContentType,
+            @FileSize,
+            @UploadedDate,
+            @UploadedBy,
+            @BlobUrl,
+            @BlobName,
+            @GrantID,
+            @PhaseID,
+            @ProjectID,
+            @IsArchived
+        )";
+
+                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                {
+                    cmd.Parameters.AddWithValue("@FileName", document.FileName);
+                    cmd.Parameters.AddWithValue("@ContentType", document.ContentType);
+                    cmd.Parameters.AddWithValue("@FileSize", document.FileSize);
+                    cmd.Parameters.AddWithValue("@UploadedDate", document.UploadedDate);
+                    cmd.Parameters.AddWithValue("@UploadedBy", document.UploadedBy);
+                    cmd.Parameters.AddWithValue("@BlobUrl", document.BlobUrl);
+                    cmd.Parameters.AddWithValue("@BlobName", document.BlobName);
+                    cmd.Parameters.AddWithValue("@GrantID", document.GrantID ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@PhaseID", document.PhaseID ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@ProjectID", document.ProjectID ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IsArchived", document.IsArchived);
+
+                    connection.Open();
+                    int newDocumentId = (int)await cmd.ExecuteScalarAsync();
+                    return newDocumentId;
+                }
+            }
+        }
 
         public static int InsertDocument(DocumentModel document)
         {
