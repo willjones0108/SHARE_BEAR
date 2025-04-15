@@ -17,66 +17,33 @@ All AI-generated content was reviewed and validated by the project team to ensur
 
 ## Database Setup
 
-### Setting Up Authentication Database
+### Setting Up Azure Database
 
-1. Create a database named `AUTH` in your SQL Server instance
-2. Run the following SQL script to set up the authentication tables:
+#### Credentials
 
+##### Server Name:
 
-```sql
-CREATE TABLE dbo.HashedCredentials (
-    UserID INT IDENTITY(1,1) PRIMARY KEY,
-    Username NVARCHAR(50) NOT NULL,
-    Password NVARCHAR(MAX) NOT NULL
-);
+care-bear-server.database.windows.net
 
--- Run the code above and then create the login stored procedure
-CREATE PROCEDURE sp_Lab3Login
-    @Username NVARCHAR(50)
-AS
-BEGIN
-    SET NOCOUNT ON;
+##### Authentication:
 
-    SELECT Password 
-    FROM HashedCredentials 
-    WHERE Username = @Username;
-END;
+SQL Server Authentication
 
-```
+##### Login:
 
-3. Initialize with default user accounts (default password is "password" for all accounts):
+care-bear-admin
+
+##### Password:
+
+Password1
 
 
-```sql
-INSERT INTO HashedCredentials (Username, Password)
-VALUES ('admin', '1000:fF2zbk9sOvF/RDj8S2hVZlgNmNYUMUsz:jJv9Og+6vJq2E+vZ91av8XQil4I=');
-INSERT INTO HashedCredentials (Username, Password) 
-VALUES ('user1', '1000:fF2zbk9sOvF/RDj8S2hVZlgNmNYUMUsz:jJv9Og+6vJq2E+vZ91av8XQil4I=');
-INSERT INTO HashedCredentials (Username, Password) 
-VALUES ('user2', '1000:fF2zbk9sOvF/RDj8S2hVZlgNmNYUMUsz:jJv9Og+6vJq2E+vZ91av8XQil4I=');
-INSERT INTO HashedCredentials (Username, Password) 
-VALUES ('user3', '1000:fF2zbk9sOvF/RDj8S2hVZlgNmNYUMUsz:jJv9Og+6vJq2E+vZ91av8XQil4I=');
-
-```
-
-### Setting Up Main Application Database
-
-1. Create a database named `JMU_CARE` in your SQL Server instance
-2. Run the `JMUcare_SQL.txt` script to create all required tables and initial data
-3. Update the connection strings in `DBclass.cs` to match your SQL Server instance:
-
-
-```csharp
-public static readonly string JMUcareDBConnString =
-    "Server=YOUR_SERVER_NAME;Database=JMU_CARE;Trusted_Connection=True";
-
-private static readonly string? AuthConnString =
-    "Server=YOUR_SERVER_NAME;Database=AUTH;Trusted_Connection=True";
-
-```
+* if you have any errors regarding the database please reach out to jonesww@dukes.jmu.edu
 
 
 ## Using the System
+
+#### Note that the databse and file sharing system is located on the cloud and the project runs locally.
 
 ### Logging In
 
@@ -86,13 +53,9 @@ private static readonly string? AuthConnString =
 
 User Account Details
 | Username | Password | Role               | Default Access                                    | 
-|----------|----------|--------------------|---------------------------------------------------| 
-| admin    | Password | Admin              | Full access to all grants, phases, and projects   | 
-| user1    | Password | Contributor        |                                                   | 
-| user2    | Password | Business Partner   |                                                   |
-
-*** Permissions must be redone to be tested. 
-For example user1 must be removed and added to grant 1 to see the action take place.
+|-------------|----------|--------------------|---------------------------------------------------| 
+|rachel.smith | 123      | Admin              | Full access to all grants, phases, and projects   | 
+|cody.brown   | 123      | Contributor        |                                                   | 
 
 
 ### Dashboard Navigation
@@ -103,7 +66,9 @@ The main dashboard provides access to:
 - Projects assigned to you
 - Tasks requiring your attention
 - Phases you're involved in
-- System notifications and messages (To be Implemeneted)
+- Messages
+- Calander 
+- User Management (Admin)
 
 ## Managing Grants
 
@@ -153,17 +118,19 @@ You can manually adjust the phase order:
 1. Navigate to the grant view showing all phases and select reorder phases
 2. Use the arrows to reorder phases
 
-## Managing Projects
+## Managing Projects (Task/Folders)
+
+Project = Task = Folder 
+The Project.Type determines the type
 
 ### Creating a Project
 
-1. From a phase view, click "Add Project"
+1. From a phase view, click "Add Task/Folder"
 2. Fill in project details:
    - Title
    - Description
-   - Project Type
    - Tracking Status
-3. Save the project/Add permissions (Bugs Present)
+3. Save the project/Add permissions
 
 ### Project Permissions
 
@@ -173,23 +140,6 @@ Each project inherits permissions from its parent phase, but you can also set sp
 2. Navigate to Permissions tab
 3. Add or modify user access levels
 
-## Task Management
-
-### Creating Tasks
-
-1. From a project view, click "Add Task"
-2. Enter task details:
-   - Task Content
-   - Due Date
-   - Status
-3. Assign users to the task with specific roles (Bugs Present)
-4. Save the task
-
-### Updating Task Status
-
-1. Open the task
-2. Change status (Pending, In Progress, Completed, etc.)
-3. Save changes
 
 ## Messaging System
 
@@ -217,13 +167,6 @@ Each project inherits permissions from its parent phase, but you can also set sp
 2. Select a recipient from the dropdown menu
 3. Type your message in the text area
 4. Click "Send" to dispatch your message
-
-### Managing Message Status (To be Implemented)
-
-Messages have three possible statuses:
-- **Sent**: Message has been delivered but not yet read
-- **Read**: Recipient has viewed the message
-- **Archived**: Message has been archived (not shown in main view)
 
 ## Calendar System
 
@@ -262,4 +205,33 @@ The calendar automatically integrates with:
 2. Phases - displayed based on expected completion dates (To be Implemented)
 3. Grant deadlines - important dates from grants appear in the calendar (To be Implemented)
 
-For improved organization, tasks inherit their color coding from their current status, making it easy to identify high-priority items at a glance.
+
+## Document Upload System
+
+Documents can be uploaded and organized at both the **grant level** and within individual **folders (projects)**. This enables users to maintain relevant documentation across different parts of the system.
+
+### Uploading Documents to a Grant
+
+1. Navigate to the **Grant View** page
+2. Scroll to the **Documents** section
+3. Click **"Upload Document"**
+4. Select the file from your device and confirm the upload
+5. The uploaded document will now be accessible to users with permission to view the grant
+
+### Uploading Documents to a Folder
+
+1. Navigate to the **Folder (Project)** view
+2. In the **Documents** section, click **"Upload Document"**
+3. Choose a file from your device and upload
+4. The document will be stored under that specific folder, helping organize materials related to the task or phase
+
+### Supported File Types
+
+The system currently supports common document formats, including:
+- PDF
+- Word Documents (.doc, .docx)
+- Excel Files (.xls, .xlsx)
+- Text Files (.txt)
+- Images (e.g., .png, .jpg)
+
+Users must have appropriate permissions to upload or access documents in a given grant or folder.
