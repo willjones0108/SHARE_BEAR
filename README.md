@@ -52,7 +52,7 @@ Password1
 3. Click "Login" to access the system
 
 User Account Details
-| Username | Password | Role               | Default Access                                    | 
+| Username    | Password    | Role            | Default Access                                    | 
 |-------------|----------|--------------------|---------------------------------------------------| 
 |rachel.smith | 123      | Admin              | Full access to all grants, phases, and projects   | 
 |cody.brown   | 123      | Contributor        |                                                   | 
