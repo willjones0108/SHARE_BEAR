@@ -48,7 +48,9 @@ User Account Details
 | Username    | Password    | Role            | Default Access                                    | 
 |-------------|----------|--------------------|---------------------------------------------------| 
 |admin        | password | Admin              | Full access to all grants, phases, and projects   | 
-|user1        | password | Contributor        |                                                   | 
+|user1| password | Contributor        |                                                   | 
+|user2| password | Contributor        |                                                   | 
+|user3| password | Contributor        |                                                   | 
 
 
 ### Dashboard Navigation
