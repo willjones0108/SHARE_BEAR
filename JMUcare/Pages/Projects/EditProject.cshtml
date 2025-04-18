@@ -60,12 +60,9 @@
 
                                     <div class="col-md-6 mb-3">
                                         <div class="card h-100 grant-info-card">
-                                            <div class="card-body">
-                                                <h5 class="card-title">Associated Phase</h5>
-                                                <select asp-for="Project.PhaseID" class="form-select" asp-items="@(new SelectList(Model.Phases, "PhaseID", "PhaseName"))">
-                                                    <option value="">-- Select Phase --</option>
-                                                </select>
-                                                <span asp-validation-for="Project.PhaseID" class="text-danger"></span>
+                                            <div class="form-group">
+                                                <label for="Phase">Phase</label>
+                                                <input type="text" id="Phase" class="form-control" value="@Model.AssociatedPhaseName" disabled />
                                             </div>
                                         </div>
                                     </div>

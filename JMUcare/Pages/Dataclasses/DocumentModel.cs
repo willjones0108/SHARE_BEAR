@@ -17,5 +17,6 @@
         public int? PhaseID { get; set; }
         public int? ProjectID { get; set; }
         public int? TaskID { get; set; }
+
     }
 }

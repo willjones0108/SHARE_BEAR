@@ -12,7 +12,7 @@ namespace JMUcare.Pages.Projects
     {
         [BindProperty]
         public ProjectModel Project { get; set; }
-
+        public string AssociatedPhaseName { get; set; }
         public List<PhaseModel> Phases { get; set; } // Added for phase selection
         public List<GrantModel> Grants { get; set; } // Added for grant selection
 
@@ -46,7 +46,6 @@ namespace JMUcare.Pages.Projects
             }
 
             Project = DBClass.GetProjectById(id);
-
             if (Project == null)
             {
                 TempData["ErrorMessage"] = "Project not found.";
@@ -72,8 +71,16 @@ namespace JMUcare.Pages.Projects
             // Load project permissions
             LoadProjectPermissions(id);
 
+            // Fetch the associated phase and set the flag
+            var associatedPhase = DBClass.GetPhaseForProject(id);
+            if (associatedPhase != null)
+            {
+                AssociatedPhaseName = associatedPhase.PhaseName;
+            }
+
             return Page();
         }
+
 
         public IActionResult OnPost()
         {

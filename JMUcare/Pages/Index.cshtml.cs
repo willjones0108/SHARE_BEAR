@@ -110,26 +110,26 @@ namespace JMUcare.Pages
             }
             RecentProjects = allProjects.OrderByDescending(p => p.ProjectID).Take(5).ToList();
 
-            // Get all tasks
-            var allTasks = new List<ProjectTaskModel>();
-            foreach (var project in allProjects)
-            {
-                var tasks = DBClass.GetTasksByProjectId(project.ProjectID, CurrentUserID);
-                if (tasks != null)
-                {
-                    allTasks.AddRange(tasks);
-                }
-            }
+            //// Get all tasks
+            //var allTasks = new List<ProjectTaskModel>();
+            //foreach (var project in allProjects)
+            //{
+            //    var tasks = DBClass.GetTasksByProjectId(project.ProjectID, CurrentUserID);
+            //    if (tasks != null)
+            //    {
+            //        allTasks.AddRange(tasks);
+            //    }
+            //}
 
             // Get pending/in-progress tasks with the earliest due dates
-            UpcomingTasks = allTasks
-                .Where(t => t.Status == "Pending" || t.Status == "In Progress")
-                .OrderBy(t => t.DueDate)
-                .Take(5)
-                .ToList();
+            //UpcomingTasks = allTasks
+            //    .Where(t => t.Status == "Pending" || t.Status == "In Progress")
+            //    .OrderBy(t => t.DueDate)
+            //    .Take(5)
+            //    .ToList();
 
-            // Get the number of pending tasks
-            PendingTasks = allTasks.Count;
+            //// Get the number of pending tasks
+            //PendingTasks = allTasks.Count;
 
             var authorizedProjects = DBClass.GetProjectsByUserId(CurrentUserID);
             foreach (var project in authorizedProjects)

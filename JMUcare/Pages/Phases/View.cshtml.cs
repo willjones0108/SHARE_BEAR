@@ -58,10 +58,10 @@ namespace JMUcare.Pages.Phases
 
             // Get tasks associated with each project
             ProjectTasks = new Dictionary<int, List<ProjectTaskModel>>();
-            foreach (var project in Projects)
-            {
-                ProjectTasks[project.ProjectID] = DBClass.GetTasksByProjectId(project.ProjectID, CurrentUserID);
-            }
+            //foreach (var project in Projects)
+            //{
+            //    ProjectTasks[project.ProjectID] = DBClass.GetTasksByProjectId(project.ProjectID, CurrentUserID);
+            //}
 
             return Page();
         }

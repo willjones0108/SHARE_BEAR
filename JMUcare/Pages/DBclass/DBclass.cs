@@ -13,74 +13,73 @@ namespace JMUcare.Pages.DBclass
     public class DBClass
     {
         // Static constructor to initialize connection strings
-        static DBClass()
-        {
-            var configuration = GetConfiguration();
-            AuthConnString = configuration.GetConnectionString("AUTH");
-            JMUcareDBConnString = configuration.GetConnectionString("JMU_CARE");
+        //static DBClass()
+        //{
+        //    var configuration = GetConfiguration();
+        //    AuthConnString = configuration.GetConnectionString("AUTH");
+        //    JMUcareDBConnString = configuration.GetConnectionString("JMU_CARE");
 
-            // Initialize the connection object
-            JMUcareDBConnection = new SqlConnection(JMUcareDBConnString);
-        }
+        //    // Initialize the connection object
+        //    JMUcareDBConnection = new SqlConnection(JMUcareDBConnString);
+        //}
 
         // Configuration helper
-        private static IConfiguration GetConfiguration()
-        {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+        //private static IConfiguration GetConfiguration()
+        //{
+        //    var builder = new ConfigurationBuilder()
+        //        .SetBasePath(Directory.GetCurrentDirectory())
+        //        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-            return builder.Build();
-        }
+        //    return builder.Build();
+        //}
 
         // Connection objects
-        public static SqlConnection JMUcareDBConnection { get; }
-        public static string AuthConnString { get; }
-        private static string JMUcareDBConnString { get; }
-
-        // Rest of your DBClass implementation...
-    
-
-
-
-
-//private static readonly string JMUcareDBConnString =
-// "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
-
-//private static readonly string? AuthConnString =
-//"Server=Localhost;Database=AUTH;Trusted_Connection=True";
-
-//private static readonly string JMUcareDBConnString =
-//    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
-
-//private static readonly string? AuthConnString =
-//    "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
+        //public static SqlConnection JMUcareDBConnection { get; }
+        //public static string AuthConnString { get; }
+        //private static string JMUcareDBConnString { get; }
 
 
 
 
 
-//Will's Connection Below
 
 
-//public static readonly string JMUcareDBConnString =
-//"Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True";
+        //private static readonly string JMUcareDBConnString =
+        // "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
 
-//private static readonly string? AuthConnString =
-//"Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True";
+        //private static readonly string? AuthConnString =
+        //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
+
+        //private static readonly string JMUcareDBConnString =
+        //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
+
+        //private static readonly string? AuthConnString =
+        //    "Server=LOCALHOST\\MSSQLSERVER484;Database=AUTH;Trusted_Connection=True";
 
 
 
 
-//Dylan BELOW
 
-//private static readonly string JMUcareDBConnString =
-//     "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+        //Will's Connection Below
 
-//private static readonly string? AuthConnString =
-//     "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+        public static readonly string JMUcareDBConnString =
+            "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True;TrustServerCertificate=True";
 
-public const int SaltByteSize = 24; // standard, secure size of salts
+        private static readonly string? AuthConnString =
+            "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True;TrustServerCertificate=True";
+
+
+
+
+        //Dylan BELOW
+
+        //private static readonly string JMUcareDBConnString =
+        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+
+        //private static readonly string? AuthConnString =
+        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+
+        public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
         public const int Pbkdf2Iterations = 1000; // higher number is more secure but takes longer
         public const int IterationIndex = 0; // used to find first section (number of iterations) of PasswordHash database field
@@ -1276,124 +1275,168 @@ WHERE pp.PhaseID = @PhaseID";
             }
         }
 
-        public static List<ProjectTaskModel> GetTasksByProjectId(int projectId)
+        //public static List<ProjectTaskModel> GetTasksByProjectId(int projectId)
+        //{
+        //    var tasks = new List<ProjectTaskModel>();
+
+        //    using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+        //    {
+        //        string sqlQuery = @"
+        //SELECT TaskID, ProjectID, TaskContent, DueDate, Status
+        //FROM Project_Task
+        //WHERE ProjectID = @ProjectID";
+
+        //        using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+        //        {
+        //            cmd.Parameters.AddWithValue("@ProjectID", projectId);
+        //            connection.Open();
+
+        //            using (SqlDataReader reader = cmd.ExecuteReader())
+        //            {
+        //                while (reader.Read())
+        //                {
+        //                    tasks.Add(new ProjectTaskModel
+        //                    {
+        //                        TaskID = reader.GetInt32(reader.GetOrdinal("TaskID")),
+        //                        ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+        //                        TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
+        //                        DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
+        //                        Status = reader.GetString(reader.GetOrdinal("Status")),
+        //                        AssignedUsers = new List<DbUserModel>() // Initialize empty list
+        //                    });
+        //                }
+        //            }
+        //        }
+
+        //        // For each task, get the assigned users
+        //        foreach (var task in tasks)
+        //        {
+        //            string userQuery = @"
+        //    SELECT u.UserID, u.FirstName, u.LastName, u.Email, ptu.Role
+        //    FROM DBUser u
+        //    JOIN Project_Task_User ptu ON u.UserID = ptu.UserID
+        //    WHERE ptu.TaskID = @TaskID";
+
+        //            using (SqlCommand userCmd = new SqlCommand(userQuery, connection))
+        //            {
+        //                userCmd.Parameters.AddWithValue("@TaskID", task.TaskID);
+
+        //                using (SqlDataReader userReader = userCmd.ExecuteReader())
+        //                {
+        //                    while (userReader.Read())
+        //                    {
+        //                        task.AssignedUsers.Add(new DbUserModel
+        //                        {
+        //                            UserID = userReader.GetInt32(userReader.GetOrdinal("UserID")),
+        //                            FirstName = userReader.GetString(userReader.GetOrdinal("FirstName")),
+        //                            LastName = userReader.GetString(userReader.GetOrdinal("LastName")),
+        //                            Email = userReader.GetString(userReader.GetOrdinal("Email"))
+        //                            // Add other properties as needed
+        //                        });
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    return tasks ?? new List<ProjectTaskModel>();
+        //}
+
+
+        //public static List<ProjectTaskModel> GetTasksByProjectId(int projectId, int userId)
+        //{
+        //    var tasks = new List<ProjectTaskModel>();
+
+        //    using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+        //    {
+        //        string sqlQuery = @"
+        //        SELECT t.*
+        //        FROM Project_Task t
+        //        LEFT JOIN Project_Permission pp ON t.ProjectID = pp.ProjectID
+        //        LEFT JOIN DBUser u ON u.UserID = @UserID
+        //        LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
+        //        WHERE t.ProjectID = @ProjectID
+        //        AND t.IsArchived = 0  -- Added filter for non-archived tasks
+        //        AND (
+        //            pp.UserID = @UserID AND pp.AccessLevel IN ('Read', 'Edit')
+        //            OR ur.RoleName = 'Admin'
+        //            OR EXISTS (
+        //                SELECT 1 
+        //                FROM Grant_Permission gp 
+        //                WHERE gp.UserID = @UserID AND gp.AccessLevel = 'Edit'
+        //            )
+        //        )";
+
+        //        using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+        //        {
+        //            cmd.Parameters.AddWithValue("@ProjectID", projectId);
+        //            cmd.Parameters.AddWithValue("@UserID", userId);
+        //            connection.Open();
+
+        //            using (SqlDataReader reader = cmd.ExecuteReader())
+        //            {
+        //                while (reader.Read())
+        //                {
+        //                    tasks.Add(new ProjectTaskModel
+        //                    {
+        //                        TaskID = reader.GetInt32(reader.GetOrdinal("TaskID")),
+        //                        ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+        //                        TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
+        //                        DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
+        //                        Status = reader.GetString(reader.GetOrdinal("Status")),
+        //                        IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
+        //                    });
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    return tasks ?? new List<ProjectTaskModel>();
+        //}
+
+
+        public static PhaseModel GetPhaseForProject(int projectId)
         {
-            var tasks = new List<ProjectTaskModel>();
-
-            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
+            using (var connection = new SqlConnection(JMUcareDBConnString))
             {
-                string sqlQuery = @"
-        SELECT TaskID, ProjectID, TaskContent, DueDate, Status
-        FROM Project_Task
-        WHERE ProjectID = @ProjectID";
+                connection.Open();
 
-                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
+                string query = @"
+            SELECT p.PhaseID, p.PhaseName, p.Description, p.Status, p.CreatedBy, 
+                   p.PhaseLeadID, p.PhasePosition, p.IsArchived
+            FROM Phase p
+            INNER JOIN Phase_Project pp ON p.PhaseID = pp.PhaseID
+            WHERE pp.ProjectID = @ProjectID";
+
+                using (var command = new SqlCommand(query, connection))
                 {
-                    cmd.Parameters.AddWithValue("@ProjectID", projectId);
-                    connection.Open();
+                    command.Parameters.AddWithValue("@ProjectID", projectId);
 
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    using (var reader = command.ExecuteReader())
                     {
-                        while (reader.Read())
+                        if (reader.Read())
                         {
-                            tasks.Add(new ProjectTaskModel
+                            return new PhaseModel
                             {
-                                TaskID = reader.GetInt32(reader.GetOrdinal("TaskID")),
-                                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
-                                TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
-                                DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
+                                PhaseID = reader.GetInt32(reader.GetOrdinal("PhaseID")),
+                                PhaseName = reader.GetString(reader.GetOrdinal("PhaseName")),
+                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
                                 Status = reader.GetString(reader.GetOrdinal("Status")),
-                                AssignedUsers = new List<DbUserModel>() // Initialize empty list
-                            });
-                        }
-                    }
-                }
+                                CreatedBy = reader.GetInt32(reader.GetOrdinal("CreatedBy")),
+                                PhaseLeadID = reader.GetInt32(reader.GetOrdinal("PhaseLeadID")),
+                                PhasePosition = reader.IsDBNull(reader.GetOrdinal("PhasePosition")) ? 0 : reader.GetInt32(reader.GetOrdinal("PhasePosition")),
+                                IsArchived = reader.IsDBNull(reader.GetOrdinal("IsArchived")) ? false : reader.GetBoolean(reader.GetOrdinal("IsArchived"))
 
-                // For each task, get the assigned users
-                foreach (var task in tasks)
-                {
-                    string userQuery = @"
-            SELECT u.UserID, u.FirstName, u.LastName, u.Email, ptu.Role
-            FROM DBUser u
-            JOIN Project_Task_User ptu ON u.UserID = ptu.UserID
-            WHERE ptu.TaskID = @TaskID";
-
-                    using (SqlCommand userCmd = new SqlCommand(userQuery, connection))
-                    {
-                        userCmd.Parameters.AddWithValue("@TaskID", task.TaskID);
-
-                        using (SqlDataReader userReader = userCmd.ExecuteReader())
-                        {
-                            while (userReader.Read())
-                            {
-                                task.AssignedUsers.Add(new DbUserModel
-                                {
-                                    UserID = userReader.GetInt32(userReader.GetOrdinal("UserID")),
-                                    FirstName = userReader.GetString(userReader.GetOrdinal("FirstName")),
-                                    LastName = userReader.GetString(userReader.GetOrdinal("LastName")),
-                                    Email = userReader.GetString(userReader.GetOrdinal("Email"))
-                                    // Add other properties as needed
-                                });
-                            }
+                            };
                         }
                     }
                 }
             }
 
-            return tasks ?? new List<ProjectTaskModel>();
+            return null; // Return null if no phase is found for the given project
         }
 
 
-        public static List<ProjectTaskModel> GetTasksByProjectId(int projectId, int userId)
-        {
-            var tasks = new List<ProjectTaskModel>();
-
-            using (SqlConnection connection = new SqlConnection(JMUcareDBConnString))
-            {
-                string sqlQuery = @"
-                SELECT t.*
-                FROM Project_Task t
-                LEFT JOIN Project_Permission pp ON t.ProjectID = pp.ProjectID
-                LEFT JOIN DBUser u ON u.UserID = @UserID
-                LEFT JOIN UserRole ur ON u.UserRoleID = ur.UserRoleID
-                WHERE t.ProjectID = @ProjectID
-                AND t.IsArchived = 0  -- Added filter for non-archived tasks
-                AND (
-                    pp.UserID = @UserID AND pp.AccessLevel IN ('Read', 'Edit')
-                    OR ur.RoleName = 'Admin'
-                    OR EXISTS (
-                        SELECT 1 
-                        FROM Grant_Permission gp 
-                        WHERE gp.UserID = @UserID AND gp.AccessLevel = 'Edit'
-                    )
-                )";
-
-                using (SqlCommand cmd = new SqlCommand(sqlQuery, connection))
-                {
-                    cmd.Parameters.AddWithValue("@ProjectID", projectId);
-                    cmd.Parameters.AddWithValue("@UserID", userId);
-                    connection.Open();
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            tasks.Add(new ProjectTaskModel
-                            {
-                                TaskID = reader.GetInt32(reader.GetOrdinal("TaskID")),
-                                ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
-                                TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
-                                DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
-                                Status = reader.GetString(reader.GetOrdinal("Status")),
-                                IsArchived = reader.GetBoolean(reader.GetOrdinal("IsArchived"))
-                            });
-                        }
-                    }
-                }
-            }
-
-            return tasks ?? new List<ProjectTaskModel>();
-        }
 
         public static List<ProjectModel> GetProjects()
         {
@@ -1862,84 +1905,84 @@ WHERE pp.PhaseID = @PhaseID";
                 return false;
             }
         }
-        public static bool DeleteTaskAndUsers(int taskId)
-        {
-            using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
-            connection.Open();
+        //public static bool DeleteTaskAndUsers(int taskId)
+        //{
+        //    using var connection = new System.Data.SqlClient.SqlConnection(JMUcareDBConnString);
+        //    connection.Open();
 
-            using var transaction = connection.BeginTransaction();
+        //    using var transaction = connection.BeginTransaction();
 
-            try
-            {
-                // First delete the task user assignments
-                var deleteTaskUsersQuery = "DELETE FROM Project_Task_User WHERE TaskID = @TaskID";
-                using var deleteTaskUsersCmd = new System.Data.SqlClient.SqlCommand(deleteTaskUsersQuery, connection, transaction);
-                deleteTaskUsersCmd.Parameters.AddWithValue("@TaskID", taskId);
-                deleteTaskUsersCmd.ExecuteNonQuery();
+        //    try
+        //    {
+        //        // First delete the task user assignments
+        //        var deleteTaskUsersQuery = "DELETE FROM Project_Task_User WHERE TaskID = @TaskID";
+        //        using var deleteTaskUsersCmd = new System.Data.SqlClient.SqlCommand(deleteTaskUsersQuery, connection, transaction);
+        //        deleteTaskUsersCmd.Parameters.AddWithValue("@TaskID", taskId);
+        //        deleteTaskUsersCmd.ExecuteNonQuery();
 
-                // Then delete the task itself
-                var deleteTaskQuery = "DELETE FROM Project_Task WHERE TaskID = @TaskID";
-                using var deleteTaskCmd = new System.Data.SqlClient.SqlCommand(deleteTaskQuery, connection, transaction);
-                deleteTaskCmd.Parameters.AddWithValue("@TaskID", taskId);
-                deleteTaskCmd.ExecuteNonQuery();
+        //        // Then delete the task itself
+        //        var deleteTaskQuery = "DELETE FROM Project_Task WHERE TaskID = @TaskID";
+        //        using var deleteTaskCmd = new System.Data.SqlClient.SqlCommand(deleteTaskQuery, connection, transaction);
+        //        deleteTaskCmd.Parameters.AddWithValue("@TaskID", taskId);
+        //        deleteTaskCmd.ExecuteNonQuery();
 
-                transaction.Commit();
-                return true;
-            }
-            catch
-            {
-                transaction.Rollback();
-                return false;
-            }
-        }
+        //        transaction.Commit();
+        //        return true;
+        //    }
+        //    catch
+        //    {
+        //        transaction.Rollback();
+        //        return false;
+        //    }
+        //}
 
-        public static ProjectTaskModel GetTaskById(int taskId)
-        {
-            using var connection = new SqlConnection(JMUcareDBConnString);
-            var query = @"
-        SELECT * FROM Project_Task
-        WHERE TaskID = @TaskID";
+        //public static ProjectTaskModel GetTaskById(int taskId)
+        //{
+        //    using var connection = new SqlConnection(JMUcareDBConnString);
+        //    var query = @"
+        //SELECT * FROM Project_Task
+        //WHERE TaskID = @TaskID";
 
-            using var cmd = new SqlCommand(query, connection);
-            cmd.Parameters.AddWithValue("@TaskID", taskId);
+        //    using var cmd = new SqlCommand(query, connection);
+        //    cmd.Parameters.AddWithValue("@TaskID", taskId);
 
-            connection.Open();
-            using var reader = cmd.ExecuteReader();
+        //    connection.Open();
+        //    using var reader = cmd.ExecuteReader();
 
-            if (reader.Read())
-            {
-                return new ProjectTaskModel
-                {
-                    TaskID = reader.GetInt32(reader.GetOrdinal("TaskID")),
-                    ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
-                    TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
-                    DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
-                    Status = reader.GetString(reader.GetOrdinal("Status"))
-                };
-            }
+        //    if (reader.Read())
+        //    {
+        //        return new ProjectTaskModel
+        //        {
+        //            TaskID = reader.GetInt32(reader.GetOrdinal("TaskID")),
+        //            ProjectID = reader.GetInt32(reader.GetOrdinal("ProjectID")),
+        //            TaskContent = reader.GetString(reader.GetOrdinal("TaskContent")),
+        //            DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
+        //            Status = reader.GetString(reader.GetOrdinal("Status"))
+        //        };
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
 
-        public static void UpdateTask(ProjectTaskModel task)
-        {
-            using var connection = new SqlConnection(JMUcareDBConnString);
-            var query = @"
-        UPDATE Project_Task
-        SET TaskContent = @TaskContent,
-            DueDate = @DueDate,
-            Status = @Status
-        WHERE TaskID = @TaskID";
+        //public static void UpdateTask(ProjectTaskModel task)
+        //{
+        //    using var connection = new SqlConnection(JMUcareDBConnString);
+        //    var query = @"
+        //UPDATE Project_Task
+        //SET TaskContent = @TaskContent,
+        //    DueDate = @DueDate,
+        //    Status = @Status
+        //WHERE TaskID = @TaskID";
 
-            using var cmd = new SqlCommand(query, connection);
-            cmd.Parameters.AddWithValue("@TaskID", task.TaskID);
-            cmd.Parameters.AddWithValue("@TaskContent", task.TaskContent);
-            cmd.Parameters.AddWithValue("@DueDate", task.DueDate);
-            cmd.Parameters.AddWithValue("@Status", task.Status);
+        //    using var cmd = new SqlCommand(query, connection);
+        //    cmd.Parameters.AddWithValue("@TaskID", task.TaskID);
+        //    cmd.Parameters.AddWithValue("@TaskContent", task.TaskContent);
+        //    cmd.Parameters.AddWithValue("@DueDate", task.DueDate);
+        //    cmd.Parameters.AddWithValue("@Status", task.Status);
 
-            connection.Open();
-            cmd.ExecuteNonQuery();
-        }
+        //    connection.Open();
+        //    cmd.ExecuteNonQuery();
+        //}
 
         //public static void LoadTaskAssignments(int taskId, List<TaskAssignmentViewModel> taskAssignments)
         //{

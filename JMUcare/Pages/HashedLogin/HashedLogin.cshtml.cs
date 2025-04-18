@@ -34,7 +34,7 @@ namespace JMUcare.Pages.HashedLogin
                 HttpContext.Session.SetInt32("CurrentUserID", userId);
 
                 ViewData["LoginMessage"] = "Login Successful!";
-                DBClass.JMUcareDBConnection.Close();
+
 
                 // Redirect to the dashboard page (Index page)
                 return RedirectToPage("/Index");
@@ -42,9 +42,11 @@ namespace JMUcare.Pages.HashedLogin
             else
             {
                 ViewData["LoginMessage"] = "Username and/or Password Incorrect";
-                DBClass.JMUcareDBConnection.Close();
+
+                // Remove the invalid reference to JMUcareDBConnection.Close()
                 return Page();
             }
+
         }
 
     }

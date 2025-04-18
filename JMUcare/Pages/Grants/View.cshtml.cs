@@ -35,6 +35,8 @@ namespace JMUcare.Pages.Grants
         public bool IsAdmin => DBClass.IsUserAdmin(CurrentUserID);
         public bool IsGrantLead => Grant != null && Grant.GrantLeadID == CurrentUserID;
 
+        public string fileUrl { get; set; } = string.Empty; // URL for the file to be downloaded
+
         // New properties for document management
         public List<DocumentModel> Documents { get; set; } = new List<DocumentModel>();
         public List<DocumentModel> AccessibleDocuments { get; set; } = new List<DocumentModel>();
@@ -266,7 +268,9 @@ namespace JMUcare.Pages.Grants
                     UploadedDate = DateTime.UtcNow,
                     UploadedBy = CurrentUserID,
                     BlobName = blobName,
-                    BlobUrl = await _blobStorageService.GenerateSasTokenAsync(blobName, TimeSpan.FromHours(1)),
+                    //BlobUrl = await _blobStorageService.GenerateSasTokenAsync(blobName, TimeSpan.FromHours(1)),
+                    BlobUrl = _blobStorageService.GenerateLocalFileUrl(blobName),
+
                     IsArchived = false,
                     GrantID = entityId
                 };
@@ -408,4 +412,5 @@ namespace JMUcare.Pages.Grants
             return RedirectToPage(new { id = grantId });
         }
     }
+
 }

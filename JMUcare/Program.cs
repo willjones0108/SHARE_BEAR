@@ -1,31 +1,36 @@
+
+//builder.Services.AddScoped<BlobStorageService>(); // Blob storage service for document handling
+
+
 using JMUcare.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-builder.Services.AddSession();
-builder.Services.AddHttpContextAccessor(); // Add this line
+builder.Services.AddSession(); // Enables session state
+builder.Services.AddHttpContextAccessor(); // Provides access to the current HTTP context
 
-// Register the BlobStorageService
-builder.Services.AddScoped<BlobStorageService>();
+// Register custom services for local storage
+builder.Services.AddScoped<BlobStorageService>(); // Local storage service for document handling
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
+    app.UseExceptionHandler("/Error"); // Use a custom error page in production
+    app.UseHsts(); // Enforce HTTPS in production
 }
-app.UseStaticFiles();
 
-app.UseRouting();
+app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS
+app.UseStaticFiles(); // Serve static files like CSS, JS, and uploaded files
 
-app.UseAuthorization();
+app.UseRouting(); // Enable routing
 
-app.UseSession();
+app.UseSession(); // Enable session middleware
+app.UseAuthorization(); // Enable authorization middleware
 
-app.MapRazorPages();
+app.MapRazorPages(); // Map Razor Pages endpoints
 
-app.Run();
+app.Run(); // Run the application

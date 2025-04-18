@@ -108,7 +108,7 @@ namespace JMUcare.Pages.Projects
             // Get tasks if this is a folder
             if (IsFolder)
             {
-                Tasks = DBClass.GetTasksByProjectId(Id);
+
 
                 // Load documents for this folder
                 Documents = DBClass.GetDocumentsByEntityId("project", Id);
@@ -175,7 +175,7 @@ namespace JMUcare.Pages.Projects
                     UploadedDate = DateTime.UtcNow,
                     UploadedBy = CurrentUserID,
                     BlobName = blobName,
-                    BlobUrl = await _blobStorageService.GenerateSasTokenAsync(blobName, TimeSpan.FromHours(1)),
+                    BlobUrl = _blobStorageService.GenerateLocalFileUrl(blobName),
                     IsArchived = false,
                     ProjectID = entityId
                 };
