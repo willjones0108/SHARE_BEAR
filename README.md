@@ -15,28 +15,21 @@ GitHub Copilot – for real-time coding suggestions and automated code completio
 These tools were employed to enhance productivity, improve quality, and accelerate development. 
 All AI-generated content was reviewed and validated by the project team to ensure accuracy and appropriateness.
 
-## Database Setup
+## Database Connection
 
-### Setting Up Azure Database
+Please note we migrated OFF of azure back to local host. 
+Some functionality may have been impacted, however no bugs were found in our testing in regards to the database.
 
-#### Credentials
-
-##### Server Name:
-
-care-bear-server.database.windows.net
-
-##### Authentication:
-
-SQL Server Authentication
-
-##### Login:
-
-care-bear-admin
-
-##### Password:
-
-Password1
-
+1.	Create the Databases
+•	Set up two databases:
+•	AUTH
+•	JMU_CARE
+2.	Run the Stored Procedure
+•	Locate the file sp_Lab3Login.txt in the project directory.
+•	Execute the SQL script in sp_Lab3Login.txt on the AUTH database to create the required stored procedure.
+3.	Verify the Connection String
+•	Open the DBClass file in the project.
+•	Ensure the connection strings for both AUTH and JMU_CARE databases are accurate and match your local or server database configuration.
 
 * if you have any errors regarding the database please reach out to jonesww@dukes.jmu.edu
 
@@ -54,8 +47,8 @@ Password1
 User Account Details
 | Username    | Password    | Role            | Default Access                                    | 
 |-------------|----------|--------------------|---------------------------------------------------| 
-|rachel.smith | 123      | Admin              | Full access to all grants, phases, and projects   | 
-|cody.brown   | 123      | Contributor        |                                                   | 
+|admin        | password | Admin              | Full access to all grants, phases, and projects   | 
+|user1        | password | Contributor        |                                                   | 
 
 
 ### Dashboard Navigation
