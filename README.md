@@ -121,6 +121,7 @@ You can manually adjust the phase order:
 ## Managing Projects (Task/Folders)
 
 Project = Task = Folder 
+
 The Project.Type determines the type
 
 ### Creating a Project
