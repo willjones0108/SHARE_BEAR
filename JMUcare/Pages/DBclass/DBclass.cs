@@ -44,11 +44,11 @@ namespace JMUcare.Pages.DBclass
 
 
 
-        //private static readonly string JMUcareDBConnString =
-        // "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True";
+        private static readonly string JMUcareDBConnString =
+         "Server=LocalHost;Database=JMU_CARE;Trusted_Connection=True; Trusted_Connection=True";
 
-        //private static readonly string? AuthConnString =
-        //"Server=Localhost;Database=AUTH;Trusted_Connection=True";
+        private static readonly string? AuthConnString =
+        "Server=Localhost;Database=AUTH;Trusted_Connection=True; Trusted_Connection=True";
 
         //private static readonly string JMUcareDBConnString =
         //    "Server=LOCALHOST\\MSSQLSERVER484;Database=JMU_CARE;Trusted_Connection=True";
@@ -62,11 +62,11 @@ namespace JMUcare.Pages.DBclass
 
         //Will's Connection Below
 
-        public static readonly string JMUcareDBConnString =
-            "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True;TrustServerCertificate=True";
+       // public static readonly string JMUcareDBConnString =
+         //   "Server=DESKTOP-LUH5RCB;Database=JMU_CARE;Trusted_Connection=True;TrustServerCertificate=True";
 
-        private static readonly string? AuthConnString =
-            "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True;TrustServerCertificate=True";
+      //  private static readonly string? AuthConnString =
+         //   "Server=DESKTOP-LUH5RCB;Database=AUTH;Trusted_Connection=True;TrustServerCertificate=True";
 
 
 
@@ -74,10 +74,10 @@ namespace JMUcare.Pages.DBclass
         //Dylan BELOW
 
         //private static readonly string JMUcareDBConnString =
-        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True";
+             //"Server=LOCALHOST\\MSSQLSERVER01;Database=JMU_CARE;Trusted_Connection=True; TrustServerCertificate=True";
 
         //private static readonly string? AuthConnString =
-        //     "Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True";
+             //"Server=LOCALHOST\\MSSQLSERVER01;Database=AUTH;Trusted_Connection=True; TrustServerCertificate=True";
 
         public const int SaltByteSize = 24; // standard, secure size of salts
         public const int HashByteSize = 20; // to match the size of the PBKDF2-HMAC-SHA-1 hash (standard)
